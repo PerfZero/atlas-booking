@@ -123,10 +123,10 @@ const tours = [
 ];
 
 export default function TourDetailPage({ params }) {
+  const [showNotification, setShowNotification] = useState(false);
+  
   const tour = tours.find((t) => t.slug === params.slug);
   if (!tour) return notFound();
-
-  const [showNotification, setShowNotification] = useState(false);
 
   const handleShare = async () => {
     if (navigator.share) {
