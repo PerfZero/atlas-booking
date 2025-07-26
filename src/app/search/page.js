@@ -8,6 +8,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import styles from './page.module.css';
 import TourCard from '../components/TourCard';
 import SearchFilters from '../components/SearchFilters';
+import CustomSortSelect from '../components/CustomSortSelect';
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -198,16 +199,16 @@ function SearchPageContent() {
                 <div className={styles.resultsHeader}>
                   <h3 className={styles.resultsTitle}>Результаты поиска. Найдено {filteredResults.length} варианта</h3>
                   <div className={styles.sortWrapper}>
-                    <select 
-                      className={styles.sortSelect}
+                    <CustomSortSelect
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
-                      <option value="popular">Сортировка не выбрана</option>
-                      <option value="price-low">По цене (сначала дешевые)</option>
-                      <option value="price-high">По цене (сначала дорогие)</option>
-                      <option value="rating">По рейтингу</option>
-                    </select>
+                      onChange={setSortBy}
+                      options={[
+                        { value: 'popular', label: 'Сортировка не выбрана' },
+                        { value: 'price-low', label: 'По цене (сначала дешевые)' },
+                        { value: 'price-high', label: 'По цене (сначала дорогие)' },
+                        { value: 'rating', label: 'По рейтингу' }
+                      ]}
+                    />
                   </div>
                 </div>
 

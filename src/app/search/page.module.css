@@ -312,12 +312,14 @@ color: #333;
 }
 
 .resultsHeader {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 24px;
+  gap: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  display: flex
+;
+  flex-direction: column;
 }
 
 .resultsTitle {
@@ -682,4 +684,93 @@ background: #253168;
   .currentPrice {
     font-size: 20px;
   }
+}
+
+.customSelect {
+  position: relative;
+  display: inline-block;
+}
+
+.selectButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 24px;
+  cursor: pointer;
+  font: 500 16px / 150% var(--font-primary);
+  color: #333;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.selectButton:hover {
+  border-color: #253168;
+  color: #253168;
+}
+
+.sortIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selectText {
+  flex: 1;
+  text-align: left;
+}
+
+.arrowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.customSelect.open .arrowIcon {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.dropdownOption {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font: 400 14px var(--font-primary);
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdownOption:hover {
+  background-color: #f8f9fa;
+  color: #253168;
+}
+
+.dropdownOption.selected {
+  background-color: #253168;
+  color: #fff;
+}
+
+.dropdownOption.selected:hover {
+  background-color: #253168;
+  color: #fff;
 }
