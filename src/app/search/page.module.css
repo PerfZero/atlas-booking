@@ -350,11 +350,11 @@ color: #333;
 }
 
 .tourCard {
-  background: white;
+  background: rgba(242, 242, 247, 0.5);
   border-radius: 16px;
   overflow: hidden;
   display: flex;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  height: 465px;
   transition: transform 0.2s, box-shadow 0.2s;
   position: relative;
 }
@@ -368,6 +368,7 @@ color: #333;
   position: relative;
   width: 465px;
   height: 100%;
+  border-radius: 32px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -499,13 +500,14 @@ background: #253168;
   margin-bottom: 8px;
   font: 400 14px / 140% var(--font-primary);
   color: #333;
+  
 }
 
 
 .featureText {
   flex: 1;
   font: 500 16px / 150% var(--font-primary);
-color: #181d27;
+  color: #181d27;
 }
 
 .spotsLeft {
@@ -575,6 +577,17 @@ display: flex;
 align-items: center;
 justify-content: center;
 
+}
+
+.featureTextContainer{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.featureSubtext{
+  font: 400 14px / 143% var(--font-primary);
+color: #535862;
 }
 
 .viewOptionsBtn {
