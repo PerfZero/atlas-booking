@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import CustomSelect from './CustomSelect';
 import DatePicker from './DatePicker';
 import styles from './SearchForm.module.css';
+import Toast from './Toast';
 
 export default function SearchForm({ className = '' }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const datePickerRef = useRef(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
@@ -16,6 +18,8 @@ export default function SearchForm({ className = '' }) {
     travelDate: 'not-specified',
     pilgrimageType: 'umrah'
   });
+  const [dateError, setDateError] = useState(false);
+  const [toast, setToast] = useState({ visible: false, message: '' });
 
   const cityOptions = [
     { value: 'almaty', label: 'Алматы' },
@@ -57,6 +61,7 @@ export default function SearchForm({ className = '' }) {
       travelDate: 'custom'
     }));
     setIsDatePickerOpen(false);
+    setDateError(false);
   };
 
   useEffect(() => {
@@ -75,14 +80,59 @@ export default function SearchForm({ className = '' }) {
     };
   }, [isDatePickerOpen]);
 
+  useEffect(() => {
+    const departureCity = searchParams.get('departureCity');
+    const travelDate = searchParams.get('travelDate');
+    const pilgrimageType = searchParams.get('pilgrimageType');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    if (departureCity) {
+      setFormData(prev => ({ ...prev, departureCity }));
+    }
+    if (travelDate) {
+      setFormData(prev => ({ ...prev, travelDate }));
+    }
+    if (pilgrimageType) {
+      setFormData(prev => ({ ...prev, pilgrimageType }));
+    }
+    if (startDate && endDate) {
+      const parseDate = (dateString) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      };
+      setSelectedStartDate(parseDate(startDate));
+      setSelectedEndDate(parseDate(endDate));
+    }
+  }, [searchParams]);
+
+  const isFormValid = selectedStartDate && selectedEndDate;
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!selectedStartDate || !selectedEndDate) {
+      setDateError(true);
+      setToast({ visible: true, message: 'Пожалуйста, выберите даты поездки' });
+      return;
+    }
     
     const searchParams = new URLSearchParams({
       departureCity: formData.departureCity,
       travelDate: formData.travelDate,
       pilgrimageType: formData.pilgrimageType
     });
+
+    if (selectedStartDate && selectedEndDate) {
+      const formatDate = (date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear().toString();
+        return `${year}-${month}-${day}`;
+      };
+      
+      searchParams.append('startDate', formatDate(selectedStartDate));
+      searchParams.append('endDate', formatDate(selectedEndDate));
+    }
     
     router.push(`/search?${searchParams.toString()}`);
   };
@@ -98,16 +148,16 @@ export default function SearchForm({ className = '' }) {
           placeholder="Выберите город"
         />
         
-        <div className={styles.selectGroup} ref={datePickerRef}>
-          <label>Дата поездки</label>
-          <div 
-            className={styles.select}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDatePickerOpen(!isDatePickerOpen);
-            }}
-          >
+                 <div className={styles.selectGroup} ref={datePickerRef}>
+           <label>Дата поездки</label>
+           <div 
+             className={`${styles.select} ${dateError ? styles.error : ''}`}
+             onClick={(e) => {
+               e.preventDefault();
+               e.stopPropagation();
+               setIsDatePickerOpen(!isDatePickerOpen);
+             }}
+           >
             <span className={styles.selectValue}>
               {formatDateRange()}
             </span>
@@ -138,6 +188,11 @@ export default function SearchForm({ className = '' }) {
            Найти
          </button>
        </form>
+       <Toast
+        message={toast.message}
+        visible={toast.visible}
+        onClose={() => setToast({ ...toast, visible: false })}
+      />
      </>
    );
 } 

@@ -29,6 +29,38 @@ function SearchPageContent() {
     { label: 'Результат поиска' }
   ];
 
+  // Функция для проверки, подходит ли тур под указанный период дат
+  const isTourInDateRange = (tour, startDate, endDate) => {
+    if (!startDate || !endDate) return true;
+    
+    // Парсим даты из URL
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Для туров с custom датами показываем все, так как они подходят под любой период
+    if (tour.dateValue === 'custom') {
+      return true;
+    }
+    
+    // Для туров с конкретными месяцами проверяем, попадает ли период в этот месяц
+    const tourMonth = tour.dateValue;
+    const startMonth = start.toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
+    const endMonth = end.toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
+    
+    // Специальная обработка для августа
+    if (tourMonth === 'august' && (startMonth === 'august' || endMonth === 'august')) {
+      return true;
+    }
+    
+    // Если период пересекается с месяцем тура, показываем тур
+    if (tourMonth === startMonth || tourMonth === endMonth || 
+        (startMonth <= tourMonth && tourMonth <= endMonth)) {
+      return true;
+    }
+    
+    return false;
+  };
+
   const allSearchResults = [
     {
       id: 1,
@@ -39,7 +71,7 @@ function SearchPageContent() {
       duration: "3 дня в Медине · 3 дня в Мекке",
       departure: "Алматы",
       departureValue: "almaty",
-      date: "15 января 2024",
+      date: "26 июля - 2 августа 2025",
       dateValue: "january",
       type: "Умра",
       typeValue: "umrah",
@@ -109,6 +141,106 @@ function SearchPageContent() {
       spotsLeft: 15,
       features: ["Всё включено", "С пересадкой", "4* отель в Мекке", "Расстояние до Каабы 200 м.", "4* отель в Медине", "Расстояние до мечети 300 м."],
       tags: ["Умра", "Эконом"]
+    },
+    {
+      id: 5,
+      name: "August Umrah Package",
+      price: "2 600 $",
+      priceValue: 2600,
+      oldPrice: "2 800 $",
+      duration: "3 дня в Медине · 4 дня в Мекке",
+      departure: "Алматы",
+      departureValue: "almaty",
+      date: "1-7 августа 2025",
+      dateValue: "august",
+      type: "Умра",
+      typeValue: "umrah",
+      image: "/tour_1.png",
+      rating: 9.4,
+      reviews: 98,
+      spotsLeft: 7,
+      features: ["Всё включено", "Прямой рейс", "5* отель в Мекке", "Расстояние до Каабы 80 м.", "5* отель в Медине", "Расстояние до мечети 120 м."],
+      tags: ["Умра", "Летний сезон"]
+    },
+    {
+      id: 6,
+      name: "Summer Umrah Special",
+      price: "2 300 $",
+      priceValue: 2300,
+      oldPrice: "2 500 $",
+      duration: "3 дня в Медине · 4 дня в Мекке",
+      departure: "Алматы",
+      departureValue: "almaty",
+      date: "1-7 августа 2025",
+      dateValue: "august",
+      type: "Умра",
+      typeValue: "umrah",
+      image: "/tour_2.png",
+      rating: 9.0,
+      reviews: 76,
+      spotsLeft: 11,
+      features: ["Всё включено", "С пересадкой", "4* отель в Мекке", "Расстояние до Каабы 150 м.", "4* отель в Медине", "Расстояние до мечети 250 м."],
+      tags: ["Умра", "Эконом"]
+    },
+    {
+      id: 7,
+      name: "Custom Date Umrah Premium",
+      price: "2 900 $",
+      priceValue: 2900,
+      oldPrice: "3 100 $",
+      duration: "4 дня в Медине · 4 дня в Мекке",
+      departure: "Алматы",
+      departureValue: "almaty",
+      date: "1-8 августа 2025",
+      dateValue: "custom",
+      type: "Умра",
+      typeValue: "umrah",
+      image: "/tour_3.png",
+      rating: 9.6,
+      reviews: 134,
+      spotsLeft: 4,
+      features: ["Всё включено", "Прямой рейс", "5* отель в Мекке", "Расстояние до Каабы 50 м.", "5* отель в Медине", "Расстояние до мечети 80 м."],
+      tags: ["Умра", "Премиум", "Кастомные даты"]
+    },
+    {
+      id: 8,
+      name: "August Umrah Express",
+      price: "1 900 $",
+      priceValue: 1900,
+      oldPrice: "2 100 $",
+      duration: "2 дня в Медине · 3 дня в Мекке",
+      departure: "Алматы",
+      departureValue: "almaty",
+      date: "1-6 августа 2025",
+      dateValue: "custom",
+      type: "Умра",
+      typeValue: "umrah",
+      image: "/tour_4.png",
+      rating: 8.7,
+      reviews: 89,
+      spotsLeft: 18,
+      features: ["Всё включено", "С пересадкой", "4* отель в Мекке", "Расстояние до Каабы 300 м.", "4* отель в Медине", "Расстояние до мечети 400 м."],
+      tags: ["Умра", "Эконом", "Кастомные даты"]
+    },
+    {
+      id: 9,
+      name: "Summer Umrah Deluxe",
+      price: "3 200 $",
+      priceValue: 3200,
+      oldPrice: "3 400 $",
+      duration: "5 дня в Медине · 5 дня в Мекке",
+      departure: "Алматы",
+      departureValue: "almaty",
+      date: "1-10 августа 2025",
+      dateValue: "custom",
+      type: "Умра",
+      typeValue: "umrah",
+      image: "/tour_1.png",
+      rating: 9.8,
+      reviews: 167,
+      spotsLeft: 3,
+      features: ["Всё включено", "Прямой рейс", "5* отель в Мекке", "Расстояние до Каабы 20 м.", "5* отель в Медине", "Расстояние до мечети 50 м."],
+      tags: ["Умра", "Люкс", "Кастомные даты"]
     }
   ];
 
@@ -118,16 +250,23 @@ function SearchPageContent() {
     const departureCity = searchParams.get('departureCity');
     const travelDate = searchParams.get('travelDate');
     const pilgrimageType = searchParams.get('pilgrimageType');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
-    if (departureCity && departureCity !== 'almaty') {
+    if (departureCity) {
       results = results.filter(tour => tour.departureValue === departureCity);
     }
 
     if (travelDate && travelDate !== 'not-specified') {
-      results = results.filter(tour => tour.dateValue === travelDate);
+      if (travelDate === 'custom') {
+        // Для custom дат фильтруем по указанному периоду
+        results = results.filter(tour => isTourInDateRange(tour, startDate, endDate));
+      } else {
+        results = results.filter(tour => tour.dateValue === travelDate);
+      }
     }
 
-    if (pilgrimageType && pilgrimageType !== 'umrah') {
+    if (pilgrimageType) {
       results = results.filter(tour => tour.typeValue === pilgrimageType);
     }
 
@@ -147,6 +286,19 @@ function SearchPageContent() {
         break;
       default:
         results.sort((a, b) => b.reviews - a.reviews);
+    }
+
+    // Fallback: если не найдено ни одного тура, показываем туры из Алматы типа "Умра"
+    if (results.length === 0) {
+      const fallbackResults = allSearchResults.filter(tour => 
+        tour.departureValue === 'almaty' && tour.typeValue === 'umrah'
+      ).slice(0, 3); // Показываем максимум 3 тура
+      
+      if (fallbackResults.length > 0) {
+        console.log('No exact matches found, showing fallback results');
+        setFilteredResults(fallbackResults);
+        return;
+      }
     }
 
     setFilteredResults(results);

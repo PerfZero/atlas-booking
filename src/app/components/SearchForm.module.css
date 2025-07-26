@@ -78,6 +78,11 @@
   transform: rotate(180deg);
 }
 
+.select.error {
+  border-color: #e53935;
+  box-shadow: 0 0 0 2px #e53935;
+}
+
 @media (max-width: 1024px) {
   .searchForm {
     flex-direction: column;
