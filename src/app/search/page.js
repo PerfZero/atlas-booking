@@ -615,7 +615,7 @@ function SearchPageContent() {
                                              <div key={tour.id} className={styles.tourCard}>
                          <div className={styles.tourImage}>
                            <div className={styles.cardBadge}>
-                             <span className={styles.badgeIcon}>👤</span>
+                             <span className={styles.badgeIcon}><img src="/chos.svg" alt="★" /></span>
                              <span>Выбор паломников</span>
                            </div>
                            <img src={tour.image} alt={tour.name} />
@@ -627,11 +627,9 @@ function SearchPageContent() {
                              </div>
                              <h4 className={styles.tourName}>{tour.name}</h4>
                              <div className={styles.externalIcon}>
-                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                 <path d="M12 8.66667V12.6667C12 13.0203 11.8595 13.3594 11.6095 13.6095C11.3594 13.8595 11.0203 14 10.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V5.33333C2 4.97971 2.14048 4.64057 2.39052 4.39052C2.64057 4.14048 2.97971 4 3.33333 4H7.33333" stroke="#253168" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                 <path d="M10 2H14V6" stroke="#253168" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                 <path d="M6.66667 9.33333L14 2" stroke="#253168" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                               </svg>
+                             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10.7481 8.26334L10.7414 1.52675C10.7414 1.14505 10.4936 0.877197 10.0918 0.877197H3.35519C2.98019 0.877197 2.72572 1.16514 2.72572 1.48657C2.72572 1.808 3.01367 2.08255 3.3284 2.08255H5.65876L8.92662 1.97541L7.68108 3.06693L1.04492 9.71648C0.924386 9.83699 0.857422 9.99105 0.857422 10.1384C0.857422 10.4598 1.14537 10.7611 1.48019 10.7611C1.63421 10.7611 1.78153 10.7076 1.90206 10.5803L8.55159 3.93746L9.65651 2.68523L9.53599 5.81247V8.29014C9.53599 8.60488 9.81057 8.89951 10.1387 8.89951C10.4601 8.89951 10.7481 8.62499 10.7481 8.26334Z" fill="#253168" />
+</svg>
                              </div>
                            </div>
                          </div>
@@ -648,12 +646,12 @@ function SearchPageContent() {
                            
                            <div className={styles.featureButtons}>
                              <div className={styles.allInclusiveBtn}>
-                               <span className={styles.featureIcon}>✓</span>
+                               <span className={styles.featureIcon}><img src="/all.svg" alt="★" /></span>
                                <span>Всё включено</span>
                              </div>
                              {tour.spotsLeft && (
                                <div className={styles.spotsLeft}>
-                                 <span className={styles.spotsIcon}>⚠</span>
+                                 <span className={styles.spotsIcon}><img src="/alert.svg" alt="★" /></span>
                                  <span>Осталось {tour.spotsLeft} мест</span>
                                </div>
                              )}
@@ -661,19 +659,19 @@ function SearchPageContent() {
                            
                            <div className={styles.tourFeatures}>
                              <div className={styles.feature}>
-                               <span className={styles.featureIcon}>✈</span>
+                               <span className={styles.featureIcon}><img src="/airplane.svg" alt="★" /></span>
                                <span className={styles.featureText}>Прямой рейс</span>
                              </div>
                              <div className={styles.feature}>
-                               <span className={styles.featureIcon}>🕌</span>
+                               <span className={styles.featureIcon}><img src="/mekka.svg" alt="★" /></span>
                                <span className={styles.featureText}>5* отель в Мекке</span>
                              </div>
                              <div className={styles.feature}>
-                               <span className={styles.featureIcon}>📍</span>
+                               <span className={styles.featureIcon}><img src="/location.svg" alt="★" /></span>
                                <span className={styles.featureText}>Расстояние до Каабы 50 м.</span>
                              </div>
                              <div className={styles.feature}>
-                               <span className={styles.featureIcon}>🕌</span>
+                               <span className={styles.featureIcon}><img src="/medina.svg" alt="★" /></span>
                                <span className={styles.featureText}>5* отель в Медине</span>
                              </div>
                              <div className={styles.feature}>

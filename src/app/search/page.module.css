@@ -382,38 +382,46 @@ color: #333;
   position: absolute;
   top: 16px;
   left: 16px;
-  font: 500 16px / 150% var(--font-family);
+  font: 500 16px / 150% var(--font-primary);
   color: #333;
   z-index: 2;
   border-radius: 16px;
 padding: 8px 16px;
-width: 203px;
+
 height: 40px;
+display: flex;
+align-items: center;
+gap: 8px;
 background: #fff;
 
 }
 
-.badgeIcon {
-  font-size: 14px;
-}
 
 .imageOverlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 8px;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
   color: white;
+  backdrop-filter: blur(10px);
+background: rgba(0, 0, 0, 0.4);
+margin: 16px;
 }
 
 .externalIcon {
   position: absolute;
-  bottom: 16px;
-  right: 16px;
+  bottom: 8px;
+  right: 8px;
   background: white;
   border-radius: 8px;
-  padding: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 2;
 }
 
@@ -427,20 +435,19 @@ background: #fff;
 .contentHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  align-items: center;
+  
+  margin-bottom: 20px;
 }
 
 .tourName {
-  font: 600 24px / 130% var(--font-primary);
-  color: white;
-  margin: 0 0 8px 0;
+  font: 600 32px / 125% var(--font-primary);
+  color: #fff;
 }
 
 .tourDuration {
-  font: 600 18px / 130% var(--font-primary);
+  font: 600 24px / 133% var(--font-primary); 
   color: #333;
-  margin: 0;
 }
 
 .tourRating {
@@ -453,11 +460,11 @@ background: #fff;
   height: 40px;
   background: #253168;
   color: white;
-  border-radius: 8px;
+  border-radius: 16px 16px 16px 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font: 600 14px / 140% var(--font-primary);
+  font: 600 14px / 140% var(--font-family);
 }
 
 .featureButtons {
@@ -467,14 +474,17 @@ background: #fff;
 }
 
 .allInclusiveBtn {
-  background: #253168;
-  color: white;
-  padding: 8px 16px;
+  font: 500 16px / 150% var(--font-family);
+  color: #fff;
   border-radius: 8px;
-  font: 500 14px / 140% var(--font-primary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+padding: 8px 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+height: 40px;
+width: 169px;
+
+background: #253168;
 }
 
 .tourFeatures {
@@ -485,32 +495,30 @@ background: #fff;
 .feature {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 8px;
   font: 400 14px / 140% var(--font-primary);
   color: #333;
 }
 
-.featureIcon {
-  font-size: 16px;
-  color: #253168;
-  width: 16px;
-  text-align: center;
-}
 
 .featureText {
   flex: 1;
+  font: 500 16px / 150% var(--font-primary);
+color: #181d27;
 }
 
 .spotsLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffe6e6;
-  color: #d63384;
-  padding: 8px 12px;
+  font: 500 16px / 150% var(--font-family);
+  color: #e81142;
   border-radius: 8px;
-  font: 500 14px / 140% var(--font-primary);
+padding: 8px 16px;
+
+height: 40px;
+display: flex;
+align-items: center;
+gap: 8px;
+background: rgba(232, 17, 66, 0.1);
 }
 
 .spotsIcon {
@@ -522,32 +530,32 @@ background: #fff;
 }
 
 .priceNote {
-  font: 400 12px / 140% var(--font-primary);
-  color: #999;
-  margin-bottom: 8px;
+  font: 400 12px var(--font-primary);
+  color: rgba(51, 51, 51, 0.5);
 }
 
 .priceInfo {
-  display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
   margin-bottom: 4px;
+  display: flex
+;
 }
 
 .currentPrice {
-  font: 700 24px / 130% var(--font-primary);
+  font: 600 24px / 133% var(--font-primary);
   color: #333;
 }
 
 .oldPrice {
-  font: 400 16px / 140% var(--font-primary);
-  color: #d63384;
+  font: 400 12px / 267% var(--font-primary);
   text-decoration: line-through;
+  color: #e81142;
 }
 
 .priceEquivalent {
-  font: 400 12px / 140% var(--font-primary);
-  color: #999;
+  font: 500 10px var(--font-primary);
+  color: #333;
 }
 
 .tourTags {
@@ -558,24 +566,26 @@ background: #fff;
 }
 
 .tag {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font: 400 12px / 140% var(--font-primary);
+  font: 400 12px var(--font-family);
+  color: #fff;
+  border: 0.50px solid #fff;
+border-radius: 8px;
+padding: 2px 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+
 }
 
 .viewOptionsBtn {
-  width: 100%;
-  background: #253168;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font: 500 14px / 140% var(--font-primary);
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: auto;
+  font: 500 16px / 150% var(--font-family);
+  color: #fff;
+  border: 1px solid #253168;
+
+  border-radius: 16px;
+
+height: 44px;
+background: #253168;
 }
 
 .viewOptionsBtn:hover {
