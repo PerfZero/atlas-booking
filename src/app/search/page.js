@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -7,7 +7,7 @@ import SearchForm from '../components/SearchForm';
 import Breadcrumbs from '../components/Breadcrumbs';
 import styles from './page.module.css';
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const [filteredResults, setFilteredResults] = useState([]);
   const [sortBy, setSortBy] = useState('popular');
@@ -712,5 +712,13 @@ export default function SearchPage() {
       
       <Footer />
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 } 

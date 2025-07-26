@@ -382,16 +382,15 @@ color: #333;
   position: absolute;
   top: 16px;
   left: 16px;
-  background: white;
-  color: #253168;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font: 500 12px / 140% var(--font-primary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font: 500 16px / 150% var(--font-family);
+  color: #333;
   z-index: 2;
-  border: 1px solid #253168;
+  border-radius: 16px;
+padding: 8px 16px;
+width: 203px;
+height: 40px;
+background: #fff;
+
 }
 
 .badgeIcon {
