@@ -28,6 +28,56 @@
   transform: translateY(-1px);
 }
 
+.selectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+}
+
+.selectGroup label {
+  font: 500 24px / 133% var(--font-primary);
+  color: #414651;
+}
+
+.select {
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  font: 500 16px / 150% var(--font-primary);
+  color: #333;
+  background: white;
+  box-shadow: 0 1px 2px 0 rgba(10, 13, 18, 0.05);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.select:hover {
+  border-color: #253168;
+}
+
+.selectValue {
+  flex: 1;
+  text-align: left;
+}
+
+.selectArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  margin-left: 8px;
+}
+
+.selectArrowUp {
+  transform: rotate(180deg);
+}
+
 @media (max-width: 1024px) {
   .searchForm {
     flex-direction: column;
@@ -42,5 +92,14 @@
 @media (max-width: 768px) {
   .searchForm {
     padding: 24px;
+  }
+  
+  .selectGroup label {
+    font-size: 20px;
+  }
+  
+  .select {
+    padding: 10px 14px;
+    font-size: 14px;
   }
 } 
