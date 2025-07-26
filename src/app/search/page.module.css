@@ -595,8 +595,11 @@ color: #535862;
 .viewOptionsBtn {
   font: 500 16px / 150% var(--font-family);
   color: #fff;
+  display: flex;
   border: 1px solid #253168;
-
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   border-radius: 16px;
 
 height: 44px;
