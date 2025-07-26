@@ -1,0 +1,120 @@
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+}
+
+.label {
+  font: 500 24px / 133% var(--font-primary);
+  color: #414651;
+}
+
+.selectContainer {
+  position: relative;
+  width: 100%;
+}
+
+.selectTrigger {
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  font: 500 16px / 150% var(--font-primary);
+  color: #333;
+  background: white;
+  box-shadow: 0 1px 2px 0 rgba(10, 13, 18, 0.05);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.selectTrigger:hover {
+  border-color: #253168;
+}
+
+.selectTrigger.open {
+  border-color: #253168;
+}
+
+.selectedValue {
+  flex: 1;
+  text-align: left;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  margin-left: 8px;
+}
+
+.arrowUp {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius:16px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.option {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.2s;
+  font: 500 16px / 150% var(--font-primary);
+  color: #333;
+}
+
+.option:hover {
+  background-color: #f8f9fa;
+}
+
+.option.selected {
+  background-color: #f0f2f5;
+}
+
+.optionText {
+  flex: 1;
+}
+
+.checkmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+@media (max-width: 768px) {
+  .label {
+    font-size: 20px;
+  }
+  
+  .selectTrigger {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .option {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+} 

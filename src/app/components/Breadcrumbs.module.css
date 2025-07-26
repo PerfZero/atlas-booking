@@ -1,0 +1,33 @@
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 16px 0;
+}
+
+.breadcrumbItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.separator {
+    font: 400 16px / 150% var(--font-primary);
+    color: #333;
+}
+
+.breadcrumbLink {
+    font: 400 16px / 150% var(--font-primary);
+    color: #333;
+}
+
+.breadcrumbLink:hover {
+  color: #1e2854;
+  text-decoration: underline;
+}
+
+.breadcrumbText {
+    font: 500 16px / 150% var(--font-primary);
+    color: #333;
+} 

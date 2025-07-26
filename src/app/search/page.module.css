@@ -1,0 +1,663 @@
+.page {
+  min-height: 100vh;
+
+}
+
+.main {
+  padding-top: 40px;
+  padding-bottom: 80px;
+}
+
+.container {
+  max-width: 1360px;
+  margin: 0 auto;
+
+}
+
+.header:before {
+  content: '';
+  display: block;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  height: 274px;
+  background: #253168;
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.titleSection {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.title {
+  font: 700 40px var(--font-primary);
+  text-align: center;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.searchForm {
+    backdrop-filter: blur(200px);
+    background: #f2f2f7;
+    position: relative;
+    z-index: 10;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.breadcrumbs {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 16px 0;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filters {
+  backdrop-filter: blur(200px);
+  background: rgba(242, 242, 247, 0.5);
+
+  border-radius: 32px;
+}
+
+.filtersTitle {
+  font: 500 32px / 125% var(--font-primary);
+  color: #414651;
+  border-bottom: 1px solid #e3e3e3;
+padding: 24px;
+}
+
+.filterSection {
+  border-bottom: 1px solid #e3e3e3;
+padding: 24px;
+
+}
+
+.filterSection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.filterSectionTitle {
+  font: 500 24px / 133% var(--font-primary);
+  color: #414651;
+  margin-bottom: 16px;
+}
+
+.filterGroup {
+  margin-bottom: 16px;
+}
+
+.filterLabel {
+  font: 500 16px / 150% var(--font-primary);
+  color: #414651;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.priceRange, .distanceRange {
+  margin-top: 8px;
+}
+
+.distanceSlider {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.distanceValue {
+  font: 500 16px / 150% var(--font-primary);
+  color: #181d27;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.priceSlider {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.sliderTrack {
+  position: relative;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  margin: 20px 0;
+}
+
+.sliderRange {
+  position: absolute;
+  height: 100%;
+  background: #253168;
+  border-radius: 2px;
+  left: 0;
+  right: 0;
+}
+
+.sliderThumbs {
+  position: relative;
+}
+
+.rangeInput {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  pointer-events: none;
+  appearance: none;
+  top: -24px;
+}
+
+.rangeInput::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  border: 2px solid #253168;
+
+}
+
+.rangeInput::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #253168;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.rangeInput::-webkit-slider-track {
+  background: transparent;
+}
+
+.rangeInput::-moz-range-track {
+  background: transparent;
+}
+
+.priceInputs, .distanceInputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.priceValue {
+  font: 500 16px / 150% var(--font-primary);
+  color: #181d27;
+ 
+  border-radius: 8px;
+
+  text-align: center;
+}
+
+.priceInput, .distanceInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font: 400 14px / 140% var(--font-primary);
+  color: #333;
+  background: white;
+}
+
+.radioGroup, .checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radioLabel, .checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 400 14px / 140% var(--font-primary);
+  color: #333;
+  cursor: pointer;
+}
+
+.radioLabel input, .checkboxLabel input {
+  margin: 0;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.checkboxLabel span {
+  font: 400 16px / 150% var(--font-primary);
+color: #333;
+}
+
+.checkboxLabel input:checked {
+  background: #253168;
+  border-color: #253168;
+}
+
+.checkboxLabel input:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.radioLabel input {
+  border-radius: 50%;
+}
+
+.radioLabel input:checked {
+  background: #253168;
+  border-color: #253168;
+}
+
+.radioLabel input:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+}
+
+.starIcon {
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  opacity: 1;
+}
+
+.starIconEmpty {
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  opacity: 0.3;
+}
+
+.results {
+  flex: 1;
+}
+
+.resultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.resultsTitle {
+    font: 600 32px var(--font-primary);
+    color: #333;
+}
+
+.sortWrapper {
+  position: relative;
+}
+
+.sortSelect {
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font: 400 14px / 140% var(--font-primary);
+  color: #333;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23717680' stroke-width='1.66667' stroke-linecap='round' stroke-linejoin='round' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.tourCards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tourCard {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.tourCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.tourImage {
+  position: relative;
+  width: 465px;
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tourImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBadge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: white;
+  color: #253168;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font: 500 12px / 140% var(--font-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+  border: 1px solid #253168;
+}
+
+.badgeIcon {
+  font-size: 14px;
+}
+
+.imageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+}
+
+.externalIcon {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: white;
+  border-radius: 8px;
+  padding: 8px;
+  z-index: 2;
+}
+
+.tourContent {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.tourName {
+  font: 600 24px / 130% var(--font-primary);
+  color: white;
+  margin: 0 0 8px 0;
+}
+
+.tourDuration {
+  font: 600 18px / 130% var(--font-primary);
+  color: #333;
+  margin: 0;
+}
+
+.tourRating {
+  position: static;
+  z-index: 2;
+}
+
+.ratingCircle {
+  width: 40px;
+  height: 40px;
+  background: #253168;
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 14px / 140% var(--font-primary);
+}
+
+.featureButtons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.allInclusiveBtn {
+  background: #253168;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font: 500 14px / 140% var(--font-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tourFeatures {
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font: 400 14px / 140% var(--font-primary);
+  color: #333;
+}
+
+.featureIcon {
+  font-size: 16px;
+  color: #253168;
+  width: 16px;
+  text-align: center;
+}
+
+.featureText {
+  flex: 1;
+}
+
+.spotsLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffe6e6;
+  color: #d63384;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font: 500 14px / 140% var(--font-primary);
+}
+
+.spotsIcon {
+  font-size: 16px;
+}
+
+.tourPrice {
+  margin-bottom: 20px;
+}
+
+.priceNote {
+  font: 400 12px / 140% var(--font-primary);
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.priceInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.currentPrice {
+  font: 700 24px / 130% var(--font-primary);
+  color: #333;
+}
+
+.oldPrice {
+  font: 400 16px / 140% var(--font-primary);
+  color: #d63384;
+  text-decoration: line-through;
+}
+
+.priceEquivalent {
+  font: 400 12px / 140% var(--font-primary);
+  color: #999;
+}
+
+.tourTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font: 400 12px / 140% var(--font-primary);
+}
+
+.viewOptionsBtn {
+  width: 100%;
+  background: #253168;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font: 500 14px / 140% var(--font-primary);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: auto;
+}
+
+.viewOptionsBtn:hover {
+  background: #1e2854;
+}
+
+.noResults {
+  text-align: center;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  border-radius: 16px;
+}
+
+.noResults h3 {
+  font: 600 24px / 130% var(--font-primary);
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.noResults p {
+  font: 400 16px / 150% var(--font-primary);
+  color: #666;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 20px;
+  }
+  
+  .title {
+    font-size: 36px;
+  }
+  
+  .content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .filters {
+    position: static;
+    order: 2;
+  }
+  
+  .results {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding-top: 20px;
+    padding-bottom: 60px;
+  }
+  
+  .container {
+    padding: 0 16px;
+  }
+  
+  .title {
+    font-size: 28px;
+  }
+  
+  .resultsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .tourCard {
+    margin-bottom: 16px;
+  }
+  
+  .tourContent {
+    padding: 16px;
+  }
+  
+  .tourName {
+    font-size: 20px;
+  }
+  
+  .currentPrice {
+    font-size: 20px;
+  }
+}
