@@ -1,6 +1,6 @@
 "use client";
 import { notFound } from "next/navigation";
-import { useState } from "react";
+import { useState, use } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import SearchForm from "../../components/SearchForm";
@@ -120,12 +120,41 @@ const tours = [
     ],
     tags: ["Умра", "Эконом"],
   },
+  {
+    slug: "summer-umrah-deluxe",
+    id: 5,
+    name: "Summer Umrah Deluxe",
+    price: "3 200 $",
+    priceValue: 3200,
+    oldPrice: "3 400 $",
+    duration: "5 дня в Медине · 5 дня в Мекке",
+    departure: "Алматы",
+    departureValue: "almaty",
+    date: "1-10 августа 2025",
+    dateValue: "custom",
+    type: "Умра",
+    typeValue: "umrah",
+    image: "/tour_1.png",
+    rating: 9.8,
+    reviews: 167,
+    spotsLeft: 3,
+    features: [
+      "Всё включено",
+      "Прямой рейс",
+      "5* отель в Мекке",
+      "Расстояние до Каабы 20 м.",
+      "5* отель в Медине",
+      "Расстояние до мечети 50 м.",
+    ],
+    tags: ["Умра", "Люкс", "Кастомные даты"],
+  },
 ];
 
 export default function TourDetailPage({ params }) {
   const [showNotification, setShowNotification] = useState(false);
   
-  const tour = tours.find((t) => t.slug === params.slug);
+  const resolvedParams = use(params);
+  const tour = tours.find((t) => t.slug === resolvedParams.slug);
   if (!tour) return notFound();
 
   const handleShare = async () => {
