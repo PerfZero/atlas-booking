@@ -6,9 +6,13 @@ import DatePicker from './DatePicker';
 import styles from './SearchForm.module.css';
 import Toast from './Toast';
 
-export default function SearchForm({ className = '' }) {
-  const router = useRouter();
+function SearchFormWithParams({ className = '' }) {
   const searchParams = useSearchParams();
+  return <SearchForm searchParams={searchParams} className={className} />;
+}
+
+function SearchForm({ searchParams, className = '' }) {
+  const router = useRouter();
   const datePickerRef = useRef(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
@@ -195,4 +199,6 @@ export default function SearchForm({ className = '' }) {
       />
      </>
    );
-} 
+}
+
+export default SearchFormWithParams; 

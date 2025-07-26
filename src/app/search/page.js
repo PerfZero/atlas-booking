@@ -10,8 +10,13 @@ import TourCard from '../components/TourCard';
 import SearchFilters from '../components/SearchFilters';
 import CustomSortSelect from '../components/CustomSortSelect';
 
-function SearchPageContent() {
+function SearchPageWithParams() {
   const searchParams = useSearchParams();
+  
+  return <SearchPageContent searchParams={searchParams} />;
+}
+
+function SearchPageContent({ searchParams }) {
   const [filteredResults, setFilteredResults] = useState([]);
   const [sortBy, setSortBy] = useState('popular');
   const [priceRange, setPriceRange] = useState({ min: 890, max: 4500 });
@@ -316,7 +321,9 @@ function SearchPageContent() {
             </div>
             
             <div className={styles.searchFormWrapper}>
-              <SearchForm className={styles.searchForm} />
+              <Suspense fallback={<div>Loading...</div>}>
+                <SearchForm className={styles.searchForm} />
+              </Suspense>
             </div>
           </div>
           <Breadcrumbs items={breadcrumbItems} />
@@ -390,7 +397,7 @@ function SearchPageContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <SearchPageContent />
+      <SearchPageWithParams />
     </Suspense>
   );
 } 

@@ -1,4 +1,5 @@
 'use client';
+import { Suspense } from 'react';
 import SearchForm from './SearchForm';
 import styles from './Hero.module.css';
 
@@ -15,7 +16,9 @@ export default function Hero() {
         </div>
         
         <div className={styles.formContainer}>
-          <SearchForm />
+          <Suspense fallback={<div>Loading...</div>}>
+            <SearchForm />
+          </Suspense>
         </div>
       </div>
     </section>
