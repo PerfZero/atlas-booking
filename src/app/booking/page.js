@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "../components/Header";
 import HeaderBlue from "../components/HeaderBlue";
 import Footer from "../components/Footer";
 import styles from "./page.module.css";
 
-export default function BookingPage() {
+function BookingPageContent() {
   const searchParams = useSearchParams();
   const [tourData, setTourData] = useState(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -594,5 +594,13 @@ export default function BookingPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={<div>Загрузка...</div>}>
+      <BookingPageContent />
+    </Suspense>
   );
 }
