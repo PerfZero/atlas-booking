@@ -156,7 +156,6 @@ export default function TourDetailPage({ params }) {
   
   const resolvedParams = use(params);
   const tour = tours.find((t) => t.slug === resolvedParams.slug);
-  if (!tour) return notFound();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -167,6 +166,8 @@ export default function TourDetailPage({ params }) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (!tour) return notFound();
 
   const handleShare = async () => {
     if (navigator.share) {
