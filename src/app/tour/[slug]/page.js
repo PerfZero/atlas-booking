@@ -1,6 +1,6 @@
 "use client";
 import { notFound } from "next/navigation";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import SearchForm from "../../components/SearchForm";
@@ -152,10 +152,21 @@ const tours = [
 
 export default function TourDetailPage({ params }) {
   const [showNotification, setShowNotification] = useState(false);
+  const [showBookingButton, setShowBookingButton] = useState(false);
   
   const resolvedParams = use(params);
   const tour = tours.find((t) => t.slug === resolvedParams.slug);
   if (!tour) return notFound();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setShowBookingButton(scrollPosition > 500);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -179,6 +190,28 @@ export default function TourDetailPage({ params }) {
         console.error("Ошибка копирования ссылки:", err);
       }
     }
+  };
+
+  const handleBooking = () => {
+    const tourData = {
+      id: tour.id,
+      name: tour.name,
+      price: tour.price,
+      priceValue: tour.priceValue,
+      oldPrice: tour.oldPrice,
+      duration: tour.duration,
+      departure: tour.departure,
+      date: tour.date,
+      type: tour.type,
+      image: tour.image,
+      rating: tour.rating,
+      reviews: tour.reviews,
+      features: tour.features,
+      slug: tour.slug
+    };
+    
+    const queryString = new URLSearchParams(tourData).toString();
+    window.location.href = `/booking?${queryString}`;
   };
 
   const breadcrumbItems = [
@@ -1195,9 +1228,14 @@ export default function TourDetailPage({ params }) {
             </div>
           </div>
 
-    
+          <div className={`${styles.fixedBookingButton} ${!showBookingButton ? styles.hidden : ''}`}>
+            <div className={styles.fixedBookingButtonContent}>
+              <button className={styles.fixedBookButton} onClick={handleBooking}>
+                Перейти к бронированию
+              </button>
+            </div>
+          </div>
 
-        
         </div>
       </main>
 
