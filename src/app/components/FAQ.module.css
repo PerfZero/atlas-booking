@@ -1,6 +1,6 @@
 .faq {
   background: white;
-  padding: 80px 0;
+  padding: 80px 0 0;
 }
 
 .container {
@@ -38,9 +38,7 @@
   transition: all 0.3s ease;
 }
 
-.faqHeader:hover {
-  background: #f8f8f8;
-}
+
 
 .question {
   font: 600 18px var(--font-primary);
@@ -92,7 +90,7 @@
 
 @media (max-width: 768px) {
   .faq {
-    padding: 60px 0;
+    padding: 60px 0 0;
   }
   
   .container {
@@ -100,8 +98,8 @@
   }
   
   .title {
-    font-size: 28px;
-    margin-bottom: 32px;
+    font-size: 24px;
+    margin-bottom: 20px;
   }
   
   .faqHeader {
@@ -109,10 +107,10 @@
   }
   
   .question {
-    font-size: 16px;
+    font-size: 20px;
   }
   
   .answer p {
-    font-size: 14px;
+    font-size: 16px;
   }
 } 

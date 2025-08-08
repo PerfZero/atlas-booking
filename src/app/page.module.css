@@ -115,6 +115,11 @@ a.secondary {
 
 }
 
+.page section:nth-child(7){
+padding-top: 80px;
+}
+
+
 @media (max-width: 600px) {
   .page {
     padding: 16px;

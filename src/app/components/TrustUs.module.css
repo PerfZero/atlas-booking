@@ -1,6 +1,6 @@
 .trustUs {
   background: white;
-  padding: 80px 0;
+  padding: 80px 0 0;
 }
 
 .container {
@@ -58,7 +58,7 @@
 
 @media (max-width: 768px) {
   .trustUs {
-    padding: 80px 0;
+    padding: 60px 0 0;
   }
   
   .container {
@@ -66,8 +66,8 @@
   }
   
   .title {
-    font-size: 36px;
-    margin-bottom: 60px;
+    font-size: 24px;
+    margin-bottom: 20px;
   }
   
   .stats {
@@ -76,10 +76,10 @@
   }
   
   .value {
-    font-size: 36px;
+    font-size: 20px;
   }
   
   .description {
-    font-size: 14px;
+    font-size: 16px;
   }
 } 

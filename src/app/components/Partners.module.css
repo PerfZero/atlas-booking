@@ -1,6 +1,6 @@
 .partners {
   background: white;
-  padding: 80px 0;
+  padding: 80px 0 0;
 }
 
 .container {
@@ -53,7 +53,7 @@
 
 @media (max-width: 768px) {
   .partners {
-    padding: 60px 0;
+    padding: 60px 0 0;
   }
   
   .container {
@@ -61,8 +61,8 @@
   }
   
   .title {
-    font-size: 28px;
-    margin-bottom: 30px;
+    font-size: 24px;
+    margin-bottom: 20px;
     padding: 0 20px;
   }
   
@@ -98,12 +98,12 @@
 
 @media (max-width: 480px) {
   .partners {
-    padding: 40px 0;
+    padding: 40px 0 0;
   }
   
   .title {
     font-size: 24px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     padding: 0 16px;
   }
   

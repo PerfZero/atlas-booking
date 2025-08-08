@@ -3,7 +3,8 @@
   color: #ccc;
   padding: 40px 0 20px;
   border-radius: 40px;
-  margin: 40px;
+  max-width: 1360px;
+  margin: 80px auto 20px;
 }
 
 .container {
@@ -72,7 +73,7 @@
 @media (max-width: 768px) {
   .footer {
     margin: 0;
-    padding: 30px;
+    padding: 40px 30px 20px;
   }
   
   .container {
@@ -80,7 +81,7 @@
   }
   
   .contactText {
-    font-size: 14px;
+    font-size: 16px;
   }
   
   .bottomSection {
@@ -96,6 +97,6 @@
   
   .copyright,
   .link {
-    font-size: 12px;
+    font-size: 16px;
   }
 } 
