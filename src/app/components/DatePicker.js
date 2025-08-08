@@ -166,25 +166,30 @@ export default function DatePicker({
   };
 
   return (
-    <div 
-      className={styles.dropdown} 
-      onClick={handleDropdownClick}
-      onMouseDown={handleMouseDown}
-    >
-             <div className={styles.tabs}>
-         <button 
-           className={`${styles.tab} ${selectedTab === '7' ? styles.active : ''}`}
-           onClick={(e) => handleTabClick('7', e)}
-         >
-           7 дневные туры
-         </button>
-         <button 
-           className={`${styles.tab} ${selectedTab === '10' ? styles.active : ''}`}
-           onClick={(e) => handleTabClick('10', e)}
-         >
-           10 дневные туры
-         </button>
-       </div>
+    <>
+      <div 
+        className={styles.overlay}
+        onClick={onClose}
+      />
+      <div 
+        className={styles.dropdown} 
+        onClick={handleDropdownClick}
+        onMouseDown={handleMouseDown}
+      >
+        <div className={styles.tabs}>
+          <button 
+            className={`${styles.tab} ${selectedTab === '7' ? styles.active : ''}`}
+            onClick={(e) => handleTabClick('7', e)}
+          >
+            7 дневные туры
+          </button>
+          <button 
+            className={`${styles.tab} ${selectedTab === '10' ? styles.active : ''}`}
+            onClick={(e) => handleTabClick('10', e)}
+          >
+            10 дневные туры
+          </button>
+        </div>
 
       <div className={styles.calendars}>
         <div className={styles.calendar}>
@@ -262,50 +267,51 @@ export default function DatePicker({
         </div>
       </div>
 
-             <div className={styles.footer}>
-         <div className={styles.dateRange}>
-           {startDate && (
-             <div className={styles.dateItem}>
-               <span className={styles.planeIcon}>✈</span>
-               {formatDate(startDate)}
-             </div>
-           )}
-           {startDate && endDate && <span className={styles.separator}>-</span>}
-           {endDate && (
-             <div className={styles.dateItem}>
-               <span className={styles.planeIcon}>✈</span>
-               {formatDate(endDate)}
-             </div>
-           )}
-           {startDate && !endDate && (
-             <div className={styles.hint}>
-               Выберите {selectedTab === '7' ? '7' : '10'} дней
-             </div>
-           )}
-           {startDate && endDate && (
-             <div className={styles.hint}>
-               Выбрано {calculateDaysDiff(startDate, endDate)} дней
-             </div>
-           )}
-         </div>
-        <div className={styles.buttons}>
-          <button onClick={(e) => handleCancel(e)} className={styles.cancelButton}>
-            Отменить
-          </button>
-                     <button 
-             onClick={(e) => handleConfirm(e)} 
-             className={styles.confirmButton}
-             disabled={!startDate || !endDate || (() => {
-               if (!startDate || !endDate) return true;
-               const daysDiff = calculateDaysDiff(startDate, endDate);
-               const maxDays = selectedTab === '7' ? 7 : 10;
-               return daysDiff !== maxDays;
-             })()}
-           >
-             Выбрать
-           </button>
+        <div className={styles.footer}>
+          <div className={styles.dateRange}>
+            {startDate && (
+              <div className={styles.dateItem}>
+                <span className={styles.planeIcon}>✈</span>
+                {formatDate(startDate)}
+              </div>
+            )}
+            {startDate && endDate && <span className={styles.separator}>-</span>}
+            {endDate && (
+              <div className={styles.dateItem}>
+                <span className={styles.planeIcon}>✈</span>
+                {formatDate(endDate)}
+              </div>
+            )}
+            {startDate && !endDate && (
+              <div className={styles.hint}>
+                Выберите {selectedTab === '7' ? '7' : '10'} дней
+              </div>
+            )}
+            {startDate && endDate && (
+              <div className={styles.hint}>
+                Выбрано {calculateDaysDiff(startDate, endDate)} дней
+              </div>
+            )}
+          </div>
+          <div className={styles.buttons}>
+            <button onClick={(e) => handleCancel(e)} className={styles.cancelButton}>
+              Отменить
+            </button>
+            <button 
+              onClick={(e) => handleConfirm(e)} 
+              className={styles.confirmButton}
+              disabled={!startDate || !endDate || (() => {
+                if (!startDate || !endDate) return true;
+                const daysDiff = calculateDaysDiff(startDate, endDate);
+                const maxDays = selectedTab === '7' ? 7 : 10;
+                return daysDiff !== maxDays;
+              })()}
+            >
+              Выбрать
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 } 

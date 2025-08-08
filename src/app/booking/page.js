@@ -1,13 +1,18 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "../../contexts/AuthContext";
+import { bookTour } from "../../lib/wordpress-api";
 import Header from "../components/Header";
 import HeaderBlue from "../components/HeaderBlue";
 import Footer from "../components/Footer";
+import BottomNavigation from "../components/BottomNavigation";
 import styles from "./page.module.css";
 
 function BookingPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [tourData, setTourData] = useState(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [tourists, setTourists] = useState([
@@ -38,12 +43,17 @@ function BookingPageContent() {
         duration: searchParams.get("duration"),
         departure: searchParams.get("departure"),
         date: searchParams.get("date"),
+        endDate: searchParams.get("endDate"),
         type: searchParams.get("type"),
         image: searchParams.get("image"),
         rating: searchParams.get("rating"),
         reviews: searchParams.get("reviews"),
         features: searchParams.get("features")?.split(",") || [],
-        slug: searchParams.get("slug")
+        slug: searchParams.get("slug"),
+        flightOutboundTime: searchParams.get("flightOutboundTime"),
+        flightInboundTime: searchParams.get("flightInboundTime"),
+        flightOutboundDate: searchParams.get("flightOutboundDate"),
+        flightInboundDate: searchParams.get("flightInboundDate")
       };
       setTourData(data);
     }
@@ -108,6 +118,36 @@ function BookingPageContent() {
   const applyPassportMask = (value) => {
     const numbers = value.replace(/\D/g, '');
     return numbers.slice(0, 9);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Дата не указана';
+    
+    // Если дата в формате YYYYMMDD
+    if (dateString.length === 8) {
+      const year = dateString.substring(0, 4);
+      const month = dateString.substring(4, 6);
+      const day = dateString.substring(6, 8);
+      const date = new Date(year, month - 1, day);
+      
+      const weekdays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
+                     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+      
+      return `${weekdays[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+    
+    // Если дата в другом формате, пытаемся парсить
+    try {
+      const date = new Date(dateString);
+      const weekdays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
+                     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+      
+      return `${weekdays[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch (error) {
+      return dateString;
+    }
   };
 
   const handleInputChange = (touristId, field, value) => {
@@ -187,15 +227,40 @@ function BookingPageContent() {
 
     if (Object.keys(newErrors).length === 0) {
       setIsReviewMode(true);
-      console.log("Данные туристов:", tourists);
-      console.log("Данные тура:", tourData);
-    } else {
-      console.log("Ошибки валидации:", newErrors);
     }
   };
 
   const handleEdit = () => {
     setIsReviewMode(false);
+  };
+
+  const handlePayment = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth?mode=login');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('atlas_token');
+      const tourDataForBooking = {
+        ...tourData,
+        tourists: tourists,
+        totalPrice: tourData.price,
+        bookingDate: new Date().toISOString()
+      };
+
+      const result = await bookTour(token, tourData.id, tourDataForBooking);
+      
+      if (result.success) {
+        alert('Тур успешно забронирован! Ваш профиль был обновлен данными первого туриста.');
+        router.push('/profile');
+      } else {
+        alert('Ошибка при бронировании тура: ' + (result.error || 'Неизвестная ошибка'));
+      }
+    } catch (error) {
+      console.error('Ошибка при бронировании:', error);
+      alert('Ошибка при бронировании тура');
+    }
   };
 
   if (!tourData) {
@@ -217,12 +282,12 @@ function BookingPageContent() {
                 <p className={styles.noHiddenFees}>Без скрытых платежей</p>
                 <div className={styles.priceInfo}>
                   <div className={styles.mainPrice}>
-                    <span className={styles.currentPrice}>{tourData.priceValue}₸</span>
-                    <span className={styles.oldPrice}>От {tourData.oldPrice}₸</span>
-
+                    <span className={styles.currentPrice}>${tourData.price}</span>
+                    {tourData.oldPrice && (
+                      <span className={styles.oldPrice}>От ${tourData.oldPrice}</span>
+                    )}
                   </div>
-                  <span className={styles.usdPrice}>${tourData.price}</span>
-
+                  <span className={styles.usdPrice}>~{Math.round(tourData.priceValue * 547)}₸</span>
                 </div>
               </div>
 
@@ -236,7 +301,7 @@ function BookingPageContent() {
                 </div>
                 <div className={styles.packageDetails}>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Fairmont Package</div>
+                    <div className={styles.packageName}>{tourData.name}</div>
                     <div className={styles.packageType}>Турпакет</div>
                   </div>
                   <div className={styles.packageItem}>
@@ -244,15 +309,15 @@ function BookingPageContent() {
                     <div className={styles.packageType}>Перелет</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Fairmont Makkah</div>
-                    <div className={styles.packageType}>Отель в Мекке</div>
+                    <div className={styles.packageName}>Отель в Мекке</div>
+                    <div className={styles.packageType}>Проживание</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Waqf Al Safi</div>
-                    <div className={styles.packageType}>Отель в Медине</div>
+                    <div className={styles.packageName}>Отель в Медине</div>
+                    <div className={styles.packageType}>Проживание</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Комфортабельный автобус Высокоскоростной поезд</div>
+                    <div className={styles.packageName}>Комфортабельный автобус и высокоскоростной поезд</div>
                     <div className={styles.packageType}>Трансфер</div>
                   </div>
                   <div className={styles.packageItem}>
@@ -274,20 +339,20 @@ function BookingPageContent() {
                 <div className={styles.dateInfo}>
                   <div className={styles.datesRow}>
                     <div className={styles.dateItem}>
-                      <div className={styles.dateValue}>Пт, 20 июля 2025</div>
+                      <div className={styles.dateValue}>{formatDate(tourData.flightOutboundDate || tourData.date)}</div>
                       <div className={styles.dateLabel}>Вылет</div>
                     </div>
                     <div className={styles.dateDivider}></div>
                     <div className={styles.dateItem}>
-                      <div className={styles.dateValue}>Пт, 26 июля 2025</div>
-                      <div className={styles.dateLabel}>Вылет</div>
+                      <div className={styles.dateValue}>{formatDate(tourData.flightInboundDate || tourData.endDate)}</div>
+                      <div className={styles.dateLabel}>Прилет</div>
                     </div>
                   </div>
                   
                   <div className={styles.separator}></div>
                   
                   <div className={styles.durationInfo}>
-                    <div className={styles.durationValue}>3 дня в Медине · 3 дня в Мекке</div>
+                    <div className={styles.durationValue}>{tourData.duration}</div>
                     <div className={styles.durationLabel}>Общая длительность тура</div>
                   </div>
                   
@@ -571,7 +636,7 @@ function BookingPageContent() {
                     ))}
 
                     <div className={styles.reviewActions}>
-                      <button className={styles.kaspiButton}>
+                      <button className={styles.kaspiButton} onClick={handlePayment}>
                         Оплатить через Kaspi
                       </button>
                       <button className={styles.editLink} onClick={handleEdit}>
@@ -593,6 +658,7 @@ function BookingPageContent() {
       </main>
 
       <Footer />
+      <BottomNavigation />
     </div>
   );
 }

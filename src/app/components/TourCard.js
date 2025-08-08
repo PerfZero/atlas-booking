@@ -2,7 +2,14 @@ import styles from '../search/page.module.css';
 import Link from 'next/link';
 
 export default function TourCard({ tour }) {
-  const tourSlug = tour.name.toLowerCase().replace(/\s+/g, '-').replace('package', 'package');
+  const tourSlug = tour.slug || tour.name?.toLowerCase().replace(/\s+/g, '-').replace('package', 'package');
+  const tourImage = tour.featured_image || tour.image || '/tour_1.png';
+  const tourPrice = tour.price || '0';
+  const tourOldPrice = tour.old_price || tour.oldPrice;
+  const tourRating = tour.rating || 9.0;
+  const tourSpotsLeft = tour.spots_left || tour.spotsLeft;
+  const tourDuration = tour.duration || '3 дня в Медине · 3 дня в Мекке';
+  const tourTags = Array.isArray(tour.tags) ? tour.tags : ['Умра'];
   
   return (
     <div className={styles.tourCard}>
@@ -12,11 +19,13 @@ export default function TourCard({ tour }) {
             <span className={styles.badgeIcon}><img src="/chos.svg" alt="★" /></span>
             <span>Выбор паломников</span>
           </div>
-          <img src={tour.image} alt={tour.name} />
+          <img src={tourImage} alt={tour.name} />
           <div className={styles.imageOverlay}>
             <div className={styles.tourTags}>
-              {tour.tags.map((tag, index) => (
-                <span key={index} className={styles.tag}>{tag}</span>
+              {tourTags.map((tag, index) => (
+                <span key={index} className={styles.tag}>
+                  {typeof tag === 'object' && tag.tag_text ? tag.tag_text : tag}
+                </span>
               ))}
             </div>
             <h4 className={styles.tourName}>{tour.name}</h4>
@@ -30,10 +39,10 @@ export default function TourCard({ tour }) {
       </Link>
       <div className={styles.tourContent}>
         <div className={styles.contentHeader}>
-          <h4 className={styles.tourDuration}>{tour.duration}</h4>
+          <h4 className={styles.tourDuration}>{tourDuration}</h4>
           <div className={styles.tourRating}>
             <div className={styles.ratingCircle}>
-              <span>{tour.rating}</span>
+              <span>{tourRating}</span>
             </div>
           </div>
         </div>
@@ -42,39 +51,45 @@ export default function TourCard({ tour }) {
             <span className={styles.featureIcon}><img src="/all.svg" alt="★" /></span>
             <span>Всё включено</span>
           </div>
-          {tour.spotsLeft && (
+          {tourSpotsLeft && (
             <div className={styles.spotsLeft}>
               <span className={styles.spotsIcon}><img src="/alert.svg" alt="★" /></span>
-              <span>Осталось {tour.spotsLeft} мест</span>
+              <span>Осталось {tourSpotsLeft} мест</span>
             </div>
           )}
         </div>
         <div className={styles.tourFeatures}>
           <div className={styles.feature}>
             <span className={styles.featureIcon}><img src="/airplane.svg" alt="★" /></span>
-            <span className={styles.featureText}>Прямой рейс</span>
+            <span className={styles.featureText}>
+              {tour.flight_type === 'direct' ? 'Прямой рейс' : 'С пересадкой'}
+            </span>
           </div>
           <div className={styles.feature}>
             <span className={styles.featureIcon}><img src="/mekka.svg" alt="★" /></span>
             <div className={styles.featureTextContainer}>
-              <span className={styles.featureText}>5★ отель в Мекке</span>
-              <span className={styles.featureSubtext}>Расстояние до Каабы 50 м.</span>
+              <span className={styles.featureText}>{tour.hotel_mekka || '5★ отель в Мекке'}</span>
+              <span className={styles.featureSubtext}>
+                Расстояние до Каабы {tour.distance_mekka || '50 м.'}
+              </span>
             </div>
           </div>
           <div className={styles.feature}>
             <span className={styles.featureIcon}><img src="/medina.svg" alt="★" /></span>
             <div className={styles.featureTextContainer}>
-              <span className={styles.featureText}>5★ отель в Медине</span>
-              <span className={styles.featureSubtext}>Расстояние до мечети 150 м.</span>
+              <span className={styles.featureText}>{tour.hotel_medina || '5★ отель в Медине'}</span>
+              <span className={styles.featureSubtext}>
+                Расстояние до мечети {tour.distance_medina || '150 м.'}
+              </span>
             </div>
           </div>
         </div>
         <div className={styles.tourPrice}>
           <div className={styles.priceNote}>Без скрытых платежей</div>
           <div className={styles.priceInfo}>
-            <span className={styles.currentPrice}>От ${tour.price.replace(' $', '')}</span>
-            {tour.oldPrice && (
-              <span className={styles.oldPrice}>{tour.oldPrice}</span>
+            <span className={styles.currentPrice}>От ${tourPrice.toString().replace(' $', '')}</span>
+            {tourOldPrice && (
+              <span className={styles.oldPrice}>{tourOldPrice}</span>
             )}
           </div>
           <div className={styles.priceEquivalent}>~1 312 500T</div>

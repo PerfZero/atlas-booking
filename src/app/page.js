@@ -9,6 +9,7 @@ import Reviews from './components/Reviews';
 import Partners from './components/Partners';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
+import BottomNavigation from './components/BottomNavigation';
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
       <Partners />
       <FAQ />
       <Footer />
+      <BottomNavigation />
     </div>
   );
 }

@@ -1,161 +1,40 @@
 "use client";
 import { notFound } from "next/navigation";
 import { useState, use, useEffect } from "react";
+import { getTourBySlug } from "../../../lib/wordpress-api";
+import { useAuth } from "../../../contexts/AuthContext";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import SearchForm from "../../components/SearchForm";
 import Breadcrumbs from "../../components/Breadcrumbs";
 import styles from "./page.module.css";
 
-const tours = [
-  {
-    slug: "fairmont-package",
-    id: 1,
-    name: "Fairmont Package",
-    price: "2 400 $",
-    priceValue: 2400,
-    oldPrice: "2 500 $",
-    duration: "3 дня в Медине · 3 дня в Мекке",
-    departure: "Алматы",
-    departureValue: "almaty",
-    date: "15 января 2024",
-    dateValue: "january",
-    type: "Умра",
-    typeValue: "umrah",
-    image: "/tour_1.png",
-    rating: 9.3,
-    reviews: 124,
-    spotsLeft: 9,
-    features: [
-      "Всё включено",
-      "Прямой рейс",
-      "5* отель в Мекке",
-      "Расстояние до Каабы 50 м.",
-      "5* отель в Медине",
-      "Расстояние до мечети 150 м.",
-    ],
-    tags: ["Умра", "Возможен номер с видом на Каабу"],
-  },
-  {
-    slug: "address-package",
-    id: 2,
-    name: "Address Package",
-    price: "2 200 $",
-    priceValue: 2200,
-    oldPrice: "2 300 $",
-    duration: "3 дня в Медине · 3 дня в Мекке",
-    departure: "Астана",
-    departureValue: "astana",
-    date: "20 января 2024",
-    dateValue: "january",
-    type: "Умра",
-    typeValue: "umrah",
-    image: "/tour_2.png",
-    rating: 9.1,
-    reviews: 89,
-    spotsLeft: 12,
-    features: [
-      "Всё включено",
-      "Прямой рейс",
-      "5* отель в Мекке",
-      "Расстояние до Каабы 100 м.",
-      "4* отель в Медине",
-      "Расстояние до мечети 200 м.",
-    ],
-    tags: ["Умра"],
-  },
-  {
-    slug: "swissotel-package",
-    id: 3,
-    name: "Swissotel Package",
-    price: "2 800 $",
-    priceValue: 2800,
-    oldPrice: "3 000 $",
-    duration: "3 дня в Медине · 3 дня в Мекке",
-    departure: "Алматы",
-    departureValue: "almaty",
-    date: "25 января 2024",
-    dateValue: "january",
-    type: "Умра",
-    typeValue: "umrah",
-    image: "/tour_3.png",
-    rating: 9.5,
-    reviews: 156,
-    spotsLeft: 5,
-    features: [
-      "Всё включено",
-      "Прямой рейс",
-      "5* отель в Мекке",
-      "Расстояние до Каабы 30 м.",
-      "5* отель в Медине",
-      "Расстояние до мечети 100 м.",
-    ],
-    tags: ["Умра", "Премиум"],
-  },
-  {
-    slug: "marriott-package",
-    id: 4,
-    name: "Marriott Package",
-    price: "2 100 $",
-    priceValue: 2100,
-    oldPrice: "2 200 $",
-    duration: "3 дня в Медине · 3 дня в Мекке",
-    departure: "Шымкент",
-    departureValue: "shymkent",
-    date: "30 января 2024",
-    dateValue: "january",
-    type: "Умра",
-    typeValue: "umrah",
-    image: "/tour_4.png",
-    rating: 8.9,
-    reviews: 67,
-    spotsLeft: 15,
-    features: [
-      "Всё включено",
-      "С пересадкой",
-      "4* отель в Мекке",
-      "Расстояние до Каабы 200 м.",
-      "4* отель в Медине",
-      "Расстояние до мечети 300 м.",
-    ],
-    tags: ["Умра", "Эконом"],
-  },
-  {
-    slug: "summer-umrah-deluxe",
-    id: 5,
-    name: "Summer Umrah Deluxe",
-    price: "3 200 $",
-    priceValue: 3200,
-    oldPrice: "3 400 $",
-    duration: "5 дня в Медине · 5 дня в Мекке",
-    departure: "Алматы",
-    departureValue: "almaty",
-    date: "1-10 августа 2025",
-    dateValue: "custom",
-    type: "Умра",
-    typeValue: "umrah",
-    image: "/tour_1.png",
-    rating: 9.8,
-    reviews: 167,
-    spotsLeft: 3,
-    features: [
-      "Всё включено",
-      "Прямой рейс",
-      "5* отель в Мекке",
-      "Расстояние до Каабы 20 м.",
-      "5* отель в Медине",
-      "Расстояние до мечети 50 м.",
-    ],
-    tags: ["Умра", "Люкс", "Кастомные даты"],
-  },
-];
-
 export default function TourDetailPage({ params }) {
   const [showNotification, setShowNotification] = useState(false);
   const [showBookingButton, setShowBookingButton] = useState(false);
+  const [tour, setTour] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const resolvedParams = use(params);
-  const tour = tours.find((t) => t.slug === resolvedParams.slug);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const loadTour = async () => {
+      try {
+        setLoading(true);
+        const tourData = await getTourBySlug(resolvedParams.slug);
+        setTour(tourData);
+      } catch (err) {
+        console.error('Ошибка загрузки тура:', err);
+        setError('Тур не найден');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTour();
+    }, [resolvedParams.slug]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -167,7 +46,23 @@ export default function TourDetailPage({ params }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!tour) return notFound();
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <Header invertLogo={true} buttonStyle="search" />
+        <main className={styles.main}>
+          <div className={styles.container}>
+            <div className={styles.loading}>Загрузка тура...</div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !tour) {
+    return notFound();
+  }
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -194,25 +89,60 @@ export default function TourDetailPage({ params }) {
   };
 
   const handleBooking = () => {
-    const tourData = {
-      id: tour.id,
-      name: tour.name,
-      price: tour.price,
-      priceValue: tour.priceValue,
-      oldPrice: tour.oldPrice,
-      duration: tour.duration,
-      departure: tour.departure,
-      date: tour.date,
-      type: tour.type,
-      image: tour.image,
-      rating: tour.rating,
-      reviews: tour.reviews,
-      features: tour.features,
-      slug: tour.slug
-    };
-    
-    const queryString = new URLSearchParams(tourData).toString();
-    window.location.href = `/booking?${queryString}`;
+    if (isAuthenticated) {
+      // Пользователь авторизован - переходим на страницу бронирования
+      const tourData = {
+        id: tour.id,
+        name: tour.name,
+        price: tour.price,
+        priceValue: tour.price,
+        oldPrice: tour.old_price,
+        duration: tour.duration,
+        departure: tour.departure_city,
+        date: tour.tour_start_date,
+        endDate: tour.tour_end_date,
+        type: tour.pilgrimage_type,
+        image: tour.featured_image,
+        rating: tour.rating,
+        reviews: tour.reviews_count,
+        features: tour.features,
+        slug: tour.slug,
+        flightOutboundTime: tour.flight_outbound?.departure_time || '',
+        flightInboundTime: tour.flight_inbound?.departure_time || '',
+        flightOutboundDate: tour.tour_start_date,
+        flightInboundDate: tour.tour_end_date
+      };
+      
+      const queryString = new URLSearchParams(tourData).toString();
+      window.location.href = `/booking?${queryString}`;
+    } else {
+      // Пользователь не авторизован - переходим на страницу авторизации с данными тура
+      const tourData = {
+        id: tour.id,
+        name: tour.name,
+        price: tour.price,
+        priceValue: tour.price,
+        oldPrice: tour.old_price,
+        duration: tour.duration,
+        departure: tour.departure_city,
+        date: tour.tour_start_date,
+        endDate: tour.tour_end_date,
+        type: tour.pilgrimage_type,
+        image: tour.featured_image,
+        rating: tour.rating,
+        reviews: tour.reviews_count,
+        features: tour.features,
+        slug: tour.slug,
+        flightOutboundTime: tour.flight_outbound?.departure_time || '',
+        flightInboundTime: tour.flight_inbound?.departure_time || '',
+        flightOutboundDate: tour.tour_start_date,
+        flightInboundDate: tour.tour_end_date
+      };
+      
+      const queryString = new URLSearchParams(tourData).toString();
+      const encoded = encodeURIComponent(queryString);
+      window.location.href = `/auth?booking=${encoded}`;
+    }
   };
 
   const breadcrumbItems = [
@@ -262,49 +192,34 @@ export default function TourDetailPage({ params }) {
           <div className={styles.tourGallery}>
             <div className={styles.galleryGrid}>
               <div className={styles.mainImage}>
-                <img src="/tour_1.png" alt="Мечеть Аль-Харам" />
+                <img src={tour.featured_image || "/tour_1.png"} alt={tour.name} />
               </div>
               <div className={styles.sideImages}>
-                <div className={styles.sideImage}>
-                  <img src="/tour_2.png" alt="Лобби отеля" />
-                </div>
-                <div className={styles.sideImage}>
-                  <img src="/tour_3.png" alt="Вид из ресторана" />
-                </div>
-                <div className={styles.sideImage}>
-                  <img src="/tour_4.png" alt="Номер отеля" />
-                </div>
-                <div className={styles.sideImage}>
-                  <img src="/tour_1.png" alt="Вид на мечеть" />
-                  <button className={styles.viewAllPhotos}>
-                    <img src="/photos.svg" alt="eye" />
-                    Посмотреть все фото
-                  </button>
-                </div>
+                {Array.isArray(tour.gallery) && tour.gallery.slice(0, 4).map((image, index) => (
+                  <div key={index} className={styles.sideImage}>
+                    <img src={image.url || image} alt={`${tour.name} ${index + 1}`} />
+                  </div>
+                ))}
+                {(!Array.isArray(tour.gallery) || tour.gallery.length < 4) && (
+                  <div className={styles.sideImage}>
+                    <img src="/tour_1.png" alt="Вид на мечеть" />
+                    <button className={styles.viewAllPhotos}>
+                      <img src="/photos.svg" alt="eye" />
+                      Посмотреть все фото
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           <div className={styles.tourFeatures}>
-            <div className={styles.featureItem}>
-              <img src="/done.svg" alt="check" />
-              <span>Всё включено</span>
-            </div>
-            <div className={styles.featureItem}>
-              <span>Прямой рейс</span>
-            </div>
-            <div className={styles.featureItem}>
-              <span>50 м до Каабы</span>
-            </div>
-            <div className={styles.featureItem}>
-              <span>Сопровождение гида</span>
-            </div>
-            <div className={styles.featureItem}>
-              <span>5 и 4 звездочные отели</span>
-            </div>
-            <div className={styles.featureItem}>
-              <span>Высокоскоростной поезд</span>
-            </div>
+            {Array.isArray(tour.features) && tour.features.map((feature, index) => (
+              <div key={index} className={styles.featureItem}>
+                <img src="/done.svg" alt="check" />
+                <span>{typeof feature === 'object' && feature.feature_text ? feature.feature_text : feature}</span>
+              </div>
+            ))}
           </div>
 
           <div className={styles.tourStats}>
@@ -320,16 +235,16 @@ export default function TourDetailPage({ params }) {
             <span className={styles.statSeparator}>|</span>
 
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>382</span>
+              <span className={styles.statNumber}>{tour.reviews_count || 382}</span>
               <div className={styles.statText}>
                 <span>Паломников выбрали</span>
-                <span>Fairmont Package</span>
+                <span>{tour.name}</span>
               </div>
             </div>
 
             <span className={styles.statSeparator}>|</span>
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>291</span>
+              <span className={styles.statNumber}>{tour.reviews_count || 291}</span>
               <div className={styles.statText}>
                 <span>Отзывы паломников</span>
                 <span className={styles.statLink}>Посмотреть</span>
@@ -355,45 +270,49 @@ export default function TourDetailPage({ params }) {
                   <img src="/start_fly.svg" alt="airplane" />
                 </div>
 
-                <div className={styles.airlineInfo}>
-                  <div className={styles.airlineTag}>
-                    <img src="/air_astana.svg" alt="airplane" />
-                  </div>
-                  <div className={styles.flightNumber}>
-                    <span>KC 911</span>
-                  </div>
-                </div>
+                {tour.flight_outbound && (
+                  <>
+                    <div className={styles.airlineInfo}>
+                      <div className={styles.airlineTag}>
+                        <img src="/air_astana.svg" alt="airplane" />
+                      </div>
+                      <div className={styles.flightNumber}>
+                        <span>{tour.flight_outbound.number}</span>
+                      </div>
+                    </div>
 
-                <div className={styles.routeInfo}>
-                  <div className={styles.airport}>
-                    <span className={styles.city}>Almaty</span>
-                    <span className={styles.code}>ALA</span>
-                  </div>
-                  <div className={styles.flightPath}>
-                    <img src="/flight.svg" alt="flight" />
-                  </div>
-                  <div className={styles.airport}>
-                    <span className={styles.city}>Madinah</span>
-                    <span className={styles.code}>MED</span>
-                  </div>
-                </div>
+                    <div className={styles.routeInfo}>
+                      <div className={styles.airport}>
+                        <span className={styles.city}>{tour.flight_outbound.departure_airport}</span>
+                        <span className={styles.code}>{tour.flight_outbound.departure_airport}</span>
+                      </div>
+                      <div className={styles.flightPath}>
+                        <img src="/flight.svg" alt="flight" />
+                      </div>
+                      <div className={styles.airport}>
+                        <span className={styles.city}>{tour.flight_outbound.arrival_airport}</span>
+                        <span className={styles.code}>{tour.flight_outbound.arrival_airport}</span>
+                      </div>
+                    </div>
 
-                <div className={styles.duration}>
-                  <span>Время в пути 6 ч 20 м</span>
-                </div>
+                    <div className={styles.duration}>
+                      <span>Время в пути {tour.flight_outbound.duration}</span>
+                    </div>
 
-                <div className={styles.timeInfo}>
-                  <div className={styles.departure}>
-                    <span>Вылет</span>
-                    <span className={styles.time}>10:00</span>
-                    <span className={styles.date}>Пн, 19 июня</span>
-                  </div>
-                  <div className={styles.arrival}>
-                    <span>Прилет</span>
-                    <span className={styles.time}>20:00</span>
-                    <span className={styles.date}>Вт, 19 июня</span>
-                  </div>
-                </div>
+                    <div className={styles.timeInfo}>
+                      <div className={styles.departure}>
+                        <span>Вылет</span>
+                        <span className={styles.time}>{tour.flight_outbound.departure_time}</span>
+                        <span className={styles.date}>Пн, 19 июня</span>
+                      </div>
+                      <div className={styles.arrival}>
+                        <span>Прилет</span>
+                        <span className={styles.time}>{tour.flight_outbound.arrival_time}</span>
+                        <span className={styles.date}>Вт, 19 июня</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className={styles.flightSection}>
@@ -402,45 +321,49 @@ export default function TourDetailPage({ params }) {
                   <img src="/finish_fly.svg" alt="airplane" />
                 </div>
 
-                <div className={styles.airlineInfo}>
-                  <div className={styles.airlineTag}>
-                    <img src="/air_astana.svg" alt="airplane" />
-                  </div>
-                  <div className={styles.flightNumber}>
-                    <span>KC 911</span>
-                  </div>
-                </div>
+                {tour.flight_inbound && (
+                  <>
+                    <div className={styles.airlineInfo}>
+                      <div className={styles.airlineTag}>
+                        <img src="/air_astana.svg" alt="airplane" />
+                      </div>
+                      <div className={styles.flightNumber}>
+                        <span>{tour.flight_inbound.number}</span>
+                      </div>
+                    </div>
 
-                <div className={styles.routeInfo}>
-                  <div className={styles.airport}>
-                    <span className={styles.city}>Madinah</span>
-                    <span className={styles.code}>MED</span>
-                  </div>
-                  <div className={styles.flightPath}>
-                    <img src="/flight.svg" alt="flight" />
-                  </div>
-                  <div className={styles.airport}>
-                    <span className={styles.city}>Almaty</span>
-                    <span className={styles.code}>ALA</span>
-                  </div>
-                </div>
+                    <div className={styles.routeInfo}>
+                      <div className={styles.airport}>
+                        <span className={styles.city}>{tour.flight_inbound.departure_airport}</span>
+                        <span className={styles.code}>{tour.flight_inbound.departure_airport}</span>
+                      </div>
+                      <div className={styles.flightPath}>
+                        <img src="/flight.svg" alt="flight" />
+                      </div>
+                      <div className={styles.airport}>
+                        <span className={styles.city}>{tour.flight_inbound.arrival_airport}</span>
+                        <span className={styles.code}>{tour.flight_inbound.arrival_airport}</span>
+                      </div>
+                    </div>
 
-                <div className={styles.duration}>
-                  <span>Время в пути 6 ч 20 м</span>
-                </div>
+                    <div className={styles.duration}>
+                      <span>Время в пути {tour.flight_inbound.duration}</span>
+                    </div>
 
-                <div className={styles.timeInfo}>
-                  <div className={styles.departure}>
-                    <span>Вылет</span>
-                    <span className={styles.time}>10:00</span>
-                    <span className={styles.date}>Пн, 19 июня</span>
-                  </div>
-                  <div className={styles.arrival}>
-                    <span>Прилет</span>
-                    <span className={styles.time}>20:00</span>
-                    <span className={styles.date}>Вт, 19 июня</span>
-                  </div>
-                </div>
+                    <div className={styles.timeInfo}>
+                      <div className={styles.departure}>
+                        <span>Вылет</span>
+                        <span className={styles.time}>{tour.flight_inbound.departure_time}</span>
+                        <span className={styles.date}>Пн, 19 июня</span>
+                      </div>
+                      <div className={styles.arrival}>
+                        <span>Прилет</span>
+                        <span className={styles.time}>{tour.flight_inbound.arrival_time}</span>
+                        <span className={styles.date}>Вт, 19 июня</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -459,7 +382,7 @@ export default function TourDetailPage({ params }) {
             <div className={styles.flightSections}>
               <div className={styles.flightSection}>
                 <div className={styles.flightSectionHeader}>
-                  <h3>Проживание в Мекке · <span className={styles.flightSectionTitle}>Fairmont Makkah</span></h3>
+                  <h3>Проживание в Мекке · <span className={styles.flightSectionTitle}>{tour.hotel_mekka}</span></h3>
                   <img src="/mekka.svg" alt="airplane" />
                 </div>
 
@@ -468,7 +391,7 @@ export default function TourDetailPage({ params }) {
                    <img src="/fairmont.svg" alt="airplane" />
                   </div>
                   <div className={styles.hotelDistance}>
-                    <span className={styles.distanceNumber}>50 м</span>
+                    <span className={styles.distanceNumber}>{tour.distance_mekka}</span>
                     <span className={styles.distanceText}>до Каабы</span>
                   </div>
                 </div>
@@ -483,8 +406,8 @@ export default function TourDetailPage({ params }) {
                 </div>
 
                 <div className={styles.hotelDetails}>
-                  <h3>Fairmont Makkah Clock Royal Tower</h3>
-                  <p>Отель расположен в комплексе Abraj Al Bait с прямым доступом к Аль-Хараму. Впечатляющий вид на Каабу, просторные номера, высокий уровень сервиса и широкий выбор ресторанов. Идеально подходит для паломников, сочетая комфорт, расположение и международное качество.</p>
+                  <h3>{tour.hotel_mekka}</h3>
+                  <p>{tour.hotel_mekka_details && tour.hotel_mekka_details.description ? tour.hotel_mekka_details.description : 'Отель расположен в комплексе Abraj Al Bait с прямым доступом к Аль-Хараму. Впечатляющий вид на Каабу, просторные номера, высокий уровень сервиса и широкий выбор ресторанов. Идеально подходит для паломников, сочетая комфорт, расположение и международное качество.'}</p>
                   
                   <div className={styles.amenities}>
                     <h4>Удобства и размещения в номере</h4>
@@ -502,12 +425,12 @@ export default function TourDetailPage({ params }) {
                     </ul>
                   </div>
                   
-                  <div className={styles.reviews}>
-                    <h4>Отзывы гостей</h4>
-                    <div className={styles.overallRating}>
-                      <span className={styles.ratingScore}>9.3</span>
-                      <span className={styles.ratingText}>Превосходно</span>
-                    </div>
+                                      <div className={styles.reviews}>
+                      <h4>Отзывы гостей</h4>
+                      <div className={styles.overallRating}>
+                        <span className={styles.ratingScore}>{tour.hotel_mekka_details && tour.hotel_mekka_details.rating ? tour.hotel_mekka_details.rating : '9.3'}</span>
+                        <span className={styles.ratingText}>Превосходно</span>
+                      </div>
                     <div className={styles.ratingCategories}>
                       <div className={styles.ratingItem}>
                         <div className={styles.ratingHeader}>
@@ -579,7 +502,7 @@ export default function TourDetailPage({ params }) {
 
               <div className={styles.flightSection}>
                 <div className={styles.flightSectionHeader}>
-                  <h3>Проживание в Медине · <span className={styles.flightSectionTitle}>Waqf Al Safi</span></h3>
+                  <h3>Проживание в Медине · <span className={styles.flightSectionTitle}>{tour.hotel_medina}</span></h3>
                   <img src="/medina.svg" alt="airplane" />
                 </div>
 
@@ -589,7 +512,7 @@ export default function TourDetailPage({ params }) {
                    
                   </div>
                   <div className={styles.hotelDistance}>
-                    <span className={styles.distanceNumber}>200 м</span>
+                    <span className={styles.distanceNumber}>{tour.distance_medina}</span>
                     <span className={styles.distanceText}>до главной мечети</span>
                   </div>
                 </div>
@@ -604,8 +527,8 @@ export default function TourDetailPage({ params }) {
                 </div>
 
                 <div className={styles.hotelDetails}>
-                  <h3>Waqf Al Safi</h3>
-                  <p>Отель расположен в комплексе Abraj Al Bait с прямым доступом к Аль-Хараму. Впечатляющий вид на Каабу, просторные номера, высокий уровень сервиса и широкий выбор ресторанов. Идеально подходит для паломников, сочетая комфорт, расположение и международное качество.</p>
+                  <h3>{tour.hotel_medina}</h3>
+                  <p>{tour.hotel_medina_details && tour.hotel_medina_details.description ? tour.hotel_medina_details.description : 'Отель расположен в комплексе Abraj Al Bait с прямым доступом к Аль-Хараму. Впечатляющий вид на Каабу, просторные номера, высокий уровень сервиса и широкий выбор ресторанов. Идеально подходит для паломников, сочетая комфорт, расположение и международное качество.'}</p>
                   
                   <div className={styles.amenities}>
                     <h4>Удобства и размещения в номере</h4>
@@ -623,13 +546,13 @@ export default function TourDetailPage({ params }) {
                     </ul>
                   </div>
                   
-                  <div className={styles.reviews}>
-                    <h4>Отзывы гостей</h4>
-                    <div className={styles.overallRating}>
-                      <span className={styles.ratingScore}>9.3</span>
-                      <span className={styles.ratingSeparator}>|</span>
-                      <span className={styles.ratingText}>Превосходно</span>
-                    </div>
+                                      <div className={styles.reviews}>
+                      <h4>Отзывы гостей</h4>
+                      <div className={styles.overallRating}>
+                        <span className={styles.ratingScore}>{tour.hotel_medina_details && tour.hotel_medina_details.rating ? tour.hotel_medina_details.rating : '9.3'}</span>
+                        <span className={styles.ratingSeparator}>|</span>
+                        <span className={styles.ratingText}>Превосходно</span>
+                      </div>
                     <div className={styles.ratingCategories}>
                       <div className={styles.ratingItem}>
                         <div className={styles.ratingHeader}>
@@ -822,7 +745,7 @@ export default function TourDetailPage({ params }) {
             <div className={styles.flightHeader}>
               <div className={styles.flightTitle}>
                 <img src="/check.svg" alt="shield" />
-                <span>Что входит в пакет Fairmont Package</span>
+                <span>Что входит в пакет {tour.name}</span>
               </div>
             </div>
 
@@ -934,192 +857,57 @@ export default function TourDetailPage({ params }) {
             </div>
 
             <div className={styles.roomOptionsGrid}>
-              <div className={styles.roomCard}>
-                <div className={styles.roomHeader}>
-                  <div className={styles.roomIcons}>
-                    <div className={styles.smallBeds}>
-                      <img src="/room.svg" alt="bed" />
-                      <img src="/room.svg" alt="bed" />
-                      <img src="/room.svg" alt="bed" />
-                      <img src="/room.svg" alt="bed" />
+              {Array.isArray(tour.room_options) && tour.room_options.map((room, index) => (
+                <div key={index} className={styles.roomCard}>
+                  <div className={styles.roomHeader}>
+                    <div className={styles.roomIcons}>
+                      <div className={styles.smallBeds}>
+                        <img src="/room.svg" alt="bed" />
+                        <img src="/room.svg" alt="bed" />
+                        <img src="/room.svg" alt="bed" />
+                        <img src="/room.svg" alt="bed" />
+                      </div>
+                    </div>
+                    <h3>{room.type}</h3>
+                  </div>
+
+                  <div className={styles.roomInfo}>
+                    <div className={styles.roomSection}>
+                      <img src="/human.svg" alt="person" />
+                      <div className={styles.roomSectionContent}>
+                        <h4>Проживание</h4>
+                        <span>{room.description}</span>
+                      </div>
+                    </div>
+                    <div className={styles.roomSection}>
+                      <img src="/bad.svg" alt="bed" />
+                      <div className={styles.roomSectionContent}>
+                        <h4>Типы кровати</h4>
+                        <span>4 односпальных кровати</span>
+                      </div>
                     </div>
                   </div>
-                  <h3>Четырехместный номер</h3>
-                </div>
 
-                <div className={styles.roomInfo}>
-                  <div className={styles.roomSection}>
-                    <img src="/human.svg" alt="person" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Проживание</h4>
-                      <span>В номере с Вами будут размещены +3 человека</span>
+                  <div className={styles.availabilityInfo}>
+                    <img src="/alert.svg" alt="alert" />
+                    <span>Осталось {room.spots_left} мест</span>
+                  </div>
+
+                  <div className={styles.roomPrice}>
+                    <p>Без скрытых платежей</p>
+                    <div className={styles.priceInfo}>
+                      <span className={styles.currentPrice}>${room.price}</span>
+                      {room.old_price && <span className={styles.oldPrice}>От ${room.old_price}</span>}
                     </div>
+                    <p className={styles.additionalPrice}>~{Math.round(room.price * 547)}T</p>
                   </div>
-                  <div className={styles.roomSection}>
-                    <img src="/bad.svg" alt="bed" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Типы кровати</h4>
-                      <span>4 односпальных кровати</span>
-                    </div>
-                  </div>
+
+                  <button className={styles.bookButton} onClick={handleBooking}>Перейти к бронированию</button>
+                  <p className={styles.roomDescription}>Оформите бронирование на себя и до 3-х спутников в одном номере.</p>
                 </div>
+              ))}
 
-                <div className={styles.availabilityInfo}>
-                  <img src="/alert.svg" alt="alert" />
-                  <span>Осталось 4 места</span>
-                </div>
 
-                <div className={styles.roomPrice}>
-                  <p>Без скрытых платежей</p>
-                  <div className={styles.priceInfo}>
-                    <span className={styles.currentPrice}>$2 400</span>
-                    <span className={styles.oldPrice}>От $2 500</span>
-                  </div>
-                  <p className={styles.additionalPrice}>~1312 500T</p>
-                </div>
-
-                <button className={styles.bookButton}>Перейти к бронированию</button>
-                <p className={styles.roomDescription}>Оформите бронирование на себя и до 3-х спутников в одном номере.</p>
-              </div>
-
-              <div className={styles.roomCard}>
-                <div className={styles.roomHeader}>
-                  <div className={styles.roomIcons}>
-       
-                    <div className={styles.smallBeds}>
-                      <img src="/room.svg" alt="bed" />
-                      <img src="/room.svg" alt="bed" />
-                      <img src="/room.svg" alt="bed" />
-                    </div>
-                  </div>
-                  <h3>Трехместный номер</h3>
-                </div>
-
-                <div className={styles.roomInfo}>
-                  <div className={styles.roomSection}>
-                    <img src="/human.svg" alt="person" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Проживание</h4>
-                      <span>В номере с Вами будут размещены +3 человека</span>
-                    </div>
-                  </div>
-                  <div className={styles.roomSection}>
-                    <img src="/bad.svg" alt="bed" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Типы кровати</h4>
-                      <span>4 односпальных кровати</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.availabilityInfo}>
-                  <img src="/alert.svg" alt="alert" />
-                  <span>Осталось 4 места</span>
-                </div>
-
-                <div className={styles.roomPrice}>
-                  <p>Без скрытых платежей</p>
-                  <div className={styles.priceInfo}>
-                    <span className={styles.currentPrice}>$2 400</span>
-                    <span className={styles.oldPrice}>От $2 500</span>
-                  </div>
-                  <p className={styles.additionalPrice}>~1312 500T</p>
-                </div>
-
-                <button className={styles.bookButton}>Перейти к бронированию</button>
-                <p className={styles.roomDescription}>Оформите бронирование на себя и до 3-х спутников в одном номере.</p>
-              </div>
-
-              <div className={styles.roomCard}>
-                <div className={styles.roomHeader}>
-                  <div className={styles.roomIcons}>
-                    <div className={styles.smallBeds}>
-                      <img src="/room.svg" alt="bed" />
-                      <img src="/room.svg" alt="bed" />
-                    </div>
-                  </div>
-                  <h3>Двухместный номер</h3>
-                </div>
-
-                <div className={styles.roomInfo}>
-                  <div className={styles.roomSection}>
-                    <img src="/human.svg" alt="person" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Проживание</h4>
-                      <span>В номере с Вами будут размещены +1 человека</span>
-                    </div>
-                  </div>
-                  <div className={styles.roomSection}>
-                    <img src="/bad.svg" alt="bed" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Типы кровати</h4>
-                      <span>4 односпальных или 1 большая кровать</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.availabilityInfo}>
-                  <img src="/alert.svg" alt="alert" />
-                  <span>Осталось 4 места</span>
-                </div>
-
-                <div className={styles.roomPrice}>
-                  <p>Без скрытых платежей</p>
-                  <div className={styles.priceInfo}>
-                    <span className={styles.currentPrice}>$2 400</span>
-                    <span className={styles.oldPrice}>От $2 500</span>
-                  </div>
-                  <p className={styles.additionalPrice}>~1312 500T</p>
-                </div>
-
-                <button className={styles.bookButton}>Перейти к бронированию</button>
-                <p className={styles.roomDescription}>Оформите бронирование на себя и до 3-х спутников в одном номере.</p>
-              </div>
-
-              <div className={styles.roomCard}>
-                <div className={styles.roomHeader}>
-                  <div className={styles.roomIcons}>
-                    <div className={styles.smallBeds}>
-                      <img src="/room.svg" alt="bed" />
-                    </div>
-                  </div>
-                  <h3>Одноместный номер</h3>
-                </div>
-
-                <div className={styles.roomInfo}>
-                  <div className={styles.roomSection}>
-                    <img src="/human.svg" alt="person" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Проживание</h4>
-                      <span>В номере будете проживать только Вы</span>
-                    </div>
-                  </div>
-                  <div className={styles.roomSection}>
-                    <img src="/bad.svg" alt="bed" />
-                    <div className={styles.roomSectionContent}>
-                      <h4>Типы кровати</h4>
-                      <span>1 большая кровать</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.availabilityInfo}>
-                  <img src="/alert.svg" alt="alert" />
-                  <span>Осталось 4 места</span>
-                </div>
-
-                <div className={styles.roomPrice}>
-                  <p>Без скрытых платежей</p>
-                  <div className={styles.priceInfo}>
-                    <span className={styles.currentPrice}>$2 400</span>
-                    <span className={styles.oldPrice}>От $2 500</span>
-                  </div>
-                  <p className={styles.additionalPrice}>~1312 500T</p>
-                </div>
-
-                <button className={styles.bookButton}>Перейти к бронированию</button>
-                <p className={styles.roomDescription}>Оформите бронирование на себя и до 3-х спутников в одном номере.</p>
-              </div>
             </div>
           </div>
 

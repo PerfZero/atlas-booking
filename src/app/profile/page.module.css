@@ -527,6 +527,10 @@ color: #fff;
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding-bottom: 80px;
+  }
+  
   .content {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -570,4 +574,47 @@ color: #fff;
   .tourActions {
     flex-direction: column;
   }
+}
+
+.touristsInfo {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(242, 242, 247, 0.5);
+  border-radius: 12px;
+  border: 1px solid #e3e3e3;
+}
+
+.touristsInfo h4 {
+  font: 600 18px / 133% var(--font-primary);
+  color: #253168;
+  margin: 0 0 16px 0;
+}
+
+.touristInfo {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e3e3e3;
+}
+
+.touristInfo:last-child {
+  margin-bottom: 0;
+}
+
+.touristInfo strong {
+  font: 600 16px / 133% var(--font-primary);
+  color: #253168;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.touristInfo div {
+  font: 400 14px / 143% var(--font-primary);
+  color: #414651;
+  margin-bottom: 4px;
+}
+
+.touristInfo div:last-child {
+  margin-bottom: 0;
 }

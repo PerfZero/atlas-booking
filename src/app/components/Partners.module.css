@@ -57,27 +57,63 @@
   }
   
   .container {
-    padding: 0 20px;
+    padding: 0 0;
   }
   
   .title {
     font-size: 28px;
-    margin-bottom: 32px;
+    margin-bottom: 30px;
+    padding: 0 20px;
   }
   
   .logoGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    padding: 0 20px 20px 20px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .logoGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .logoGrid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .logoGrid::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
   }
   
   .logoCard {
+    flex: 0 0 200px;
+    scroll-snap-align: start;
     padding: 16px;
   }
 }
 
 @media (max-width: 480px) {
+  .partners {
+    padding: 40px 0;
+  }
+  
+  .title {
+    font-size: 24px;
+    margin-bottom: 24px;
+    padding: 0 16px;
+  }
+  
   .logoGrid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
+    padding: 0 16px 16px 16px;
+  }
+  
+  .logoCard {
+    flex: 0 0 160px;
+    padding: 12px;
   }
 } 

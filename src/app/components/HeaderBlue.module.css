@@ -133,7 +133,7 @@
     font: 500 16px / 150% var(--font-primary);
     color: #fff;
     padding: 10px 16px;
-    width: 77px;
+    width: fit-content;
     height: 44px;
     background: #253168;
     border-radius: 8px;
@@ -164,8 +164,10 @@
     background: white;
     color: #253168;
     border: 1px solid #253168;
-    width: 77px;
+    width: fit-content;
     height: 44px;
+    padding: 0 16px;
+
     border-radius: 8px;
   }
   

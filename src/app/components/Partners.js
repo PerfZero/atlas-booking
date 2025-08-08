@@ -14,7 +14,11 @@ export default function Partners() {
     { id: 9, logo: "/part_1.svg", name: "Partner 9" },
     { id: 10, logo: "/part_2.svg", name: "Partner 10" },
     { id: 11, logo: "/part_3.svg", name: "Partner 11" },
-    { id: 12, logo: "/part_4.svg", name: "Partner 12" }
+    { id: 12, logo: "/part_4.svg", name: "Partner 12" },
+    { id: 13, logo: "/part_1.svg", name: "Partner 13" },
+    { id: 14, logo: "/part_2.svg", name: "Partner 14" },
+    { id: 15, logo: "/part_3.svg", name: "Partner 15" },
+    { id: 16, logo: "/part_4.svg", name: "Partner 16" }
   ];
 
   return (

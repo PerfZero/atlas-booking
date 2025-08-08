@@ -1,35 +1,21 @@
-export function buildQueryParams(params = {}) {
-  const queryParams = new URLSearchParams();
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      queryParams.append(key, value);
-    }
-  });
-  
-  return queryParams;
+// Базовые утилиты для работы с API
+export function formatPrice(price) {
+  return new Intl.NumberFormat('ru-RU').format(price);
 }
 
-export function handleApiError(error, defaultMessage = 'API Error') {
-  if (error.response) {
-    return `HTTP ${error.response.status}: ${error.response.statusText}`;
-  }
-  return error.message || defaultMessage;
+export function formatDate(date) {
+  return new Date(date).toLocaleDateString('ru-RU');
 }
 
-export function formatWordPressData(data) {
-  if (!data) return null;
-  
-  return {
-    id: data.id,
-    title: data.title?.rendered || '',
-    content: data.content?.rendered || '',
-    excerpt: data.excerpt?.rendered || '',
-    slug: data.slug,
-    date: data.date,
-    modified: data.modified,
-    acf: data.acf || {},
-    featured_media: data.featured_media,
-    _embedded: data._embedded
-  };
+export function truncateText(text, maxLength = 100) {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + '...';
+}
+
+export function generateSlug(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 } 

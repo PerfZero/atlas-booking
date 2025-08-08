@@ -3,10 +3,12 @@
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './HeaderBlue.module.css';
 
-export default function HeaderBlue({ invertLogo = false, buttonStyle = 'default', tourTitle = 'Оформление тура' }) {
+export default function HeaderProfile({ invertLogo = false, buttonStyle = 'default' }) {
   const router = useRouter();
+  const { isAuthenticated, user, logout, loading } = useAuth();
   const [currentLanguage, setCurrentLanguage] = useState('ru');
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const languageRef = useRef(null);
@@ -27,7 +29,11 @@ export default function HeaderBlue({ invertLogo = false, buttonStyle = 'default'
     <>
       <header className={styles.header}>
         <div className={styles.container}>
-          <div className={`${styles.logoInverted} ${invertLogo ? styles.logoInverted : ''}`}>
+          <div 
+            className={`${styles.logoInverted} ${invertLogo ? styles.logoInverted : ''}`}
+            onClick={() => router.push('/')}
+            style={{ cursor: 'pointer' }}
+          >
             <Image
               src="/logo.svg"
               alt="Atlas Hajj"
@@ -87,19 +93,47 @@ export default function HeaderBlue({ invertLogo = false, buttonStyle = 'default'
               )}
             </div>
             
-            <button className={`${styles.registerBtnSearch} ${buttonStyle === 'search' ? styles.registerBtnSearch : ''}`}>
-              Зарегистрироваться
-            </button>
-            
-            <button className={`${styles.loginBtnSearch} ${buttonStyle === 'search' ? styles.loginBtnSearch : ''}`}>
-              Войти
-            </button>
+            {!loading && isAuthenticated ? (
+              <>
+                <button 
+                  className={`${styles.loginBtnSearch} ${buttonStyle === 'search' ? styles.loginBtnSearch : ''}`}
+                  onClick={() => router.push('/profile')}
+                >
+                  {user?.name || 'Профиль'}
+                </button>
+                <button 
+                  className={`${styles.registerBtnSearch} ${buttonStyle === 'search' ? styles.registerBtnSearch : ''}`}
+                  onClick={() => {
+                    logout();
+                    router.push('/');
+                  }}
+                >
+                  Выйти
+                </button>
+              </>
+            ) : !loading && (
+              <>
+                <button 
+                  className={`${styles.registerBtnSearch} ${buttonStyle === 'search' ? styles.registerBtnSearch : ''}`}
+                  onClick={() => router.push('/auth?mode=register')}
+                >
+                  Зарегистрироваться
+                </button>
+                
+                <button 
+                  className={`${styles.loginBtnSearch} ${buttonStyle === 'search' ? styles.loginBtnSearch : ''}`}
+                  onClick={() => router.push('/auth?mode=login')}
+                >
+                  Войти
+                </button>
+              </>
+            )}
           </div>
         </div>
-                 <div className={styles.secondHeader}> 
+                                  <div className={styles.secondHeader}> 
            <h1 className={styles.title}> 
-      
-             Личный кабинет <span>Nuraly Kopbossyn</span>
+       
+             Личный кабинет <span>{user?.name || 'Пользователь'}</span>
            </h1>
          </div>
       </header>

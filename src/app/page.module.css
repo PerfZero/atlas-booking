@@ -1,6 +1,8 @@
 .page {
   min-height: 100vh;
   background: white;
+    padding: 0 16px;
+
 }
 
 .main {
@@ -105,9 +107,17 @@ a.secondary {
   }
 }
 
+@media (max-width: 768px) {
+  .page {
+    padding-bottom: 80px;
+  }
+
+
+}
+
 @media (max-width: 600px) {
   .page {
-    padding: 32px;
+    padding: 16px;
     padding-bottom: 80px;
   }
 

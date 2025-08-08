@@ -1,12 +1,11 @@
-export const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://test.devdenis.ru/wp-json/wp/v2';
+// Базовые константы API
+export const API_BASE = '/api';
 
 export const API_ENDPOINTS = {
-  WORDPRESS_BASE: WORDPRESS_API_URL,
-  PAGES: `${WORDPRESS_API_URL}/pages`,
-  TOURS: `${WORDPRESS_API_URL}/tours`,
-  REVIEWS: `${WORDPRESS_API_URL}/reviews`,
-  PARTNERS: `${WORDPRESS_API_URL}/partners`,
-  FAQ: `${WORDPRESS_API_URL}/faq`
+  TOURS: `${API_BASE}/tours`,
+  REVIEWS: `${API_BASE}/reviews`,
+  PARTNERS: `${API_BASE}/partners`,
+  FAQ: `${API_BASE}/faq`
 };
 
 export const DEFAULT_PARAMS = {

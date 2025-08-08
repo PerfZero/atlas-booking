@@ -31,6 +31,16 @@ export default function Reviews() {
       id: 6, 
       videoId: "y6120QOlsfU",
       title: "Отзыв паломника 6"
+    },
+    { 
+      id: 7, 
+      videoId: "jfKfPfyJRdk",
+      title: "Отзыв паломника 7"
+    },
+    { 
+      id: 8, 
+      videoId: "dQw4w9WgXcQ",
+      title: "Отзыв паломника 8"
     }
   ];
 

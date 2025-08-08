@@ -1240,3 +1240,12 @@ padding: 8px;
   }
 }
 
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font: 600 18px var(--font-primary);
+  color: #333;
+}
+

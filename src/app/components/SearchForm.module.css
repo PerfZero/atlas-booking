@@ -91,12 +91,14 @@
   
   .searchBtn {
     width: 100%;
+    max-width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .searchForm {
     padding: 24px;
+    align-items: stretch;
   }
   
   .selectGroup label {
