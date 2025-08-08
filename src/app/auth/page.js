@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sendSMS, verifyCode } from "../../lib/wordpress-api";
 import { useAuth } from "../../contexts/AuthContext";
 import BottomNavigation from "../components/BottomNavigation";
 import styles from "./page.module.css";
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -260,6 +260,14 @@ export default function AuthPage() {
       )}
       <BottomNavigation />
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthPageContent />
+    </Suspense>
   );
 }
 

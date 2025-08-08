@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { searchToursWithFilters } from '../../lib/wordpress-api';
 import Header from '../components/Header';
@@ -39,7 +39,7 @@ function SearchPageContent({ searchParams }) {
     { label: 'Результат поиска' }
   ];
 
-  const loadTours = async () => {
+  const loadTours = useCallback(async () => {
     setLoading(true);
     try {
       const departureCity = searchParams.get('departureCity');
@@ -70,11 +70,11 @@ function SearchPageContent({ searchParams }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchParams, priceRange, sortBy]);
 
   useEffect(() => {
     loadTours();
-  }, [searchParams, sortBy, priceRange, flightTypes, ticketTypes, mekkaHotels, medinaHotels, mekkaDistance, medinaDistance, foodTypes, transferTypes]);
+  }, [searchParams, sortBy, priceRange, flightTypes, ticketTypes, mekkaHotels, medinaHotels, mekkaDistance, medinaDistance, foodTypes, transferTypes, loadTours]);
 
   return (
     <div className={styles.page}>

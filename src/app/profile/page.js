@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import { getProfile, updateProfile, getMyBookings } from "../../lib/wordpress-api";
@@ -37,7 +37,7 @@ export default function ProfilePage() {
       loadProfile();
       loadBookings();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, loadProfile, loadBookings]);
 
   // Перенаправляем на главную если не авторизован
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, loading, router]);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user?.token) return;
     
     setProfileLoading(true);
@@ -79,9 +79,9 @@ export default function ProfilePage() {
     } finally {
       setProfileLoading(false);
     }
-  };
+  }, [user?.token, formData]);
 
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     if (!user?.token) return;
     
     setBookingsLoading(true);
@@ -101,7 +101,7 @@ export default function ProfilePage() {
     } finally {
       setBookingsLoading(false);
     }
-  };
+  }, [user?.token, loadProfile]);
 
   useEffect(() => {
     const interval = setInterval(() => {
