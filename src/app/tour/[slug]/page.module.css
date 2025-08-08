@@ -1223,9 +1223,278 @@ padding: 8px;
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding-bottom: 80px;
+  }
+  
+  .main {
+    padding-top: 20px;
+    padding-bottom: 60px;
+  }
+  
+  .container {
+    padding: 0 16px;
+  }
+  
+  .header:before {
+    height: 200px;
+  }
+  
+  .title {
+    font-size: 28px;
+  }
+  
+  .content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .tourHeaderBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .tourHeaderName {
+    font-size: 24px;
+  }
+  
+  .tourHeaderDuration {
+    font-size: 20px;
+  }
+  
+  .tourGallery {
+    margin-bottom: 24px;
+  }
+  
+  .galleryGrid {
+    flex-direction: column;
+    gap: 12px;
+    height: auto;
+
+  }
+  
+  .mainImage {
+    height: 200px;
+  }
+  
+  .sideImages {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .sideImages::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .sideImages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .sideImages::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
+  }
+  
+  .sideImage {
+    flex: 0 0 120px;
+    height: 80px;
+    scroll-snap-align: start;
+  }
+  
+  .tourFeatures {
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .featureItem {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  .tourStats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .statsLeft {
+    justify-content: center;
+  }
+  
+  .statsMiddle {
+    text-align: center;
+  }
+  
+  .statsNumbers {
+    justify-content: center;
+  }
+  
+  .flightInfo {
+    margin-bottom: 24px;
+  }
+  
+  .flightSections {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+  
+  .flightSections::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .flightSections::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .flightSections::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
+  }
+  
+  .flightSection {
+    flex: 0 0 300px;
+    scroll-snap-align: start;
+    padding: 12px 16px;
+  }
+  
+  .flightSectionTitle {
+    font-size: 16px;
+  }
+  
+  .accommodationInfo {
+    margin-bottom: 24px;
+  }
+  
+  .hotelsGrid {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+  
+  .hotelsGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .hotelsGrid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .hotelsGrid::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
+  }
+  
+  .hotelCard {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+  }
+  
+  .packageGrid {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+  
+  .packageGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .packageGrid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .packageGrid::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
+  }
+  
+  .packageCard {
+    flex: 0 0 200px;
+    scroll-snap-align: start;
+  }
+  
+  .roomOptionsGrid {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+  
+  .roomOptionsGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .roomOptionsGrid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .roomOptionsGrid::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
+  }
+  
+  .roomCard {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+  }
+  
+  .reviewsGrid {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+  
+  .reviewsGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .reviewsGrid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .reviewsGrid::-webkit-scrollbar-thumb {
+    background: #253168;
+    border-radius: 2px;
+  }
+  
+  .reviewCard {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+  }
+  
   .fixedBookButton {
     width: 100%;
     max-width: 300px;
+    padding: 16px 24px;
+    font-size: 16px;
   }
 }
 

@@ -96,6 +96,19 @@ export async function getHomeSettings() {
   }
 }
 
+export async function getHomePageSettings() {
+  try {
+    const response = await fetch(`${WORDPRESS_URL}/wp-json/wp/v2/pages/1`);
+    if (!response.ok) throw new Error('Ошибка загрузки настроек главной страницы');
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Ошибка получения настроек главной страницы:', error);
+    return null;
+  }
+}
+
 export async function searchTours(searchQuery) {
   try {
     const response = await fetch(`${API_BASE}/posts?categories=1&search=${encodeURIComponent(searchQuery)}&_embed`);

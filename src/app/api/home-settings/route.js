@@ -1,4 +1,4 @@
-import { getHomePageSettings } from '../../../lib/api';
+import { getHomePageSettings } from '../../../lib/wordpress-api';
 
 export async function GET() {
   try {

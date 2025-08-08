@@ -7,6 +7,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import SearchForm from "../../components/SearchForm";
 import Breadcrumbs from "../../components/Breadcrumbs";
+import BottomNavigation from "../../components/BottomNavigation";
 import styles from "./page.module.css";
 
 export default function TourDetailPage({ params }) {
@@ -1029,6 +1030,7 @@ export default function TourDetailPage({ params }) {
       </main>
 
       <Footer />
+      <BottomNavigation />
     </div>
   );
 }

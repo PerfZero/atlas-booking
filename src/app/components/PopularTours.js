@@ -62,7 +62,7 @@ export default function PopularTours() {
         <div className={styles.container}>
           <h2 className={styles.title}>Популярные туры</h2>
           <div className={styles.cards}>
-            <div className={styles.error}>Туры не найдены. Убедитесь, что в WordPress созданы посты с полем "price".</div>
+            <div className={styles.error}>Туры не найдены. Убедитесь, что в WordPress созданы посты с полем &quot;price&quot;.</div>
           </div>
         </div>
       </section>
