@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'booking.devdenis.ru',
+        hostname: 'api.booking.atlas.kz',
         port: '',
         pathname: '/wp-content/uploads/**',
       },
