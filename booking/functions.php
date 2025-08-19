@@ -1881,6 +1881,7 @@ function atlas_kaspi_admin_page() {
 }
 
 function atlas_create_kaspi_payment($request) {
+    error_log('=== atlas_create_kaspi_payment called ===');
     $params = $request->get_params();
     
     // Отладочная информация
@@ -1930,17 +1931,78 @@ function atlas_create_kaspi_payment($request) {
     $payments[$tran_id] = $payment_data;
     update_option('atlas_kaspi_payments', $payments);
     
-    // Возвращаем JSON с данными для Kaspi
-    return array(
-        'success' => true,
-        'payment_data' => array(
-            'tran_id' => $tran_id,
-            'order_id' => $order_id,
-            'amount' => $amount,
-            'service' => 'AtlasBooking',
-            'return_url' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount
-        )
+    // Делаем POST запрос к Kaspi для получения URL оплаты (JSON формат)
+    error_log('Making POST request to Kaspi for payment URL');
+    
+    // Делаем POST запрос к Kaspi для получения URL оплаты (JSON формат)
+    error_log('Making POST request to Kaspi for payment URL');
+    
+    $kaspi_data = array(
+        'TranId' => $tran_id,
+        'OrderId' => $order_id,
+        'Amount' => $amount,
+        'Service' => 'AtlasBooking',
+        'returnUrl' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount,
+        'refererHost' => 'api.booking.atlas.kz',
+        'GenerateQrCode' => true
     );
+    
+    error_log('Kaspi request data: ' . print_r($kaspi_data, true));
+    
+    // Отправляем POST запрос к Kaspi (JSON формат согласно документации)
+    error_log('Sending POST request to Kaspi with data: ' . print_r($kaspi_data, true));
+    
+    $response = wp_remote_post('https://kaspi.kz/online', array(
+        'body' => json_encode($kaspi_data),
+        'timeout' => 30,
+        'headers' => array(
+            'Content-Type' => 'application/json',
+            'User-Agent' => 'Atlas-Hajj/1.0'
+        )
+    ));
+    
+    if (is_wp_error($response)) {
+        error_log('Kaspi request failed: ' . $response->get_error_message());
+        return new WP_Error('kaspi_error', 'Failed to get payment URL from Kaspi', array('status' => 500));
+    }
+    
+    $response_code = wp_remote_retrieve_response_code($response);
+    $response_body = wp_remote_retrieve_body($response);
+    
+    error_log('Kaspi response code: ' . $response_code);
+    error_log('Kaspi response body: ' . $response_body);
+    
+    if ($response_code === 200) {
+        // Парсим JSON ответ от Kaspi
+        $kaspi_result = json_decode($response_body, true);
+        error_log('Parsed Kaspi response: ' . print_r($kaspi_result, true));
+        
+        if ($kaspi_result && isset($kaspi_result['code']) && $kaspi_result['code'] === 0) {
+            // Успешный ответ от Kaspi
+            error_log('Kaspi payment URL received: ' . $kaspi_result['redirectUrl']);
+            
+            return array(
+                'success' => true,
+                'payment_url' => $kaspi_result['redirectUrl'],
+                'tran_id' => $tran_id,
+                'order_id' => $order_id,
+                'amount' => $amount
+            );
+        } else {
+            error_log('Kaspi returned error: ' . print_r($kaspi_result, true));
+            $error_message = 'Unknown error';
+            if (isset($kaspi_result['message'])) {
+                $error_message = $kaspi_result['message'];
+            } elseif (isset($kaspi_result['comment'])) {
+                $error_message = $kaspi_result['comment'];
+            }
+            return new WP_Error('kaspi_error', 'Kaspi returned error: ' . $error_message, array('status' => 400));
+        }
+    } else {
+        error_log('Kaspi request failed with code: ' . $response_code);
+        error_log('Kaspi response headers: ' . print_r(wp_remote_retrieve_headers($response), true));
+        return new WP_Error('kaspi_error', 'Failed to get payment URL from Kaspi (HTTP ' . $response_code . ')', array('status' => 500));
+    }
 }
 
 function atlas_get_kaspi_payment_status($request) {
