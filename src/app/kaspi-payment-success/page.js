@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BottomNavigation from '../components/BottomNavigation';
 import styles from './page.module.css';
 
-export default function KaspiPaymentSuccess() {
+function KaspiPaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [paymentStatus, setPaymentStatus] = useState('loading');
@@ -160,5 +160,27 @@ export default function KaspiPaymentSuccess() {
       <Footer />
       <BottomNavigation />
     </div>
+  );
+}
+
+export default function KaspiPaymentSuccess() {
+  return (
+    <Suspense fallback={
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.container}>
+            <div className={styles.loading}>
+              <div className={styles.spinner}></div>
+              <p>Загрузка...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+        <BottomNavigation />
+      </div>
+    }>
+      <KaspiPaymentSuccessContent />
+    </Suspense>
   );
 }
