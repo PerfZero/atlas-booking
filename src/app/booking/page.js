@@ -271,39 +271,51 @@ function BookingPageContent() {
           body: JSON.stringify(paymentRequestData)
         });
 
-        const paymentData = await paymentResponse.json();
-
         if (!paymentResponse.ok) {
-          throw new Error(paymentData.message || 'Ошибка создания платежа');
+          const errorData = await paymentResponse.json();
+          throw new Error(errorData.message || 'Ошибка создания платежа');
         }
 
-        // Создаем форму для Kaspi
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'https://kaspi.kz/online';
-        form.id = 'kaspikz-form';
-        form.style.display = 'none';
-
-        // Добавляем параметры
-        const params = {
-          'TranId': paymentData.tran_id,
-          'OrderId': paymentData.order_id,
-          'Amount': amount * 100,
-          'Service': 'AtlasBooking',
-          'returnUrl': 'https://booking.atlas.kz/kaspi-payment-success/?order_id=' + paymentData.order_id
-        };
-
-        Object.keys(params).forEach(key => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = params[key];
-          form.appendChild(input);
-        });
-
-        // Добавляем форму на страницу и отправляем
-        document.body.appendChild(form);
-        form.submit();
+        // Бэкенд вернет JSON с данными для Kaspi
+        const paymentResult = await paymentResponse.json();
+        console.log('Получен ответ от бэкенда:', paymentResult);
+        
+        if (paymentResult.success && paymentResult.payment_data) {
+            const { tran_id, order_id, amount, service, return_url } = paymentResult.payment_data;
+            
+            // Делаем POST запрос к Kaspi для получения URL быстрой оплаты
+            const kaspiResponse = await fetch('https://kaspi.kz/online', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'TranId': tran_id,
+                    'OrderId': order_id,
+                    'Amount': amount,
+                    'Service': service,
+                    'returnUrl': return_url,
+                    'GenerateQrCode': 'true'
+                })
+            });
+            
+            if (kaspiResponse.ok) {
+                const kaspiData = await kaspiResponse.json();
+                console.log('Ответ от Kaspi:', kaspiData);
+                
+                if (kaspiData.code === 0 && kaspiData.redirectUrl) {
+                    // Перенаправляем на URL быстрой оплаты
+                    console.log('Перенаправление на быструю оплату:', kaspiData.redirectUrl);
+                    window.location.href = kaspiData.redirectUrl;
+                } else {
+                    throw new Error('Kaspi вернул ошибку: ' + (kaspiData.message || 'Неизвестная ошибка'));
+                }
+            } else {
+                throw new Error('Ошибка запроса к Kaspi');
+            }
+        } else {
+            throw new Error('Неожиданный формат ответа от сервера');
+        }
       } else {
         alert('Ошибка при бронировании тура: ' + (result.error || 'Неизвестная ошибка'));
       }

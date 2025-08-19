@@ -27,6 +27,9 @@ function booking_setup() {
 		* to change 'booking' to the name of your theme in all the template files.
 		*/
 	load_theme_textdomain( 'booking', get_template_directory() . '/languages' );
+	
+	// Добавляем пункт меню в админку
+	add_action('admin_menu', 'atlas_kaspi_admin_menu');
 
 	// Add default posts and comments RSS feed links to head.
 	add_theme_support( 'automatic-feed-links' );
@@ -1720,6 +1723,163 @@ function atlas_kaspi_process_payment($params) {
     );
 }
 
+function atlas_kaspi_test_page($request) {
+    // Создаем тестовый платеж
+    $tran_id = 'KSP' . uniqid();
+    $order_id = 'test_' . time();
+    $amount = 100000;
+    
+    $payment_data = array(
+        'tran_id' => $tran_id,
+        'order_id' => $order_id,
+        'amount' => $amount,
+        'tour_id' => 33,
+        'user_id' => 3,
+        'status' => 'pending',
+        'created_at' => current_time('mysql')
+    );
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    $payments[$tran_id] = $payment_data;
+    update_option('atlas_kaspi_payments', $payments);
+    
+    // Формируем простую HTML страницу
+    $html = '<html><head><title>Kaspi Test</title></head><body>';
+    $html .= '<h1>Kaspi Payment Test</h1>';
+    $html .= '<p><strong>TranId:</strong> ' . $tran_id . '</p>';
+    $html .= '<p><strong>OrderId:</strong> ' . $order_id . '</p>';
+    $html .= '<p><strong>Amount:</strong> ' . number_format($amount) . ' ₸</p>';
+    $html .= '<p><strong>Status:</strong> ' . $payment_data['status'] . '</p>';
+    $html .= '<h3>Test URLs:</h3>';
+    $html .= '<p><strong>Check Payment:</strong><br>';
+    $html .= 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=check&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount . '</p>';
+    $html .= '<p><strong>Kaspi URL:</strong><br>';
+    $html .= 'https://kaspi.kz/online?TranId=' . $tran_id . '&OrderId=' . $order_id . '&Amount=' . $amount . '&Service=AtlasBooking&returnUrl=https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount . '</p>';
+    $html .= '<form action="https://kaspi.kz/online" method="post">';
+    $html .= '<input type="hidden" name="TranId" value="' . $tran_id . '">';
+    $html .= '<input type="hidden" name="OrderId" value="' . $order_id . '">';
+    $html .= '<input type="hidden" name="Amount" value="' . $amount . '">';
+    $html .= '<input type="hidden" name="Service" value="AtlasBooking">';
+    $html .= '<input type="hidden" name="returnUrl" value="https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount . '">';
+    $html .= '<button type="submit">Test Kaspi Payment</button>';
+    $html .= '</form>';
+    $html .= '</body></html>';
+    
+    return new WP_REST_Response($html, 200, array('Content-Type' => 'text/html'));
+}
+
+// Добавляем пункт меню в админку
+function atlas_kaspi_admin_menu() {
+    add_menu_page(
+        'Kaspi Test', 
+        'Kaspi Test', 
+        'manage_options', 
+        'kaspi-test', 
+        'atlas_kaspi_admin_page',
+        'dashicons-money-alt',
+        30
+    );
+}
+
+// Страница в админке
+function atlas_kaspi_admin_page() {
+    if (isset($_POST['test_kaspi'])) {
+        // Создаем тестовый платеж
+        $tran_id = 'KSP' . uniqid();
+        $order_id = 'test_' . time();
+        $amount = 100000;
+        
+        $payment_data = array(
+            'tran_id' => $tran_id,
+            'order_id' => $order_id,
+            'amount' => $amount,
+            'tour_id' => 33,
+            'user_id' => 3,
+            'status' => 'pending',
+            'created_at' => current_time('mysql')
+        );
+        
+        $payments = get_option('atlas_kaspi_payments', array());
+        $payments[$tran_id] = $payment_data;
+        update_option('atlas_kaspi_payments', $payments);
+        
+        echo '<div class="notice notice-success"><p>Тестовый платеж создан: ' . $tran_id . '</p></div>';
+    }
+    
+    ?>
+    <div class="wrap">
+        <h1>🧪 Kaspi Payment Test</h1>
+        
+        <div class="card">
+            <h2>Создать тестовый платеж</h2>
+            <form method="post">
+                <p>Нажмите кнопку чтобы создать тестовый платеж для Kaspi</p>
+                <input type="submit" name="test_kaspi" class="button button-primary" value="Создать тестовый платеж">
+            </form>
+        </div>
+        
+        <div class="card">
+            <h2>Тестовые URL</h2>
+            <?php
+            $payments = get_option('atlas_kaspi_payments', array());
+            if (!empty($payments)) {
+                $last_payment = end($payments);
+                $tran_id = $last_payment['tran_id'];
+                $order_id = $last_payment['order_id'];
+                $amount = $last_payment['amount'];
+                
+                echo '<p><strong>Последний платеж:</strong></p>';
+                echo '<p>TranId: <code>' . $tran_id . '</code></p>';
+                echo '<p>OrderId: <code>' . $order_id . '</code></p>';
+                echo '<p>Amount: <code>' . number_format($amount) . ' ₸</code></p>';
+                
+                echo '<h3>1. Проверить платеж:</h3>';
+                echo '<p><code>https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=check&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount . '</code></p>';
+                
+                echo '<h3>2. Kaspi URL:</h3>';
+                echo '<p><code>https://kaspi.kz/online?TranId=' . $tran_id . '&OrderId=' . $order_id . '&Amount=' . $amount . '&Service=AtlasBooking&returnUrl=https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount . '</code></p>';
+                
+                echo '<h3>3. Тестовая форма:</h3>';
+                echo '<form action="https://kaspi.kz/online" method="post" target="_blank">';
+                echo '<input type="hidden" name="TranId" value="' . $tran_id . '">';
+                echo '<input type="hidden" name="OrderId" value="' . $order_id . '">';
+                echo '<input type="hidden" name="Amount" value="' . $amount . '">';
+                echo '<input type="hidden" name="Service" value="AtlasBooking">';
+                echo '<input type="hidden" name="returnUrl" value="https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount . '">';
+                echo '<input type="submit" class="button button-secondary" value="🚀 Тест Kaspi Payment">';
+                echo '</form>';
+            } else {
+                echo '<p>Нет созданных платежей. Создайте тестовый платеж выше.</p>';
+            }
+            ?>
+        </div>
+        
+        <div class="card">
+            <h2>Все платежи</h2>
+            <?php
+            if (!empty($payments)) {
+                echo '<table class="wp-list-table widefat fixed striped">';
+                echo '<thead><tr><th>TranId</th><th>OrderId</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>';
+                echo '<tbody>';
+                foreach ($payments as $payment) {
+                    echo '<tr>';
+                    echo '<td>' . $payment['tran_id'] . '</td>';
+                    echo '<td>' . $payment['order_id'] . '</td>';
+                    echo '<td>' . number_format($payment['amount']) . ' ₸</td>';
+                    echo '<td>' . $payment['status'] . '</td>';
+                    echo '<td>' . $payment['created_at'] . '</td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table>';
+            } else {
+                echo '<p>Нет платежей</p>';
+            }
+            ?>
+        </div>
+    </div>
+    <?php
+}
+
 function atlas_create_kaspi_payment($request) {
     $params = $request->get_params();
     
@@ -1770,24 +1930,16 @@ function atlas_create_kaspi_payment($request) {
     $payments[$tran_id] = $payment_data;
     update_option('atlas_kaspi_payments', $payments);
     
-    // Формируем URL для Kaspi
-    $kaspi_url = 'https://kaspi.kz/online';
-    $kaspi_params = array(
-        'TranId' => $tran_id,
-        'OrderId' => $order_id,
-        'Amount' => $amount,
-        'Service' => 'AtlasBooking',
-        'returnUrl' => 'https://booking.atlas.kz/kaspi-payment-success/?order_id=' . $order_id
-    );
-    
+    // Возвращаем JSON с данными для Kaspi
     return array(
         'success' => true,
-        'tran_id' => $tran_id,
-        'order_id' => $order_id,
-        'amount' => $amount,
-        'payment_data' => $payment_data,
-        'kaspi_url' => $kaspi_url,
-        'kaspi_params' => $kaspi_params
+        'payment_data' => array(
+            'tran_id' => $tran_id,
+            'order_id' => $order_id,
+            'amount' => $amount,
+            'service' => 'AtlasBooking',
+            'return_url' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount
+        )
     );
 }
 
@@ -1825,7 +1977,7 @@ function atlas_get_kaspi_payment_status($request) {
         'success' => true,
         'payment' => $payment
     );
-}
+}   
 
 function atlas_process_kaspi_webhook($request) {
     $params = $request->get_params();
@@ -1879,6 +2031,12 @@ add_action('rest_api_init', function() {
     register_rest_route('atlas-hajj/v1', '/kaspi/webhook', array(
         'methods' => 'POST',
         'callback' => 'atlas_process_kaspi_webhook',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('atlas-hajj/v1', '/kaspi/test', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_kaspi_test_page',
         'permission_callback' => '__return_true'
     ));
 });
