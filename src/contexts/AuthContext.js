@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
             const result = await checkAuth(token);
             if (result.success && result.authenticated) {
               const userData = {
+                id: result.user.id,
                 phone: result.user.phone,
                 name: `Пользователь ${result.user.phone.slice(-4)}`,
                 token: token

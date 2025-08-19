@@ -1722,14 +1722,37 @@ function atlas_kaspi_process_payment($params) {
 
 function atlas_create_kaspi_payment($request) {
     $params = $request->get_params();
+    
+    // Отладочная информация
+    error_log('Kaspi payment params: ' . print_r($params, true));
+    
     $order_id = sanitize_text_field($params['order_id'] ?? '');
     $amount = intval($params['amount'] ?? 0);
     $tour_id = intval($params['tour_id'] ?? 0);
-    $user_id = intval($params['user_id'] ?? 0);
+    $token = sanitize_text_field($params['token'] ?? '');
     
-    if (empty($order_id) || $amount <= 0 || $tour_id <= 0 || $user_id <= 0) {
+    error_log("Parsed params: order_id=$order_id, amount=$amount, tour_id=$tour_id, token=$token");
+    
+    if (empty($order_id) || $amount <= 0 || $tour_id <= 0 || empty($token)) {
+        error_log("Validation failed: order_id=" . (empty($order_id) ? 'empty' : $order_id) . 
+                 ", amount=" . $amount . 
+                 ", tour_id=" . $tour_id . 
+                 ", token=" . (empty($token) ? 'empty' : 'present'));
         return new WP_Error('invalid_params', 'Invalid parameters', array('status' => 400));
     }
+    
+    // Получаем токены из WordPress опций
+    $tokens = get_option('atlas_auth_tokens', array());
+    
+    if (!isset($tokens[$token])) {
+        error_log("Token not found: $token");
+        return new WP_Error('invalid_token', 'Invalid token', array('status' => 401));
+    }
+    
+    $token_data = $tokens[$token];
+    $user_id = $token_data['user_id'];
+    
+    error_log("User ID from token: $user_id");
     
     $tran_id = 'KSP' . uniqid();
     
@@ -1747,12 +1770,24 @@ function atlas_create_kaspi_payment($request) {
     $payments[$tran_id] = $payment_data;
     update_option('atlas_kaspi_payments', $payments);
     
+    // Формируем URL для Kaspi
+    $kaspi_url = 'https://kaspi.kz/online';
+    $kaspi_params = array(
+        'TranId' => $tran_id,
+        'OrderId' => $order_id,
+        'Amount' => $amount,
+        'Service' => 'AtlasBooking',
+        'returnUrl' => 'https://booking.atlas.kz/kaspi-payment-success/?order_id=' . $order_id
+    );
+    
     return array(
         'success' => true,
         'tran_id' => $tran_id,
         'order_id' => $order_id,
         'amount' => $amount,
-        'payment_data' => $payment_data
+        'payment_data' => $payment_data,
+        'kaspi_url' => $kaspi_url,
+        'kaspi_params' => $kaspi_params
     );
 }
 
