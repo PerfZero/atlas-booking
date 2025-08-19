@@ -1,4 +1,4 @@
-const WORDPRESS_URL = 'http://api.booking.atlas.kz/';
+const WORDPRESS_URL = 'https://api.booking.atlas.kz';
 const API_BASE = `${WORDPRESS_URL}/wp-json/atlas-hajj/v1`;
 
 export async function getTours(queryParams = '') {
