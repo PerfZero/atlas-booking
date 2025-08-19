@@ -12,38 +12,47 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     // Проверяем есть ли сохраненный токен
-    const token = localStorage.getItem('atlas_token');
-    if (token) {
-      // Проверяем токен на беке
-      checkAuth(token).then(result => {
-        if (result.success && result.authenticated) {
-          const userData = {
-            phone: result.user.phone,
-            name: `Пользователь ${result.user.phone.slice(-4)}`,
-            token: token
-          };
-          setUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          // Токен недействителен, удаляем его
+    const checkToken = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('atlas_token');
+          if (token) {
+            // Проверяем токен на беке
+            const result = await checkAuth(token);
+            if (result.success && result.authenticated) {
+              const userData = {
+                phone: result.user.phone,
+                name: `Пользователь ${result.user.phone.slice(-4)}`,
+                token: token
+              };
+              setUser(userData);
+              setIsAuthenticated(true);
+            } else {
+              // Токен недействителен, удаляем его
+              localStorage.removeItem('atlas_token');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка проверки токена:', error);
+        if (typeof window !== 'undefined') {
           localStorage.removeItem('atlas_token');
         }
+      } finally {
         setLoading(false);
-      }).catch(error => {
-        console.error('Ошибка проверки токена:', error);
-        localStorage.removeItem('atlas_token');
-        setLoading(false);
-      });
-    } else {
-      setLoading(false);
-    }
+      }
+    };
+
+    checkToken();
   }, []);
 
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
-    localStorage.setItem('atlas_token', userData.token);
-    localStorage.setItem('atlas_user', JSON.stringify(userData));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('atlas_token', userData.token);
+      localStorage.setItem('atlas_user', JSON.stringify(userData));
+    }
   };
 
   const logout = async () => {
@@ -56,8 +65,10 @@ export function AuthProvider({ children }) {
     }
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('atlas_token');
-    localStorage.removeItem('atlas_user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('atlas_token');
+      localStorage.removeItem('atlas_user');
+    }
   };
 
   return (

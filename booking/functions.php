@@ -667,6 +667,30 @@ add_action('rest_api_init', function() {
         'callback' => 'atlas_get_faq',
         'permission_callback' => '__return_true'
     ));
+    
+    register_rest_route('atlas/v1', '/kaspi/payment_app.cgi', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_kaspi_payment_app',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('atlas/v1', '/kaspi/payment_app.cgi', array(
+        'methods' => 'POST',
+        'callback' => 'atlas_kaspi_payment_app',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('atlas-hajj/v1', '/kaspi/create-payment', array(
+        'methods' => 'POST',
+        'callback' => 'atlas_create_kaspi_payment',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('atlas-hajj/v1', '/kaspi/payment-status', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_kaspi_payment_status',
+        'permission_callback' => '__return_true'
+    ));
 });
 
 function atlas_send_sms($request) {
@@ -1602,4 +1626,225 @@ function atlas_get_my_bookings($request) {
         'bookings' => $bookings
     );
 }
+
+function atlas_kaspi_payment_app($request) {
+    $params = $request->get_params();
+    $command = sanitize_text_field($params['command'] ?? '');
+    
+    if ($command === 'check') {
+        return atlas_kaspi_check_payment($params);
+    } elseif ($command === 'pay') {
+        return atlas_kaspi_process_payment($params);
+    } else {
+        return new WP_Error('invalid_command', 'Invalid command', array('status' => 400));
+    }
+}
+
+function atlas_kaspi_check_payment($params) {
+    $txn_id = sanitize_text_field($params['txn_id'] ?? '');
+    $account = sanitize_text_field($params['account'] ?? '');
+    $sum = floatval($params['sum'] ?? 0);
+    
+    if (empty($txn_id) || empty($account) || $sum <= 0) {
+        return new WP_Error('invalid_params', 'Invalid parameters for check', array('status' => 400));
+    }
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    
+    if (isset($payments[$txn_id])) {
+        $payment = $payments[$txn_id];
+        if ($payment['order_id'] === $account && $payment['amount'] == $sum) {
+            return array(
+                'txn_id' => $txn_id,
+                'result' => 0,
+                'comment' => 'Заказ найден и доступен для оплаты',
+                'sum' => $payment['amount']
+            );
+        }
+    }
+    
+    return array(
+        'txn_id' => $txn_id,
+        'result' => 1,
+        'comment' => 'Заказ не найден или недоступен для оплаты'
+    );
+}
+
+function atlas_kaspi_process_payment($params) {
+    $txn_id = sanitize_text_field($params['txn_id'] ?? '');
+    $account = sanitize_text_field($params['account'] ?? '');
+    $sum = floatval($params['sum'] ?? 0);
+    $txn_date = sanitize_text_field($params['txn_date'] ?? '');
+    
+    if (empty($txn_id) || empty($account) || $sum <= 0) {
+        return new WP_Error('invalid_params', 'Invalid parameters for payment', array('status' => 400));
+    }
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    
+    if (isset($payments[$txn_id])) {
+        $payment = $payments[$txn_id];
+        if ($payment['order_id'] === $account && $payment['amount'] == $sum) {
+            $payment['status'] = 'completed';
+            $payment['completed_at'] = current_time('mysql');
+            $payment['kaspi_txn_date'] = $txn_date;
+            
+            $payments[$txn_id] = $payment;
+            update_option('atlas_kaspi_payments', $payments);
+            
+            $user_bookings = get_user_meta($payment['user_id'], 'atlas_bookings', true);
+            if (is_array($user_bookings)) {
+                foreach ($user_bookings as $booking_id => $booking) {
+                    if ($booking['tour_id'] == $payment['tour_id']) {
+                        $user_bookings[$booking_id]['status'] = 'paid';
+                        $user_bookings[$booking_id]['payment_id'] = $txn_id;
+                        $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
+                        break;
+                    }
+                }
+                update_user_meta($payment['user_id'], 'atlas_bookings', $user_bookings);
+            }
+            
+            return array(
+                'txn_id' => $txn_id,
+                'result' => 0,
+                'comment' => 'Платеж успешно обработан'
+            );
+        }
+    }
+    
+    return array(
+        'txn_id' => $txn_id,
+        'result' => 1,
+        'comment' => 'Ошибка обработки платежа'
+    );
+}
+
+function atlas_create_kaspi_payment($request) {
+    $params = $request->get_params();
+    $order_id = sanitize_text_field($params['order_id'] ?? '');
+    $amount = intval($params['amount'] ?? 0);
+    $tour_id = intval($params['tour_id'] ?? 0);
+    $user_id = intval($params['user_id'] ?? 0);
+    
+    if (empty($order_id) || $amount <= 0 || $tour_id <= 0 || $user_id <= 0) {
+        return new WP_Error('invalid_params', 'Invalid parameters', array('status' => 400));
+    }
+    
+    $tran_id = 'KSP' . uniqid();
+    
+    $payment_data = array(
+        'tran_id' => $tran_id,
+        'order_id' => $order_id,
+        'amount' => $amount,
+        'tour_id' => $tour_id,
+        'user_id' => $user_id,
+        'status' => 'pending',
+        'created_at' => current_time('mysql')
+    );
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    $payments[$tran_id] = $payment_data;
+    update_option('atlas_kaspi_payments', $payments);
+    
+    return array(
+        'success' => true,
+        'tran_id' => $tran_id,
+        'order_id' => $order_id,
+        'amount' => $amount,
+        'payment_data' => $payment_data
+    );
+}
+
+function atlas_get_kaspi_payment_status($request) {
+    $params = $request->get_params();
+    $tran_id = sanitize_text_field($params['tran_id'] ?? '');
+    $order_id = sanitize_text_field($params['order_id'] ?? '');
+    
+    if (empty($tran_id) && empty($order_id)) {
+        return new WP_Error('missing_params', 'Transaction ID or Order ID is required', array('status' => 400));
+    }
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    
+    if (!empty($tran_id)) {
+        if (!isset($payments[$tran_id])) {
+            return new WP_Error('payment_not_found', 'Payment not found', array('status' => 404));
+        }
+        $payment = $payments[$tran_id];
+    } else {
+        $payment = null;
+        foreach ($payments as $tran_id_key => $payment_data) {
+            if ($payment_data['order_id'] === $order_id) {
+                $payment = $payment_data;
+                break;
+            }
+        }
+        
+        if (!$payment) {
+            return new WP_Error('payment_not_found', 'Payment not found', array('status' => 404));
+        }
+    }
+    
+    return array(
+        'success' => true,
+        'payment' => $payment
+    );
+}
+
+function atlas_process_kaspi_webhook($request) {
+    $params = $request->get_params();
+    $tran_id = sanitize_text_field($params['TranId'] ?? '');
+    $order_id = sanitize_text_field($params['OrderId'] ?? '');
+    $amount = intval($params['Amount'] ?? 0);
+    $status = sanitize_text_field($params['Status'] ?? '');
+    
+    if (empty($tran_id) || empty($order_id)) {
+        return new WP_Error('invalid_webhook', 'Invalid webhook data', array('status' => 400));
+    }
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    if (!isset($payments[$tran_id])) {
+        return new WP_Error('payment_not_found', 'Payment not found', array('status' => 404));
+    }
+    
+    $payment = $payments[$tran_id];
+    
+    if ($status === 'success' || $status === 'completed') {
+        $payment['status'] = 'completed';
+        $payment['completed_at'] = current_time('mysql');
+        
+        $user_bookings = get_user_meta($payment['user_id'], 'atlas_bookings', true);
+        if (is_array($user_bookings)) {
+            foreach ($user_bookings as $booking_id => $booking) {
+                if ($booking['tour_id'] == $payment['tour_id']) {
+                    $user_bookings[$booking_id]['status'] = 'paid';
+                    $user_bookings[$booking_id]['payment_id'] = $tran_id;
+                    $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
+                    break;
+                }
+            }
+            update_user_meta($payment['user_id'], 'atlas_bookings', $user_bookings);
+        }
+    } else {
+        $payment['status'] = 'failed';
+        $payment['failed_at'] = current_time('mysql');
+    }
+    
+    $payments[$tran_id] = $payment;
+    update_option('atlas_kaspi_payments', $payments);
+    
+    return array(
+        'success' => true,
+        'message' => 'Webhook processed successfully'
+    );
+}
+
+add_action('rest_api_init', function() {
+    register_rest_route('atlas-hajj/v1', '/kaspi/webhook', array(
+        'methods' => 'POST',
+        'callback' => 'atlas_process_kaspi_webhook',
+        'permission_callback' => '__return_true'
+    ));
+});
 

@@ -1,0 +1,176 @@
+.page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.main {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.content {
+  background: white;
+  border-radius: 16px;
+  padding: 40px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.successCard,
+.pendingCard,
+.errorCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.successIcon,
+.pendingIcon,
+.errorIcon {
+  margin-bottom: 10px;
+}
+
+.successCard h1,
+.pendingCard h1,
+.errorCard h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.successCard p,
+.pendingCard p,
+.errorCard p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.paymentDetails {
+  width: 100%;
+  max-width: 400px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detailItem:last-child {
+  border-bottom: none;
+}
+
+.detailItem span:first-child {
+  font-weight: 500;
+  color: #666;
+}
+
+.detailItem span:last-child {
+  font-weight: 600;
+  color: #333;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 20px;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.primaryButton {
+  background: #007bff;
+  color: white;
+}
+
+.primaryButton:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  background: transparent;
+  color: #007bff;
+  border: 2px solid #007bff;
+}
+
+.secondaryButton:hover {
+  background: #007bff;
+  color: white;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+  
+  .content {
+    padding: 30px 16px;
+  }
+  
+  .successCard h1,
+  .pendingCard h1,
+  .errorCard h1 {
+    font-size: 24px;
+  }
+  
+  .actions {
+    max-width: 100%;
+  }
+}
+

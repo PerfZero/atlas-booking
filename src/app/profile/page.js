@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+ 
 import { useAuth } from "../../contexts/AuthContext";
 import { getProfile, updateProfile, getMyBookings } from "../../lib/wordpress-api";
 import HeaderProfile from "../components/HeaderProfile";
@@ -18,6 +19,8 @@ export default function ProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [hasLoadedBookings, setHasLoadedBookings] = useState(false);
+  const hasLoadedProfileRef = useRef(false);
   const [profileUpdated, setProfileUpdated] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -31,15 +34,128 @@ export default function ProfilePage() {
     passportExpiryDate: ""
   });
 
-  // Загружаем профиль пользователя
-  useEffect(() => {
-    if (isAuthenticated && user?.token) {
-      loadProfile();
-      loadBookings();
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("ru-RU");
+    } catch {
+      return dateStr;
     }
-  }, [isAuthenticated, user, loadProfile, loadBookings]);
+  };
 
-  // Перенаправляем на главную если не авторизован
+  const handleDownloadVoucher = (booking) => {
+    const norm = (v) => (v == null ? '' : String(v));
+    const extractStrings = (val) => {
+      const out = [];
+      const visit = (v) => {
+        if (v == null) return;
+        if (typeof v === 'string') {
+          const s = v.trim();
+          if (s && !s.startsWith('http') && !s.endsWith('.svg') && !s.endsWith('.png')) out.push(s);
+          return;
+        }
+        if (typeof v === 'number' || typeof v === 'boolean') { out.push(String(v)); return; }
+        if (Array.isArray(v)) { v.forEach(visit); return; }
+        if (typeof v === 'object') {
+          const preferred = ['label','name','title','text','value','rendered','description','ru','kz','en'];
+          for (const k of preferred) {
+            if (v[k] != null) visit(v[k]);
+          }
+          Object.entries(v).forEach(([k, vv]) => {
+            if (preferred.includes(k)) return;
+            if (['icon','image','url','src'].includes(k)) return;
+            visit(vv);
+          });
+        }
+      };
+      visit(val);
+      return out;
+    };
+    const tourists = Array.isArray(booking.tour_data?.tourists) ? booking.tour_data.tourists : [];
+    const features = [];
+
+    const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8" />
+    <title>Ваучер</title>
+    <style>
+      :root { --primary:#253168; --text:#111; --muted:#667085; --border:#E4E7EC; }
+      * { box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; color:var(--text); padding:0; background:#fff; }
+      .voucher { width:100%; margin:0; background:#fff; overflow:hidden; }
+      .header { background:var(--primary); color:#fff; padding:18px 18px 12px; }
+      .header h1 { margin:0; font-size:22px; font-weight:600; letter-spacing:0.2px; }
+      .content { padding:24px 28px; }
+      .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; }
+      .row { margin:6px 0; }
+      .muted { color:var(--muted); }
+      .badge { display:inline-block; padding:6px 10px; border-radius:999px; background:#f1f2f7; color:var(--primary); font-weight:600; font-size:12px; }
+      .section { border:1px solid var(--border); border-radius:12px; padding:16px; margin:16px 0; }
+      .section h2 { margin:0 0 10px; font-size:16px; font-weight:600; color:#0f172a; }
+      .two { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
+    </style></head><body>
+      <div class="voucher">
+        <div class="header"><h1>Atlas Tourism — Ваучер бронирования</h1></div>
+        <div class="content">
+          <div class="grid">
+            <div class="row">Номер брони: <strong>${norm(booking.booking_id)}</strong></div>
+            <div class="row">Статус: <span class="badge">${booking.status === 'paid' ? 'Оплачено' : 'Ожидает оплаты'}</span></div>
+          </div>
+
+      <div class="section">
+        <h2>Данные тура</h2>
+        <div class="two">
+          <div>Тур: <strong>${norm(booking.tour_title || booking.tour_data?.name)}</strong></div>
+          <div>Пакет: <span class="muted">${norm(booking.tour_data?.packageName || 'Турпакет')}</span></div>
+          
+          <div>Длительность: <span class="muted">${norm(booking.tour_data?.duration)}</span></div>
+          <div>Даты: <span class="muted">${formatDate(booking.tour_data?.flightOutboundDate || booking.tour_data?.date)} — ${formatDate(booking.tour_data?.flightInboundDate || booking.tour_data?.endDate)}</span></div>
+          ${booking.tour_data?.flightOutboundTime || booking.tour_data?.flightInboundTime ? `<div>Время вылета: <span class="muted">${norm(booking.tour_data?.flightOutboundTime)}</span></div><div>Время прилета: <span class="muted">${norm(booking.tour_data?.flightInboundTime)}</span></div>` : ''}
+          ${booking.tour_data?.hotel_mekka || booking.tour_data?.hotel_medina ? `<div>Отель в Мекке: <span class="muted">${norm(booking.tour_data?.hotel_mekka)}</span></div><div>Отель в Медине: <span class="muted">${norm(booking.tour_data?.hotel_medina)}</span></div>` : ''}
+          <div>Цена: <strong>$${norm(booking.tour_price)}</strong></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Туристы</h2>
+        ${tourists.map((t, idx) => `
+          <div class="two">
+            <div><strong>${idx+1}. ${norm(t.firstName)} ${norm(t.lastName)}</strong></div>
+            <div>Тип: <span class="muted">${t.type === 'adult' ? 'Взрослый' : t.type === 'child' ? 'Ребенок' : 'Младенец'}</span></div>
+            <div>Дата рождения: <span class="muted">${norm(t.birthDate)}</span></div>
+            <div>Пол: <span class="muted">${t.gender === 'male' ? 'Мужской' : t.gender === 'female' ? 'Женский' : ''}</span></div>
+            <div>ИИН: <span class="muted">${norm(t.iin)}</span></div>
+            <div>Паспорт: <span class="muted">${norm(t.passportNumber)}</span></div>
+            ${t.phone ? `<div>Телефон: <span class="muted">${norm(t.phone)}</span></div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section">
+        <h2>Условия</h2>
+        <ul>
+          <li>Ваучер подтверждает факт бронирования турпакета.</li>
+          <li>Для вылета необходим действующий загранпаспорт и виза (если требуется).</li>
+          <li>Подробности маршрута и отелей уточняйте у менеджера.</li>
+        </ul>
+      </div>
+        </div>
+      </div>
+    </body></html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => {
+      try { w.print(); } catch (_) {}
+    }, 300);
+  };
+
+  
+
+  // Перенаправляем на главную если не авторизован (после маунта)
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/');
@@ -65,13 +181,6 @@ export default function ProfilePage() {
           passportExpiryDate: result.profile.passport_expiry_date || ""
         };
         
-        // Проверяем, изменились ли данные
-        const hasChanges = JSON.stringify(newFormData) !== JSON.stringify(formData);
-        if (hasChanges && Object.values(formData).some(val => val !== "")) {
-          setProfileUpdated(true);
-          setTimeout(() => setProfileUpdated(false), 5000);
-        }
-        
         setFormData(newFormData);
       }
     } catch (error) {
@@ -79,7 +188,7 @@ export default function ProfilePage() {
     } finally {
       setProfileLoading(false);
     }
-  }, [user?.token, formData]);
+  }, [user?.token]);
 
   const loadBookings = useCallback(async () => {
     if (!user?.token) return;
@@ -90,20 +199,37 @@ export default function ProfilePage() {
       if (result.success && result.bookings) {
         console.log('Загруженные бронирования:', result.bookings);
         setBookings(result.bookings);
-        
-        // Если есть новые бронирования, перезагружаем профиль
-        if (result.bookings.length > 0) {
-          loadProfile();
-        }
       }
     } catch (error) {
       console.error('Ошибка загрузки бронирований:', error);
     } finally {
       setBookingsLoading(false);
     }
-  }, [user?.token, loadProfile]);
+  }, [user?.token]);
+
+  // Загружаем профиль пользователя (один раз за маунт)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.token) return;
+    if (hasLoadedProfileRef.current) return;
+    hasLoadedProfileRef.current = true;
+    loadProfile();
+  }, [isAuthenticated, user?.token]);
 
   useEffect(() => {
+    if (
+      activeTab === 'booked-tours' &&
+      isAuthenticated &&
+      user?.token &&
+      !bookingsLoading &&
+      !hasLoadedBookings
+    ) {
+      loadBookings();
+      setHasLoadedBookings(true);
+    }
+  }, [activeTab, isAuthenticated, user?.token, bookingsLoading, hasLoadedBookings]);
+
+  useEffect(() => {
+    if (activeTab !== 'pending-payment') return;
     const interval = setInterval(() => {
       setTimer1(prev => {
         if (prev.seconds > 0) {
@@ -125,7 +251,7 @@ export default function ProfilePage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -169,7 +295,6 @@ export default function ProfilePage() {
 
   // Перенаправляем если не авторизован
   if (!isAuthenticated) {
-    router.push('/');
     return <div>Перенаправление...</div>;
   }
 
@@ -447,7 +572,7 @@ export default function ProfilePage() {
                           >
                             Посмотреть тур
                           </button>
-                          <button className={styles.downloadVoucherBtn}>
+                          <button className={styles.downloadVoucherBtn} onClick={() => handleDownloadVoucher(booking)}>
                             Скачать ваучер
                           </button>
                         </div>

@@ -252,14 +252,39 @@ function BookingPageContent() {
       const result = await bookTour(token, tourData.id, tourDataForBooking);
       
       if (result.success) {
-        alert('Тур успешно забронирован! Ваш профиль был обновлен данными первого туриста.');
-        router.push('/profile');
+        const orderId = result.booking_id;
+        const amount = Math.round(tourData.priceValue * 547);
+        const tourId = tourData.id;
+        const userId = JSON.parse(localStorage.getItem('atlas_user')).id;
+
+        const paymentResponse = await fetch('/api/kaspi/create-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            amount: amount,
+            tour_id: tourId,
+            user_id: userId
+          })
+        });
+
+        const paymentData = await paymentResponse.json();
+
+        if (!paymentResponse.ok) {
+          throw new Error(paymentData.message || 'Ошибка создания платежа');
+        }
+
+        const kaspiUrl = `https://kaspi.kz/online?TranId=${paymentData.tran_id}&OrderId=${orderId}&Amount=${amount * 100}&Service=AtlasBooking&returnUrl=${encodeURIComponent(window.location.origin + '/kaspi-payment-success/?order_id=' + orderId)}`;
+        
+        window.location.href = kaspiUrl;
       } else {
         alert('Ошибка при бронировании тура: ' + (result.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
       console.error('Ошибка при бронировании:', error);
-      alert('Ошибка при бронировании тура');
+      alert('Ошибка при бронировании тура: ' + error.message);
     }
   };
 
