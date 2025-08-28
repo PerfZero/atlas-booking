@@ -264,7 +264,7 @@ function BookingPageContent() {
         };
         
         console.log('Отправляем запрос на создание платежа:', paymentRequestData);
-        const paymentResponse = await fetch('https://api.booking.atlas.kz/wp-json/atlas-hajj/v1/kaspi/create-payment', {
+        const paymentResponse = await fetch('https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/create-payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

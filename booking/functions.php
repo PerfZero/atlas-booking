@@ -683,19 +683,19 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true'
     ));
     
-    register_rest_route('atlas-hajj/v1', '/kaspi/create-payment', array(
+    register_rest_route('atlas/v1', '/kaspi/create-payment', array(
         'methods' => 'POST',
         'callback' => 'atlas_create_kaspi_payment',
         'permission_callback' => '__return_true'
     ));
     
-    register_rest_route('atlas-hajj/v1', '/kaspi/payment-status', array(
+    register_rest_route('atlas/v1', '/kaspi/payment-status', array(
         'methods' => 'GET',
         'callback' => 'atlas_get_kaspi_payment_status',
         'permission_callback' => '__return_true'
     ));
     
-    register_rest_route('atlas-hajj/v1', '/kaspi/test-payment', array(
+    register_rest_route('atlas/v1', '/kaspi/test-payment', array(
         'methods' => 'POST',
         'callback' => 'atlas_test_kaspi_payment',
         'permission_callback' => '__return_true'
@@ -2165,13 +2165,13 @@ function atlas_process_kaspi_webhook($request) {
 }
 
 add_action('rest_api_init', function() {
-    register_rest_route('atlas-hajj/v1', '/kaspi/webhook', array(
+    register_rest_route('atlas/v1', '/kaspi/webhook', array(
         'methods' => 'POST',
         'callback' => 'atlas_process_kaspi_webhook',
         'permission_callback' => '__return_true'
     ));
     
-    register_rest_route('atlas-hajj/v1', '/kaspi/test', array(
+    register_rest_route('atlas/v1', '/kaspi/test', array(
         'methods' => 'GET',
         'callback' => 'atlas_kaspi_test_page',
         'permission_callback' => '__return_true'

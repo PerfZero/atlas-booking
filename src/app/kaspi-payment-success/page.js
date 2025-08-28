@@ -25,7 +25,7 @@ function KaspiPaymentSuccessContent() {
 
   const checkPaymentStatus = async (orderId) => {
     try {
-      const response = await fetch(`https://booking.devdenis.ru/wp-json/atlas-hajj/v1/kaspi/payment-status?order_id=${orderId}`);
+              const response = await fetch(`https://booking.devdenis.ru/wp-json/atlas/v1/kaspi/payment-status?order_id=${orderId}`);
       const data = await response.json();
 
       if (response.ok && data.success) {
