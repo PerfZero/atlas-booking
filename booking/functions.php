@@ -694,6 +694,12 @@ add_action('rest_api_init', function() {
         'callback' => 'atlas_get_kaspi_payment_status',
         'permission_callback' => '__return_true'
     ));
+    
+    register_rest_route('atlas-hajj/v1', '/kaspi/test-payment', array(
+        'methods' => 'POST',
+        'callback' => 'atlas_test_kaspi_payment',
+        'permission_callback' => '__return_true'
+    ));
 });
 
 function atlas_send_sms($request) {
@@ -1648,24 +1654,38 @@ function atlas_kaspi_check_payment($params) {
     $account = sanitize_text_field($params['account'] ?? '');
     $sum = floatval($params['sum'] ?? 0);
     
+    error_log('=== atlas_kaspi_check_payment called ===');
+    error_log('Check params: txn_id=' . $txn_id . ', account=' . $account . ', sum=' . $sum);
+    
     if (empty($txn_id) || empty($account) || $sum <= 0) {
+        error_log('Invalid parameters for check');
         return new WP_Error('invalid_params', 'Invalid parameters for check', array('status' => 400));
     }
     
     $payments = get_option('atlas_kaspi_payments', array());
+    error_log('All payments: ' . print_r($payments, true));
     
     if (isset($payments[$txn_id])) {
         $payment = $payments[$txn_id];
+        error_log('Found payment: ' . print_r($payment, true));
+        error_log('Comparing: order_id=' . $payment['order_id'] . ' vs account=' . $account . ', amount=' . $payment['amount'] . ' vs sum=' . $sum);
+        
         if ($payment['order_id'] === $account && $payment['amount'] == $sum) {
+            error_log('Payment validation successful');
             return array(
                 'txn_id' => $txn_id,
                 'result' => 0,
                 'comment' => 'Заказ найден и доступен для оплаты',
                 'sum' => $payment['amount']
             );
+        } else {
+            error_log('Payment validation failed: order_id mismatch or amount mismatch');
         }
+    } else {
+        error_log('Payment not found for txn_id: ' . $txn_id);
     }
     
+    error_log('Returning error response');
     return array(
         'txn_id' => $txn_id,
         'result' => 1,
@@ -1679,14 +1699,22 @@ function atlas_kaspi_process_payment($params) {
     $sum = floatval($params['sum'] ?? 0);
     $txn_date = sanitize_text_field($params['txn_date'] ?? '');
     
+    error_log('=== atlas_kaspi_process_payment called ===');
+    error_log('Process params: txn_id=' . $txn_id . ', account=' . $account . ', sum=' . $sum . ', txn_date=' . $txn_date);
+    
     if (empty($txn_id) || empty($account) || $sum <= 0) {
+        error_log('Invalid parameters for payment');
         return new WP_Error('invalid_params', 'Invalid parameters for payment', array('status' => 400));
     }
     
     $payments = get_option('atlas_kaspi_payments', array());
+    error_log('All payments in process: ' . print_r($payments, true));
     
     if (isset($payments[$txn_id])) {
         $payment = $payments[$txn_id];
+        error_log('Found payment in process: ' . print_r($payment, true));
+        error_log('Comparing in process: order_id=' . $payment['order_id'] . ' vs account=' . $account . ', amount=' . $payment['amount'] . ' vs sum=' . $sum);
+        
         if ($payment['order_id'] === $account && $payment['amount'] == $sum) {
             $payment['status'] = 'completed';
             $payment['completed_at'] = current_time('mysql');
@@ -1695,6 +1723,8 @@ function atlas_kaspi_process_payment($params) {
             $payments[$txn_id] = $payment;
             update_option('atlas_kaspi_payments', $payments);
             
+            error_log('Payment marked as completed');
+            
             $user_bookings = get_user_meta($payment['user_id'], 'atlas_bookings', true);
             if (is_array($user_bookings)) {
                 foreach ($user_bookings as $booking_id => $booking) {
@@ -1702,20 +1732,27 @@ function atlas_kaspi_process_payment($params) {
                         $user_bookings[$booking_id]['status'] = 'paid';
                         $user_bookings[$booking_id]['payment_id'] = $txn_id;
                         $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
+                        error_log('User booking updated: ' . print_r($user_bookings[$booking_id], true));
                         break;
                     }
                 }
                 update_user_meta($payment['user_id'], 'atlas_bookings', $user_bookings);
             }
             
+            error_log('Payment processed successfully');
             return array(
                 'txn_id' => $txn_id,
                 'result' => 0,
                 'comment' => 'Платеж успешно обработан'
             );
+        } else {
+            error_log('Payment validation failed in process: order_id mismatch or amount mismatch');
         }
+    } else {
+        error_log('Payment not found in process for txn_id: ' . $txn_id);
     }
     
+    error_log('Payment processing failed');
     return array(
         'txn_id' => $txn_id,
         'result' => 1,
@@ -1931,6 +1968,9 @@ function atlas_create_kaspi_payment($request) {
     $payments[$tran_id] = $payment_data;
     update_option('atlas_kaspi_payments', $payments);
     
+    error_log('Payment saved to database: ' . print_r($payment_data, true));
+    error_log('All payments after save: ' . print_r($payments, true));
+    
     // Делаем POST запрос к Kaspi для получения URL оплаты (JSON формат)
     error_log('Making POST request to Kaspi for payment URL');
     
@@ -1944,7 +1984,7 @@ function atlas_create_kaspi_payment($request) {
         'Service' => 'AtlasBooking',
         'returnUrl' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount,
         'refererHost' => 'api.booking.atlas.kz',
-        'GenerateQrCode' => true
+        'GenerateQrCode' => false
     );
     
     error_log('Kaspi request data: ' . print_r($kaspi_data, true));
@@ -2003,6 +2043,41 @@ function atlas_create_kaspi_payment($request) {
         error_log('Kaspi response headers: ' . print_r(wp_remote_retrieve_headers($response), true));
         return new WP_Error('kaspi_error', 'Failed to get payment URL from Kaspi (HTTP ' . $response_code . ')', array('status' => 500));
     }
+}
+
+function atlas_test_kaspi_payment($request) {
+    error_log('=== atlas_test_kaspi_payment called ===');
+    
+    $tran_id = 'KSP' . uniqid();
+    $order_id = 'test_' . time();
+    $amount = 1000;
+    
+    error_log('Creating test payment: txn_id=' . $tran_id . ', order_id=' . $order_id . ', amount=' . $amount);
+    
+    $payment_data = array(
+        'tran_id' => $tran_id,
+        'order_id' => $order_id,
+        'amount' => $amount,
+        'tour_id' => 1,
+        'user_id' => 1,
+        'status' => 'pending',
+        'created_at' => current_time('mysql')
+    );
+    
+    $payments = get_option('atlas_kaspi_payments', array());
+    $payments[$tran_id] = $payment_data;
+    update_option('atlas_kaspi_payments', $payments);
+    
+    error_log('Test payment saved: ' . print_r($payment_data, true));
+    
+    $check_url = 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=check&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount;
+    
+    return array(
+        'success' => true,
+        'test_payment' => $payment_data,
+        'check_url' => $check_url,
+        'message' => 'Тестовый платеж создан. Используйте check_url для проверки.'
+    );
 }
 
 function atlas_get_kaspi_payment_status($request) {
