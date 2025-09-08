@@ -191,11 +191,27 @@ export default function DatePicker({
           </button>
         </div>
 
-      <div className={styles.calendars}>
+        <div className={styles.dateInputs}>
+          <div className={styles.dateInput}>
+            <span className={styles.planeIcon}>✈</span>
+            <span className={styles.dateText}>
+              {startDate ? formatDate(startDate) : '--- ---'}
+            </span>
+          </div>
+          <span className={styles.separator}>-</span>
+          <div className={styles.dateInput}>
+            <span className={styles.planeIcon}>✈</span>
+            <span className={styles.dateText}>
+              {endDate ? formatDate(endDate) : '--- ---'}
+            </span>
+          </div>
+        </div>
+
         <div className={styles.calendar}>
           <div className={styles.calendarHeader}>
             <button onClick={(e) => prevMonth(e)} className={styles.navButton}>‹</button>
             <h3>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h3>
+            <button onClick={(e) => nextMonth(e)} className={styles.navButton}>›</button>
           </div>
           <div className={styles.weekdays}>
             <span>ПН</span>
@@ -228,44 +244,6 @@ export default function DatePicker({
             ))}
           </div>
         </div>
-
-        <div className={styles.calendar}>
-          <div className={styles.calendarHeader}>
-            <h3>{monthNames[nextMonthDate.getMonth()]} {nextMonthDate.getFullYear()}</h3>
-            <button onClick={(e) => nextMonth(e)} className={styles.navButton}>›</button>
-          </div>
-          <div className={styles.weekdays}>
-            <span>ПН</span>
-            <span>ВТ</span>
-            <span>СР</span>
-            <span>ЧТ</span>
-            <span>ПТ</span>
-            <span>СБ</span>
-            <span>ВС</span>
-          </div>
-          <div className={styles.days}>
-            {getDaysInMonth(nextMonthDate).map((date, index) => (
-              <button
-                key={index}
-                className={`
-                  ${styles.day}
-                  ${!date ? styles.empty : ''}
-                  ${date && isDateDisabled(date) ? styles.disabled : ''}
-                  ${date && isDateSelected(date) ? styles.selected : ''}
-                  ${date && isDateInRange(date) ? styles.inRange : ''}
-                  ${date && hoveredDate && startDate && !endDate && 
-                    date > startDate && date <= hoveredDate ? styles.hoverRange : ''}
-                `}
-                onClick={(e) => handleDateClick(date, e)}
-                onMouseEnter={() => handleDateHover(date)}
-                disabled={!date || isDateDisabled(date)}
-              >
-                {date ? date.getDate() : ''}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
         <div className={styles.footer}>
           <div className={styles.dateRange}>

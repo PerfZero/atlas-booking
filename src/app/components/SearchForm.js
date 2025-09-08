@@ -6,12 +6,12 @@ import DatePicker from './DatePicker';
 import styles from './SearchForm.module.css';
 import Toast from './Toast';
 
-function SearchFormWithParams({ className = '' }) {
+function SearchFormWithParams({ className = '', isHomePage = false }) {
   const searchParams = useSearchParams();
-  return <SearchForm searchParams={searchParams} className={className} />;
+  return <SearchForm searchParams={searchParams} className={className} isHomePage={isHomePage} />;
 }
 
-function SearchForm({ searchParams, className = '' }) {
+function SearchForm({ searchParams, className = '', isHomePage = false }) {
   const router = useRouter();
   const datePickerRef = useRef(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -182,7 +182,7 @@ function SearchForm({ searchParams, className = '' }) {
 
   return (
     <>
-      {showResults && (
+      {showResults && !isHomePage && (
         <div 
           className={`${styles.searchResults} ${className}`}
           onClick={() => router.push('/')}

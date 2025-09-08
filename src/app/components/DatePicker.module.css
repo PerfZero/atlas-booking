@@ -91,6 +91,30 @@
     color: #252b37;
 }
 
+.dateInputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dateInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  flex: 1;
+}
+
+.dateText {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
 
 
 .calendars {
@@ -292,15 +316,21 @@
   .dropdown {
     padding: 0;
     position: fixed;
-    top: 0;
+    top: 10%;
     left: 0;
     right: 0;
+    box-shadow: 0 4px 40px 0 rgba(0, 0, 0, 0.15);
+background: #fff;
+border: 1px solid #e9eaeb;
+border-radius: 16px !important;
+overflow: hidden;
     bottom: 0;
-    width: 100%;
-    height: 100vh;
+    width: 80%;
+    height:max-content;
     max-width: none;
     max-height: none;
     overflow-y: auto;
+    margin: 0 auto;
     border-radius: 0;
     box-shadow: none;
     transform: none !important;
@@ -321,6 +351,20 @@
     font-size: 16px;
   }
   
+  .dateInputs {
+    margin: 20px;
+    margin-bottom: 16px;
+  }
+
+  .dateInput {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .dateText {
+    font-size: 16px;
+  }
+
   .calendars {
     flex-direction: column;
     gap: 0;
@@ -329,7 +373,8 @@
   }
   
   .calendar {
-    flex: 1;
+    flex: none;
+    padding: 0 20px  0;
     margin-bottom: 20px;
   }
   
@@ -358,6 +403,7 @@
   
   .days {
     gap: 4px;
+    
   }
   
   .day {
@@ -369,10 +415,9 @@
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
-    padding: 20px;
-    border-top: 1px solid #e5e7eb;
+    padding: 0 20px 20px;
+    border-top:none;
     background: white;
-    margin-top: auto;
   }
   
   .dateRange {
@@ -407,6 +452,20 @@
     padding: 14px 16px;
     font-size: 15px;
   }
+
+  .dateInputs {
+    margin: 16px;
+    margin-bottom: 12px;
+  }
+
+  .dateInput {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .dateText {
+    font-size: 15px;
+  }
   
   .calendars {
     padding: 16px;
@@ -428,7 +487,8 @@
   
   .day {
     font-size: 14px;
-    min-height: 36px;
+    
+    min-height: 30px;
   }
   
   .buttons {

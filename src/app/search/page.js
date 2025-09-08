@@ -91,7 +91,7 @@ function SearchPageContent({ searchParams }) {
             
             <div className={styles.searchFormWrapper}>
               <Suspense fallback={<div>Loading...</div>}>
-                <SearchForm className={styles.searchForm} />
+                <SearchForm className={styles.searchForm} isHomePage={false} />
               </Suspense>
             </div>
           </div>

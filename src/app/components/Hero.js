@@ -24,7 +24,7 @@ export default function Hero() {
         
         <div className={styles.formContainer}>
           <Suspense fallback={<Loading size="small" />}>
-            <SearchForm />
+            <SearchForm isHomePage={true} />
           </Suspense>
         </div>
       </div>
