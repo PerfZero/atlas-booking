@@ -166,7 +166,15 @@ export default function TourDetailPage({ params }) {
             </div>
 
             <div className={styles.searchFormWrapper}>
-              <SearchForm />
+              <SearchForm 
+                searchParams={new URLSearchParams({
+                  departureCity: tour.departure_city || 'almaty',
+                  travelDate: 'custom',
+                  pilgrimageType: tour.pilgrimage_type || 'umrah',
+                  startDate: tour.tour_start_date || '2025-10-01',
+                  endDate: tour.tour_end_date || '2025-10-07'
+                })}
+              />
             </div>
           </div>
 

@@ -12,6 +12,7 @@ import SearchFilters from '../components/SearchFilters';
 import MobileFilters from '../components/MobileFilters';
 import CustomSortSelect from '../components/CustomSortSelect';
 import BottomNavigation from '../components/BottomNavigation';
+import MobileSort from '../components/MobileSort';
 
 function SearchPageWithParams() {
   const searchParams = useSearchParams();
@@ -33,6 +34,7 @@ function SearchPageContent({ searchParams }) {
   const [foodTypes, setFoodTypes] = useState({ noFood: false, breakfast: false, halfBoard: false, allInclusive: true });
   const [transferTypes, setTransferTypes] = useState({ bus: true, train: false, gmc: false });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileSortOpen, setMobileSortOpen] = useState(false);
 
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
@@ -125,13 +127,22 @@ function SearchPageContent({ searchParams }) {
                 <div className={styles.resultsHeader}>
                   <div className={styles.resultsHeaderTop}>
                     <h3 className={styles.resultsTitle}>Результаты поиска. Найдено {filteredResults.length} варианта</h3>
-                    <button 
-                      className={styles.mobileFiltersButton}
-                      onClick={() => setMobileFiltersOpen(true)}
-                    >
-                      <img src="/sort.svg" alt="Фильтры" />
-                      Фильтры
-                    </button>
+                    <div className={styles.mobileButtons}>
+                      <button 
+                        className={styles.mobileSortButton}
+                        onClick={() => setMobileSortOpen(true)}
+                      >
+                        <img src="/sort.svg" alt="Сортировка" />
+                        Сортировка
+                      </button>
+                      <button 
+                        className={styles.mobileFiltersButton}
+                        onClick={() => setMobileFiltersOpen(true)}
+                      >
+                        <img src="/sort.svg" alt="Фильтры" />
+                        Фильтры
+                      </button>
+                    </div>
                   </div>
                   <div className={styles.sortWrapper}>
                     <CustomSortSelect
@@ -154,7 +165,11 @@ function SearchPageContent({ searchParams }) {
                     </div>
                   ) : filteredResults.length > 0 ? (
                     filteredResults.map((tour) => (
-                      <TourCard key={tour.id} tour={tour} />
+                      <TourCard 
+                        key={tour.id} 
+                        tour={tour} 
+                        searchParams={searchParams}
+                      />
                     ))
                   ) : (
                     <div className={styles.noResults}>
@@ -197,6 +212,19 @@ function SearchPageContent({ searchParams }) {
           setMobileFiltersOpen(false);
           loadTours();
         }}
+      />
+      
+      <MobileSort
+        isOpen={mobileSortOpen}
+        onClose={() => setMobileSortOpen(false)}
+        value={sortBy}
+        onChange={setSortBy}
+        options={[
+          { value: 'popular', label: 'Сортировка не выбрана' },
+          { value: 'price-low', label: 'По цене (сначала дешевые)' },
+          { value: 'price-high', label: 'По цене (сначала дорогие)' },
+          { value: 'rating', label: 'По рейтингу' }
+        ]}
       />
     </div>
   );

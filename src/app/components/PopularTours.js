@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { getTours } from '../../lib/wordpress-api';
 import styles from './PopularTours.module.css';
 
@@ -9,6 +10,7 @@ export default function PopularTours() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const loadTours = async () => {
@@ -29,6 +31,13 @@ export default function PopularTours() {
 
     loadTours();
   }, []);
+
+  const getTourUrl = (tourSlug) => {
+    if (searchParams && searchParams.toString()) {
+      return `/tour/${tourSlug}?${searchParams.toString()}`;
+    }
+    return `/tour/${tourSlug}`;
+  };
 
   if (loading) {
     return (
@@ -77,7 +86,7 @@ export default function PopularTours() {
         <div className={styles.cards}>
           {tours.map((tour) => (
             <div key={tour.id} className={styles.card}>
-              <Link href={`/tour/${tour.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link href={getTourUrl(tour.slug)} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.imageContainer}>
                   <Image 
                     src={tour.featured_image || '/tour_1.png'} 

@@ -62,17 +62,26 @@
   }
   
   .container {
-    padding: 0 0;
+    padding: 0 20px;
   }
   
   .title {
     font-size: 24px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+  }
+
+  .statBlock{
+    width: 100%;
+    max-width: 310px;
+    padding: 0;
+    align-items: center;
+    text-align: center;
   }
   
   .stats {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
+    justify-items: center;
   }
   
   .value {
@@ -81,5 +90,6 @@
   
   .description {
     font-size: 16px;
+    line-height: 1.193;
   }
 } 

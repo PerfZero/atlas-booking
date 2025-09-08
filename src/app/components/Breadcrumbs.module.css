@@ -30,4 +30,25 @@
 .breadcrumbText {
     font: 500 16px / 150% var(--font-primary);
     color: #333;
+}
+
+@media (max-width: 768px) {
+  .breadcrumbs {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    display: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .breadcrumbItem {
+    flex-shrink: 0;
+  }
+  
+  .separator,
+  .breadcrumbLink,
+  .breadcrumbText {
+    font-size: 14px;
+  }
 } 

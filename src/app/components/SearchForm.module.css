@@ -9,6 +9,37 @@
   width: 100%;
 }
 
+.searchResults {
+  display: none;
+  background: #F2F2F7;
+  border: 1px solid #E3E3E3;
+  border-radius: 16px;
+  padding: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+
+  cursor: pointer;
+}
+
+.resultsContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.resultItem {
+  font: 500 16px / 1.5 var(--font-primary);
+  color: #333333;
+}
+
+.resultSeparator {
+  font: 500 16px / 1.5 var(--font-primary);
+  color: #333333;
+}
+
 .searchBtn {
   background: #253168;
   color: white;
@@ -99,10 +130,36 @@
   .searchForm {
     padding: 24px;
     align-items: stretch;
+    border-radius: 20px;
+  }
+  
+  .searchResults {
+    display: flex;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .resultsContent {
+
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .resultSeparator {
+    display: none;
+  }
+  
+  .searchResults + .searchForm {
+    display: none;
   }
   
   .selectGroup label {
-    font-size: 20px;
+    font-size: 14px;
+  }
+
+  .selectGroup input {
+    font-size: 16px;
   }
   
   .select {

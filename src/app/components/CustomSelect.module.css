@@ -104,9 +104,7 @@
 }
 
 @media (max-width: 768px) {
-  .label {
-    font-size: 20px;
-  }
+
   
   .selectTrigger {
     padding: 10px 14px;
@@ -117,4 +115,9 @@
     padding: 10px 14px;
     font-size: 14px;
   }
+
+  .label{
+    font-size: 14px;
+  }
+
 } 

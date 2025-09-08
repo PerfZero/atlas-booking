@@ -1657,40 +1657,83 @@ function atlas_kaspi_check_payment($params) {
     error_log('=== atlas_kaspi_check_payment called ===');
     error_log('Check params: txn_id=' . $txn_id . ', account=' . $account . ', sum=' . $sum);
     
-    if (empty($txn_id) || empty($account) || $sum <= 0) {
+    // Проверяем тестовые заказы
+    if (strpos($account, 'ATLAS-TEST-') === 0) {
+        return atlas_kaspi_handle_test_order($account, $txn_id, 'check');
+    }
+    
+    if (empty($txn_id) || empty($account)) {
         error_log('Invalid parameters for check');
-        return new WP_Error('invalid_params', 'Invalid parameters for check', array('status' => 400));
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 1,
+            'comment' => 'Заказ не найден'
+        );
     }
     
     $payments = get_option('atlas_kaspi_payments', array());
     error_log('All payments: ' . print_r($payments, true));
     
+    // Ищем платеж по txn_id или account
+    $payment = null;
     if (isset($payments[$txn_id])) {
         $payment = $payments[$txn_id];
-        error_log('Found payment: ' . print_r($payment, true));
-        error_log('Comparing: order_id=' . $payment['order_id'] . ' vs account=' . $account . ', amount=' . $payment['amount'] . ' vs sum=' . $sum);
-        
-        if ($payment['order_id'] === $account && $payment['amount'] == $sum) {
-            error_log('Payment validation successful');
-            return array(
-                'txn_id' => $txn_id,
-                'result' => 0,
-                'comment' => 'Заказ найден и доступен для оплаты',
-                'sum' => $payment['amount']
-            );
-        } else {
-            error_log('Payment validation failed: order_id mismatch or amount mismatch');
-        }
     } else {
-        error_log('Payment not found for txn_id: ' . $txn_id);
+        // Ищем по account
+        foreach ($payments as $payment_data) {
+            if ($payment_data['order_id'] === $account) {
+                $payment = $payment_data;
+                break;
+            }
+        }
     }
     
-    error_log('Returning error response');
-    return array(
-        'txn_id' => $txn_id,
-        'result' => 1,
-        'comment' => 'Заказ не найден или недоступен для оплаты'
-    );
+    if ($payment) {
+        error_log('Found payment: ' . print_r($payment, true));
+        
+        // Проверяем статус платежа
+        $status = $payment['status'] ?? 'pending';
+        
+        switch ($status) {
+            case 'pending':
+                return array(
+                    'txn_id' => $txn_id,
+                    'result' => 0,
+                    'comment' => 'Заказ найден и доступен для оплаты'
+                );
+            case 'completed':
+                return array(
+                    'txn_id' => $txn_id,
+                    'result' => 3,
+                    'comment' => 'Заказ уже оплачен'
+                );
+            case 'cancelled':
+                return array(
+                    'txn_id' => $txn_id,
+                    'result' => 2,
+                    'comment' => 'Заказ отменен'
+                );
+            case 'processing':
+                return array(
+                    'txn_id' => $txn_id,
+                    'result' => 4,
+                    'comment' => 'Платеж в обработке'
+                );
+            default:
+                return array(
+                    'txn_id' => $txn_id,
+                    'result' => 5,
+                    'comment' => 'Другая ошибка провайдера'
+                );
+        }
+    } else {
+        error_log('Payment not found for txn_id: ' . $txn_id . ' or account: ' . $account);
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 1,
+            'comment' => 'Заказ не найден'
+        );
+    }
 }
 
 function atlas_kaspi_process_payment($params) {
@@ -1702,29 +1745,76 @@ function atlas_kaspi_process_payment($params) {
     error_log('=== atlas_kaspi_process_payment called ===');
     error_log('Process params: txn_id=' . $txn_id . ', account=' . $account . ', sum=' . $sum . ', txn_date=' . $txn_date);
     
+    // Проверяем тестовые заказы
+    if (strpos($account, 'ATLAS-TEST-') === 0) {
+        return atlas_kaspi_handle_test_order($account, $txn_id, 'pay', $sum, $txn_date);
+    }
+    
     if (empty($txn_id) || empty($account) || $sum <= 0) {
         error_log('Invalid parameters for payment');
-        return new WP_Error('invalid_params', 'Invalid parameters for payment', array('status' => 400));
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 1,
+            'comment' => 'Заказ не найден'
+        );
     }
     
     $payments = get_option('atlas_kaspi_payments', array());
     error_log('All payments in process: ' . print_r($payments, true));
     
+    // Ищем платеж по txn_id или account
+    $payment = null;
     if (isset($payments[$txn_id])) {
         $payment = $payments[$txn_id];
+    } else {
+        // Ищем по account
+        foreach ($payments as $payment_data) {
+            if ($payment_data['order_id'] === $account) {
+                $payment = $payment_data;
+                break;
+            }
+        }
+    }
+    
+    if ($payment) {
         error_log('Found payment in process: ' . print_r($payment, true));
-        error_log('Comparing in process: order_id=' . $payment['order_id'] . ' vs account=' . $account . ', amount=' . $payment['amount'] . ' vs sum=' . $sum);
         
-        if ($payment['order_id'] === $account && $payment['amount'] == $sum) {
-            $payment['status'] = 'completed';
-            $payment['completed_at'] = current_time('mysql');
-            $payment['kaspi_txn_date'] = $txn_date;
-            
-            $payments[$txn_id] = $payment;
-            update_option('atlas_kaspi_payments', $payments);
-            
-            error_log('Payment marked as completed');
-            
+        // Проверяем статус платежа
+        $status = $payment['status'] ?? 'pending';
+        
+        if ($status === 'completed') {
+            return array(
+                'txn_id' => $txn_id,
+                'result' => 3,
+                'comment' => 'Заказ уже оплачен'
+            );
+        } elseif ($status === 'cancelled') {
+            return array(
+                'txn_id' => $txn_id,
+                'result' => 2,
+                'comment' => 'Заказ отменен'
+            );
+        } elseif ($status === 'processing') {
+            return array(
+                'txn_id' => $txn_id,
+                'result' => 4,
+                'comment' => 'Платеж в обработке'
+            );
+        }
+        
+        // Обрабатываем платеж
+        $payment['status'] = 'completed';
+        $payment['completed_at'] = current_time('mysql');
+        $payment['kaspi_txn_date'] = $txn_date;
+        $payment['processed_amount'] = $sum;
+        
+        $payments[$txn_id] = $payment;
+        update_option('atlas_kaspi_payments', $payments);
+        
+        error_log('Payment marked as completed');
+        
+        // Обновляем бронирование пользователя
+        if (isset($payment['user_id']) && isset($payment['tour_id'])) {
             $user_bookings = get_user_meta($payment['user_id'], 'atlas_bookings', true);
             if (is_array($user_bookings)) {
                 foreach ($user_bookings as $booking_id => $booking) {
@@ -1738,25 +1828,103 @@ function atlas_kaspi_process_payment($params) {
                 }
                 update_user_meta($payment['user_id'], 'atlas_bookings', $user_bookings);
             }
-            
-            error_log('Payment processed successfully');
+        }
+        
+        error_log('Payment processed successfully');
+        return array(
+            'txn_id' => $txn_id,
+            'prv_txn_id' => 'ATLAS-PAYMENT-' . $txn_id,
+            'result' => 0,
+            'sum' => $sum,
+            'comment' => 'Платеж успешно обработан'
+        );
+    } else {
+        error_log('Payment not found for txn_id: ' . $txn_id . ' or account: ' . $account);
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 1,
+            'comment' => 'Заказ не найден'
+        );
+    }
+}
+
+// Функция для обработки тестовых заказов
+function atlas_kaspi_handle_test_order($account, $txn_id, $command, $sum = 0, $txn_date = '') {
+    error_log('=== Handling test order: ' . $account . ' ===');
+    
+    $test_orders = array(
+        'ATLAS-TEST-00001' => array('status' => 'pending', 'result' => 0, 'comment' => 'Заказ найден и доступен для оплаты'),
+        'ATLAS-TEST-00002' => array('status' => 'not_found', 'result' => 1, 'comment' => 'Заказ не найден'),
+        'ATLAS-TEST-00003' => array('status' => 'cancelled', 'result' => 2, 'comment' => 'Заказ отменен'),
+        'ATLAS-TEST-00004' => array('status' => 'completed', 'result' => 3, 'comment' => 'Заказ уже оплачен'),
+        'ATLAS-TEST-00005' => array('status' => 'processing', 'result' => 4, 'comment' => 'Платеж в обработке'),
+        'ATLAS-TEST-00006' => array('status' => 'error', 'result' => 5, 'comment' => 'Другая ошибка провайдера'),
+        'ATLAS-TEST-00007' => array('status' => 'pending', 'result' => 0, 'comment' => 'Заказ найден и доступен для оплаты', 'min_amount' => 1000),
+        'ATLAS-TEST-00008' => array('status' => 'pending', 'result' => 0, 'comment' => 'Заказ найден и доступен для оплаты', 'max_amount' => 5000000),
+        'ATLAS-TEST-00009' => array('status' => 'pending', 'result' => 0, 'comment' => 'Заказ найден и доступен для оплаты', 'delay' => true)
+    );
+    
+    if (!isset($test_orders[$account])) {
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 1,
+            'comment' => 'Заказ не найден'
+        );
+    }
+    
+    $test_order = $test_orders[$account];
+    
+    // Проверяем минимальную сумму для ATLAS-TEST-00007
+    if (isset($test_order['min_amount']) && $sum < $test_order['min_amount']) {
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 5,
+            'comment' => 'Сумма меньше минимальной'
+        );
+    }
+    
+    // Проверяем максимальную сумму для ATLAS-TEST-00008
+    if (isset($test_order['max_amount']) && $sum > $test_order['max_amount']) {
+        return array(
+            'txn_id' => $txn_id,
+            'result' => 5,
+            'comment' => 'Сумма больше максимальной'
+        );
+    }
+    
+    // Имитируем задержку для ATLAS-TEST-00009
+    if (isset($test_order['delay'])) {
+        sleep(2);
+    }
+    
+    if ($command === 'check') {
+        return array(
+            'txn_id' => $txn_id,
+            'result' => $test_order['result'],
+            'comment' => $test_order['comment']
+        );
+    } elseif ($command === 'pay') {
+        if ($test_order['status'] === 'pending') {
             return array(
                 'txn_id' => $txn_id,
+                'prv_txn_id' => 'ATLAS-PAYMENT-' . $txn_id,
                 'result' => 0,
+                'sum' => $sum,
                 'comment' => 'Платеж успешно обработан'
             );
         } else {
-            error_log('Payment validation failed in process: order_id mismatch or amount mismatch');
+            return array(
+                'txn_id' => $txn_id,
+                'result' => $test_order['result'],
+                'comment' => $test_order['comment']
+            );
         }
-    } else {
-        error_log('Payment not found in process for txn_id: ' . $txn_id);
     }
     
-    error_log('Payment processing failed');
     return array(
         'txn_id' => $txn_id,
-        'result' => 1,
-        'comment' => 'Ошибка обработки платежа'
+        'result' => 5,
+        'comment' => 'Другая ошибка провайдера'
     );
 }
 

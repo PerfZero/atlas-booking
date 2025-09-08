@@ -40,7 +40,7 @@ export default function AboutService({ title, cards }) {
           {displayCards.map((card, idx) => (
             <div className={styles.card} key={idx}>
               <div className={styles.icon}>
-                <Image src={card.icon} alt={card.title} width={48} height={48} />
+                <Image src={card.icon} alt={card.title} width={40} height={40} />
               </div>
               <h3 className={styles.cardTitle}>{card.title}</h3>
               <p className={styles.cardDescription}>{card.description}</p>

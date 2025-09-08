@@ -312,7 +312,6 @@
   .tabs {
     margin: 0;
     border-radius: 0;
-    overflow: hidden;
     border: none;
     border-bottom: 1px solid #e5e7eb;
   }

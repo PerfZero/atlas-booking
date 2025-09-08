@@ -1,7 +1,7 @@
 import styles from '../search/page.module.css';
 import Link from 'next/link';
 
-export default function TourCard({ tour }) {
+export default function TourCard({ tour, searchParams = null }) {
   const tourSlug = tour.slug || tour.name?.toLowerCase().replace(/\s+/g, '-').replace('package', 'package');
   const tourImage = tour.featured_image || tour.image || '/tour_1.png';
   const tourPrice = tour.price || '0';
@@ -11,9 +11,17 @@ export default function TourCard({ tour }) {
   const tourDuration = tour.duration || '3 дня в Медине · 3 дня в Мекке';
   const tourTags = Array.isArray(tour.tags) ? tour.tags : ['Умра'];
   
+  const getTourUrl = () => {
+    if (searchParams) {
+      const params = new URLSearchParams(searchParams);
+      return `/tour/${tourSlug}?${params.toString()}`;
+    }
+    return `/tour/${tourSlug}`;
+  };
+  
   return (
     <div className={styles.tourCard}>
-      <Link href={`/tour/${tourSlug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <Link href={getTourUrl()} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className={styles.tourImage}>
           <div className={styles.cardBadge}>
             <span className={styles.badgeIcon}><img src="/chos.svg" alt="★" /></span>
@@ -94,7 +102,7 @@ export default function TourCard({ tour }) {
           </div>
           <div className={styles.priceEquivalent}>~1 312 500T</div>
         </div>
-        <Link href={`/tour/${tourSlug}`} className={styles.viewOptionsBtn}>
+        <Link href={getTourUrl()} className={styles.viewOptionsBtn}>
           <button>Посмотреть варианты</button>
         </Link>
       </div>

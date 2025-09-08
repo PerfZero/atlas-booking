@@ -24,6 +24,7 @@ function SearchForm({ searchParams, className = '' }) {
   });
   const [dateError, setDateError] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '' });
+  const [showResults, setShowResults] = useState(false);
 
   const cityOptions = [
     { value: 'almaty', label: 'Алматы' },
@@ -45,10 +46,33 @@ function SearchForm({ searchParams, className = '' }) {
     return 'Не указано';
   };
 
+  const formatDateRangeCompact = () => {
+    if (selectedStartDate && selectedEndDate) {
+      const months = [
+        'янв.', 'фев.', 'мар.', 'апр.', 'май', 'июн.',
+        'июл.', 'авг.', 'сен.', 'окт.', 'ноя.', 'дек.'
+      ];
+      const startMonth = months[selectedStartDate.getMonth()];
+      const endMonth = months[selectedEndDate.getMonth()];
+      return `${selectedStartDate.getDate()} ${startMonth} - ${selectedEndDate.getDate()} ${endMonth}`;
+    }
+    return 'Не указано';
+  };
+
   const pilgrimageOptions = [
     { value: 'umrah', label: 'Умра' },
     { value: 'hajj', label: 'Хадж' }
   ];
+
+  const getCityLabel = (value) => {
+    const city = cityOptions.find(option => option.value === value);
+    return city ? city.label : value;
+  };
+
+  const getPilgrimageLabel = (value) => {
+    const pilgrimage = pilgrimageOptions.find(option => option.value === value);
+    return pilgrimage ? pilgrimage.label : value;
+  };
 
   const handleSelectChange = (field, value) => {
     setFormData(prev => ({
@@ -108,7 +132,22 @@ function SearchForm({ searchParams, className = '' }) {
       setSelectedStartDate(parseDate(startDate));
       setSelectedEndDate(parseDate(endDate));
     }
+
+    const hasSearchParams = departureCity && travelDate && pilgrimageType && startDate && endDate;
+    setShowResults(hasSearchParams);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (selectedStartDate && selectedEndDate) {
+      setShowResults(true);
+    }
+  }, [selectedStartDate, selectedEndDate]);
+
+  useEffect(() => {
+    if (formData.departureCity && formData.pilgrimageType && selectedStartDate && selectedEndDate) {
+      setShowResults(true);
+    }
+  }, [formData.departureCity, formData.pilgrimageType, selectedStartDate, selectedEndDate]);
 
   const isFormValid = selectedStartDate && selectedEndDate;
 
@@ -143,6 +182,21 @@ function SearchForm({ searchParams, className = '' }) {
 
   return (
     <>
+      {showResults && (
+        <div 
+          className={`${styles.searchResults} ${className}`}
+          onClick={() => router.push('/')}
+        >
+          <div className={styles.resultsContent}>
+            <span className={styles.resultItem}>{getCityLabel(formData.departureCity)}</span>
+            <span className={styles.resultSeparator}>·</span>
+            <span className={styles.resultItem}>{formatDateRangeCompact()}</span>
+            <span className={styles.resultSeparator}>·</span>
+            <span className={styles.resultItem}>{getPilgrimageLabel(formData.pilgrimageType)}</span>
+          </div>
+        </div>
+      )}
+      
       <form className={`${styles.searchForm} ${className}`} onSubmit={handleSubmit}>
         <CustomSelect
           label="Город вылета"
@@ -152,24 +206,24 @@ function SearchForm({ searchParams, className = '' }) {
           placeholder="Выберите город"
         />
         
-                 <div className={styles.selectGroup} ref={datePickerRef}>
-           <label>Дата поездки</label>
-           <div 
-             className={`${styles.select} ${dateError ? styles.error : ''}`}
-             onClick={(e) => {
-               e.preventDefault();
-               e.stopPropagation();
-               setIsDatePickerOpen(!isDatePickerOpen);
-             }}
-           >
+        <div className={styles.selectGroup} ref={datePickerRef}>
+          <label>Дата поездки</label>
+          <div 
+            className={`${styles.select} ${dateError ? styles.error : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDatePickerOpen(!isDatePickerOpen);
+            }}
+          >
             <span className={styles.selectValue}>
               {formatDateRange()}
             </span>
-                         <div className={`${styles.selectArrow} ${isDatePickerOpen ? styles.selectArrowUp : ''}`}>
-               <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                 <path d="M1 1.5L6 6.5L11 1.5" stroke="#717680" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
-               </svg>
-             </div>
+            <div className={`${styles.selectArrow} ${isDatePickerOpen ? styles.selectArrowUp : ''}`}>
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="#717680" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
           <DatePicker
             isOpen={isDatePickerOpen}
@@ -188,17 +242,17 @@ function SearchForm({ searchParams, className = '' }) {
           placeholder="Выберите тип"
         />
         
-                 <button type="submit" className={styles.searchBtn}>
-           Найти
-         </button>
-       </form>
-       <Toast
+        <button type="submit" className={styles.searchBtn}>
+          Найти
+        </button>
+      </form>
+      <Toast
         message={toast.message}
         visible={toast.visible}
         onClose={() => setToast({ ...toast, visible: false })}
       />
-     </>
-   );
+    </>
+  );
 }
 
 export default SearchFormWithParams; 
