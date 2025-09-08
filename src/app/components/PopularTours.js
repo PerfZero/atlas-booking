@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { getTours } from '../../lib/wordpress-api';
 import styles from './PopularTours.module.css';
 
-export default function PopularTours() {
+function PopularToursContent() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,5 +121,22 @@ export default function PopularTours() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function PopularTours() {
+  return (
+    <Suspense fallback={
+      <section className={styles.popularTours}>
+        <div className={styles.container}>
+          <h2 className={styles.title}>Популярные туры</h2>
+          <div className={styles.cards}>
+            <div className={styles.loading}>Загрузка туров...</div>
+          </div>
+        </div>
+      </section>
+    }>
+      <PopularToursContent />
+    </Suspense>
   );
 } 
