@@ -66,6 +66,11 @@
     padding: 6px 8px;
     min-width: 50px;
   }
+
+  .navItem{
+    max-width: 50px;
+    overflow: hidden;
+  }
   
   .navLabel {
     font-size: 11px;

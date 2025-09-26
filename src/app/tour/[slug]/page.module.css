@@ -57,6 +57,12 @@
   gap: 40px;
   align-items: start;
 }
+
+.header {
+  margin-bottom: 20px;
+}
+
+
   
   .breadcrumbs {
     grid-column: 1 / -1;
@@ -1169,6 +1175,8 @@ padding: 8px;
     color: #333;
 }
 
+
+
 .reviewDate {
     font: 400 12px var(--font-primary);
     color: #666;
@@ -1229,12 +1237,27 @@ padding: 8px;
   
   .main {
     padding-top: 20px;
-    padding-bottom: 60px;
+    padding-bottom: 30px;
   }
   
   .container {
     padding: 0 16px;
   }
+
+  .fixedBookingButton {
+    z-index: 1000;
+    z-index: 99999999999;
+    padding: 16px 24px;
+    transition: transform .3s 
+ease-out, opacity .3s 
+ease-out;
+    animation: .3s 
+ease-out page-module__WGidUa__slideUp;
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+}
   
   .header:before {
     height: 200px;
@@ -1251,7 +1274,6 @@ padding: 8px;
   
   .tourHeaderBlock {
     flex-direction: row;
-    align-items: flex-start;
     gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 24px;
@@ -1278,8 +1300,12 @@ padding: 8px;
   }
   
   .mainImage {
-    height: 200px;
+    min-height: 370px;
+    max-height: 370px;
+    flex: none !important;
   }
+
+  
   
   .sideImages {
     display: flex;
@@ -1288,6 +1314,15 @@ padding: 8px;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
   }
+
+  .sideImages img{
+    border-radius: 8px;
+  }
+
+  .featureItem:not(:first-child) img{
+    display: none;
+  }
+  
   
   .sideImages::-webkit-scrollbar {
     height: 4px;
@@ -1311,12 +1346,9 @@ padding: 8px;
   
   .tourFeatures {
     gap: 12px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+   
     padding-bottom: 16px;
     border-radius: 0;
-    flex-wrap: nowrap;
     margin-bottom: 24px;
   }
   
@@ -1367,6 +1399,10 @@ padding: 8px;
   .statsLeft {
     justify-content: center;
   }
+
+  .tourHeaderDuration:nth-child(3){
+    width: 100%;
+  }
   
   .statsMiddle {
     text-align: center;
@@ -1384,15 +1420,30 @@ padding: 8px;
   
   .flightSections {
     display: flex;
-    overflow-x: auto;
-    gap: 16px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+
     padding-bottom: 16px;
+    flex-direction: column;
   }
 
+  .transferImage img{
+    height: 168px;
+  }
+
+  
+  .hotelGallery , .hajjGallery{
+    grid-template-columns: repeat(2, 1fr);
+    display: grid;
+  }
+
+  .ratingCategories {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 4px;
+    display: grid
+;
+}
+
   .tourHeaderShare{
-    width: 100%;
     justify-content: flex-end;
   }
   
@@ -1491,10 +1542,9 @@ padding: 8px;
   
   .hotelsGrid {
     display: flex;
-    overflow-x: auto;
-    gap: 16px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    flex-direction: column;
+    gap: 8px;
+
     padding-bottom: 16px;
   }
   
@@ -1519,10 +1569,9 @@ padding: 8px;
   
   .packageGrid {
     display: flex;
-    overflow-x: auto;
-    gap: 16px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    flex-direction: column;
+    gap: 8px;
+ 
     padding-bottom: 16px;
   }
   
@@ -1541,17 +1590,34 @@ padding: 8px;
   }
   
   .packageCard {
-    flex: 0 0 200px;
     scroll-snap-align: start;
   }
   
   .roomOptionsGrid {
     display: flex;
-    overflow-x: auto;
-    gap: 16px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    flex-direction: column;
+    gap: 8px;
+
     padding-bottom: 16px;
+  }
+
+  .roomDescription{
+    width: 100%;
+  }
+
+  .accommodationOptionsTitle , .pilgrimReviewsTitle{
+    font-size: 14px;
+  }
+
+  .accommodationOptionsTitle img , .pilgrimReviewsTitle img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .accommodationOptions  , .pilgrimReviews {
+    border-radius: 12px;
+    margin-bottom: 24px;
+    padding: 16px;
   }
   
   .roomOptionsGrid::-webkit-scrollbar {
@@ -1575,10 +1641,9 @@ padding: 8px;
   
   .reviewsGrid {
     display: flex;
-    overflow-x: auto;
-    gap: 16px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    flex-direction: column;
+    gap: 8px;
+
     padding-bottom: 16px;
   }
   
@@ -1597,8 +1662,9 @@ padding: 8px;
   }
   
   .reviewCard {
-    flex: 0 0 280px;
     scroll-snap-align: start;
+    margin-bottom: 0px;
+
   }
   
   .fixedBookButton {

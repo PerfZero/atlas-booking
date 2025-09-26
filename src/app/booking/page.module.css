@@ -682,7 +682,7 @@ margin-top: 24px;
 @media (max-width: 768px) {
   .content {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 16px;
   }
   
   .container {
@@ -690,10 +690,374 @@ margin-top: 24px;
   }
   
   .main {
-    padding: 20px 0 120px 0;
+    padding: 20px 0 140px 0;
+  }
+  
+  .secondHeader {
+    padding: 20px 0;
+    margin-bottom: 20px;
   }
   
   .title {
-    font-size: 24px;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+  
+  .leftColumn {
+    gap: 16px;
+  }
+  
+  .costDetails,
+  .tourDetails,
+  .bookingDates,
+  .rightColumn {
+    border-radius: 16px;
+    padding: 16px;
+  }
+  
+  .costDetails h3,
+  .tourDetails h3,
+  .bookingDates h3,
+  .bookingForm h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+  
+  .rating {
+    margin-bottom: 16px;
+  }
+  
+  .ratingBadge {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .ratingText {
+    font-size: 14px;
+  }
+  
+  .reviewsCount {
+    font-size: 14px;
+  }
+  
+  .packageName {
+    font-size: 16px;
+  }
+  
+  .packageType {
+    font-size: 12px;
+  }
+  
+  .allInclusive {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+  
+  .datesRow {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 0;
+    align-items: flex-start;
+  }
+  
+  .dateDivider {
+    display: none;
+  }
+  
+  .dateValue,
+  .durationValue {
+    font-size: 16px;
+  }
+  
+  .dateLabel,
+  .durationLabel {
+    font-size: 12px;
+  }
+  
+  .accommodationTitle {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .accommodationItem {
+    font-size: 14px;
+  }
+  
+  .accommodationTypeLabel {
+    font-size: 12px;
+  }
+  
+  .changeSelection {
+    font-size: 12px;
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .formGroup label {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  
+  .formGroup input[type="text"],
+  .formGroup input[type="tel"] {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .passportInput {
+    border-radius: 8px;
+  }
+  
+  .passportPrefix {
+    padding: 10px 0 10px 12px;
+    font-size: 14px;
+  }
+  
+  .passportInput input {
+    padding: 10px 0 10px 8px;
+  }
+  
+  .radioGroup {
+    gap: 16px;
+    flex-direction: column;
+  }
+  
+  .radioGroup label {
+    font-size: 12px;
+  }
+  
+  .phoneNote {
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  
+  .addTourist {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .addTouristNote {
+    padding: 12px;
+    font-size: 12px;
+    max-width: 100%;
+  }
+  
+  .touristForm {
+    padding-bottom: 24px;
+  }
+  
+  .touristHeader {
+    margin-bottom: 16px;
+  }
+  
+  .touristHeader h3 {
+    font-size: 16px;
+  }
+  
+  .removeTourist {
+    font-size: 12px;
+  }
+  
+  .touristType {
+    margin-bottom: 16px;
+  }
+  
+  .touristType .radioGroup {
+    gap: 14px;
+    flex-direction: column;
+  }
+  
+  .errorMessage {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .touristReview {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+  }
+  
+  .reviewGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .reviewGroup label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .reviewValue {
+    font-size: 16px;
+  }
+  
+  .reviewActions {
+    gap: 8px;
+  }
+  
+  .kaspiButton {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+  
+  .editLink {
+    font-size: 12px;
+  }
+  
+  .proceedToPayment {
+    padding: 12px 24px;
+    font-size: 14px;
+    margin-top: 16px;
+    border-radius: 8px;
+  }
+  
+  .fixedPaymentButton {
+    padding: 12px 16px;
+  }
+  
+  .paymentButton {
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-top: 16px;
+    border-radius: 6px;
+  }
+  
+  .currentPrice {
+    font-size: 20px;
+  }
+  
+  .usdPrice {
+    font-size: 9px;
+  }
+  
+  .oldPrice {
+    font-size: 10px;
+  }
+  
+  .noHiddenFees {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+  
+  .main {
+    padding: 16px 0 160px 0;
+  }
+  
+  .secondHeader {
+    padding: 16px 0;
+    margin-bottom: 16px;
+  }
+  
+  .title {
+    font-size: 18px;
+  }
+  
+  .content {
+    gap: 12px;
+  }
+  
+  .leftColumn {
+    gap: 12px;
+  }
+  
+  .costDetails,
+  .tourDetails,
+  .bookingDates,
+  .rightColumn {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  
+  .costDetails h3,
+  .tourDetails h3,
+  .bookingDates h3,
+  .bookingForm h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .ratingBadge {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+  
+  .packageName {
+    font-size: 14px;
+  }
+  
+  .allInclusive {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  
+  .formGrid {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .formGroup input[type="text"],
+  .formGroup input[type="tel"] {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .addTouristNote {
+    padding: 10px;
+    font-size: 11px;
+  }
+  
+  .touristHeader h3 {
+    font-size: 14px;
+  }
+  
+  .reviewGrid {
+    gap: 12px;
+  }
+  
+  .kaspiButton {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  .proceedToPayment {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  .fixedPaymentButton {
+    padding: 10px 12px;
+  }
+  
+  .paymentButton {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  .currentPrice {
+    font-size: 18px;
+  }
+  
+  .dateValue,
+  .durationValue {
+    font-size: 14px;
+  }
+  
+  .accommodationTitle {
+    font-size: 14px;
+  }
+  
+  .accommodationItem {
+    font-size: 13px;
   }
 }

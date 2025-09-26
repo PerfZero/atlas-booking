@@ -7,7 +7,8 @@ export default function DatePicker({
   onClose, 
   onDateSelect, 
   selectedStartDate, 
-  selectedEndDate 
+  selectedEndDate,
+  availableTours = []
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [hoveredDate, setHoveredDate] = useState(null);
@@ -72,13 +73,32 @@ export default function DatePicker({
     
     if (date < today) return true;
     
-    if (startDate) {
-      const maxDays = selectedTab === '7' ? 7 : 10;
-      const daysDiff = calculateDaysDiff(startDate, date);
-      return daysDiff > maxDays;
-    }
+    // Показываем как неактивные дни без доступных туров
+    if (!hasAvailableTour(date)) return true;
     
     return false;
+  };
+
+  const hasAvailableTour = (date) => {
+    if (!date || !availableTours.length) return false;
+    
+    // Используем локальную дату без учета часовых поясов
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    const selectedDuration = parseInt(selectedTab);
+    
+    return availableTours.some(tour => {
+      const startDate = tour.tour_start_date;
+      const tourDuration = tour.tour_duration_days ? parseInt(tour.tour_duration_days) : 7;
+      
+      if (!startDate) return false;
+      
+      // Показываем дату как доступную только если длительность тура совпадает с выбранной вкладкой
+      return dateStr === startDate && tourDuration === selectedDuration;
+    });
   };
 
   const handleDateClick = (date, event) => {
@@ -87,17 +107,13 @@ export default function DatePicker({
     
     if (!date || isDateDisabled(date)) return;
     
-    if (!startDate || (startDate && endDate)) {
-      setStartDate(date);
-      setEndDate(null);
-    } else {
-      if (date < startDate) {
-        setEndDate(startDate);
-        setStartDate(date);
-      } else {
-        setEndDate(date);
-      }
-    }
+    // Автоматически выбираем дату начала и конца на основе выбранной длительности
+    const duration = selectedTab === '7' ? 7 : 10;
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + duration - 1);
+    
+    setStartDate(date);
+    setEndDate(endDate);
   };
 
   const handleTabClick = (tab, event) => {
@@ -116,22 +132,16 @@ export default function DatePicker({
     e.preventDefault();
     e.stopPropagation();
     if (startDate && endDate) {
-      const daysDiff = calculateDaysDiff(startDate, endDate);
-      const maxDays = selectedTab === '7' ? 7 : 10;
-      
-      if (daysDiff === maxDays) {
-        onDateSelect(startDate, endDate);
-        onClose();
-      }
+      onDateSelect(startDate, endDate);
+      onClose();
     }
   };
 
   const handleCancel = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setStartDate(selectedStartDate);
-    setEndDate(selectedEndDate);
-    onClose();
+    setStartDate(null);
+    setEndDate(null);
   };
 
   const nextMonth = (e) => {
@@ -207,41 +217,82 @@ export default function DatePicker({
           </div>
         </div>
 
-        <div className={styles.calendar}>
-          <div className={styles.calendarHeader}>
-            <button onClick={(e) => prevMonth(e)} className={styles.navButton}>‹</button>
-            <h3>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h3>
-            <button onClick={(e) => nextMonth(e)} className={styles.navButton}>›</button>
+        <div className={styles.calendars}>
+          <div className={styles.calendar}>
+            <div className={styles.calendarHeader}>
+              <button onClick={(e) => prevMonth(e)} className={styles.navButton}>‹</button>
+              <h3>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h3>
+              <button onClick={(e) => nextMonth(e)} className={`${styles.navButton} ${styles.mobileOnly}`}>›</button>
+              <button className={`${styles.navButtonHidden} ${styles.desktopOnly}`}></button>
+            </div>
+            <div className={styles.weekdays}>
+              <span>ПН</span>
+              <span>ВТ</span>
+              <span>СР</span>
+              <span>ЧТ</span>
+              <span>ПТ</span>
+              <span>СБ</span>
+              <span>ВС</span>
+            </div>
+            <div className={styles.days}>
+              {getDaysInMonth(currentMonth).map((date, index) => (
+                <button
+                  key={index}
+                  className={`
+                    ${styles.day}
+                    ${!date ? styles.empty : ''}
+                    ${date && isDateDisabled(date) ? styles.disabled : ''}
+                    ${date && isDateSelected(date) ? styles.selected : ''}
+                    ${date && isDateInRange(date) ? styles.inRange : ''}
+                    ${date && hoveredDate && startDate && !endDate && 
+                      date > startDate && date <= hoveredDate ? styles.hoverRange : ''}
+                  `}
+                  onClick={(e) => handleDateClick(date, e)}
+                  onMouseEnter={() => handleDateHover(date)}
+                  disabled={!date || isDateDisabled(date)}
+                >
+                  {date ? date.getDate() : ''}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.weekdays}>
-            <span>ПН</span>
-            <span>ВТ</span>
-            <span>СР</span>
-            <span>ЧТ</span>
-            <span>ПТ</span>
-            <span>СБ</span>
-            <span>ВС</span>
-          </div>
-          <div className={styles.days}>
-            {getDaysInMonth(currentMonth).map((date, index) => (
-              <button
-                key={index}
-                className={`
-                  ${styles.day}
-                  ${!date ? styles.empty : ''}
-                  ${date && isDateDisabled(date) ? styles.disabled : ''}
-                  ${date && isDateSelected(date) ? styles.selected : ''}
-                  ${date && isDateInRange(date) ? styles.inRange : ''}
-                  ${date && hoveredDate && startDate && !endDate && 
-                    date > startDate && date <= hoveredDate ? styles.hoverRange : ''}
-                `}
-                onClick={(e) => handleDateClick(date, e)}
-                onMouseEnter={() => handleDateHover(date)}
-                disabled={!date || isDateDisabled(date)}
-              >
-                {date ? date.getDate() : ''}
-              </button>
-            ))}
+
+          <div className={`${styles.calendar} ${styles.secondCalendar} ${styles.desktopOnly}`}>
+            <div className={styles.calendarHeader}>
+              <button className={styles.navButtonHidden}></button>
+              <h3>{monthNames[nextMonthDate.getMonth()]} {nextMonthDate.getFullYear()}</h3>
+              <button onClick={(e) => nextMonth(e)} className={styles.navButton}>›</button>
+            </div>
+            <div className={styles.weekdays}>
+              <span>ПН</span>
+              <span>ВТ</span>
+              <span>СР</span>
+              <span>ЧТ</span>
+              <span>ПТ</span>
+              <span>СБ</span>
+              <span>ВС</span>
+            </div>
+            <div className={styles.days}>
+              {getDaysInMonth(nextMonthDate).map((date, index) => (
+                <button
+                  key={index}
+                  className={`
+                    ${styles.day}
+                    ${!date ? styles.empty : ''}
+                    ${date && isDateDisabled(date) ? styles.disabled : ''}
+                    ${date && isDateSelected(date) ? styles.selected : ''}
+                    ${date && isDateInRange(date) ? styles.inRange : ''}
+                    ${date && hoveredDate && startDate && !endDate && 
+                      date > startDate && date <= hoveredDate ? styles.hoverRange : ''}
+                  `}
+                  onClick={(e) => handleDateClick(date, e)}
+                  onMouseEnter={() => handleDateHover(date)}
+                  disabled={!date || isDateDisabled(date)}
+                >
+                  {date ? date.getDate() : ''}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

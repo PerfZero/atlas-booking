@@ -217,7 +217,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (
-      activeTab === 'booked-tours' &&
+      (activeTab === 'booked-tours' || activeTab === 'pending-payment') &&
       isAuthenticated &&
       user?.token &&
       !bookingsLoading &&
@@ -471,8 +471,8 @@ export default function ProfilePage() {
                   <div className={styles.loading}>Загрузка бронирований...</div>
                 ) : bookings.length === 0 ? (
                   <div className={styles.noBookings}>
-                    <h3>У вас пока нет забронированных туров</h3>
-                    <p>Забронируйте тур, чтобы он появился здесь</p>
+                    <h3 className={styles.textEx}>У вас пока нет забронированных туров</h3>
+                    <p className={styles.textEx}>Забронируйте тур, чтобы он появился здесь</p>
                   </div>
                 ) : (
                   bookings.map((booking) => (
@@ -603,155 +603,132 @@ export default function ProfilePage() {
 
             {activeTab === "pending-payment" && (
               <div className={styles.leftColumn}>
-                <div className={styles.tourCard}>
-                  <div className={styles.tourImage}>
-                    <img src="/tour_1.png" alt="Отель в Медине" />
+                {bookingsLoading ? (
+                  <div className={styles.loading}>Загрузка туров ожидающих оплаты...</div>
+                ) : bookings.filter(booking => booking.status === 'pending').length === 0 ? (
+                  <div className={styles.noBookings}>
+                    <h3 className={styles.textEx}>У вас нет туров ожидающих оплаты</h3>
+                    <p className={styles.textEx}>Все ваши туры оплачены или бронирования не найдены</p>
                   </div>
-                  <div className={styles.tourContent}>
-                    <div className={styles.tourContents}>
-                    <div className={styles.timerContainer}>
-                      <div className={styles.timerBox}>
-                        <span className={styles.timerText}>Оплатите до истечения брони</span>
-                        <span className={styles.timer}>
-                          {String(timer1.minutes).padStart(2, '0')}:{String(timer1.seconds).padStart(2, '0')}
-                        </span>
+                ) : (
+                  bookings
+                    .filter(booking => booking.status === 'pending')
+                    .map((booking, index) => (
+                    <div key={booking.booking_id} className={styles.tourCard}>
+                      <div className={styles.tourImage}>
+                        <img 
+                          src={booking.tour_image || "/tour_1.png"} 
+                          alt={booking.tour_title || "Тур"} 
+                        />
                       </div>
-                    </div>
-                    <h3 className={styles.tourTitle}>3 дня в Медине · 3 дня в Мекке</h3>
-                    </div>
-                    <div className={styles.tourFeatures}>
-                      <div className={styles.feature}>
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M10.9565 21.2053C16.5614 21.2053 21.202 16.5547 21.202 10.9598C21.202 5.35492 16.5514 0.714294 10.9464 0.714294C5.35156 0.714294 0.710938 5.35492 0.710938 10.9598C0.710938 16.5547 5.36161 21.2053 10.9565 21.2053Z" fill="white" />
-                          <path d="M9.8415 15.8717C9.50001 15.8717 9.21875 15.731 8.95759 15.3795L6.43638 12.2857C6.28572 12.0848 6.19531 11.8638 6.19531 11.6328C6.19531 11.1808 6.54688 10.8091 6.99888 10.8091C7.29018 10.8091 7.51116 10.8995 7.76227 11.231L9.80138 13.8627L14.0904 6.97209C14.2812 6.67075 14.5424 6.51004 14.8036 6.51004C15.2455 6.51004 15.6574 6.81138 15.6574 7.28347C15.6574 7.50446 15.5268 7.73549 15.4062 7.94642L10.6853 15.3795C10.4743 15.7109 10.1831 15.8717 9.8415 15.8717Z" fill="#253168" />
-                        </svg>
-                        <span>Всё включено</span>
-                      </div>
-                      <div className={styles.feature}>
-                        <img src="/airplane.svg" alt="Прямой рейс" />
-                        <span>Прямой рейс</span>
-                      </div>
-                    </div>
-                    <div className={styles.hotelInfo}>
-                      <div className={styles.hotel}>
-                        <div className={styles.hotelImage}>
-                          <img src="/mekka.svg" alt="Отель" />
+                      <div className={styles.tourContent}>
+                        <div className={styles.tourContents}>
+                          <div className={styles.timerContainer}>
+                            <div className={styles.timerBox}>
+                              <span className={styles.timerText}>Оплатите до истечения брони</span>
+                              <span className={styles.timer}>
+                                {index === 0 ? 
+                                  `${String(timer1.minutes).padStart(2, '0')}:${String(timer1.seconds).padStart(2, '0')}` :
+                                  `${String(timer2.minutes).padStart(2, '0')}:${String(timer2.seconds).padStart(2, '0')}`
+                                }
+                              </span>
+                            </div>
+                          </div>
+                          <h3 className={styles.tourTitle}>
+                            {booking.tour_data?.duration || booking.tour_title || "Тур"}
+                          </h3>
                         </div>
-                        <div className={styles.hotelContent}>
-                          <span className={styles.hotelName}>5* отель в Мекке</span>
-                          <span className={styles.distance}>Расстояние до Каабы 50 м.</span>
+                        <div className={styles.tourFeatures}>
+                          <div className={styles.feature}>
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M10.9565 21.2053C16.5614 21.2053 21.202 16.5547 21.202 10.9598C21.202 5.35492 16.5514 0.714294 10.9464 0.714294C5.35156 0.714294 0.710938 5.35492 0.710938 10.9598C0.710938 16.5547 5.36161 21.2053 10.9565 21.2053Z" fill="white" />
+                              <path d="M9.8415 15.8717C9.50001 15.8717 9.21875 15.731 8.95759 15.3795L6.43638 12.2857C6.28572 12.0848 6.19531 11.8638 6.19531 11.6328C6.19531 11.1808 6.54688 10.8091 6.99888 10.8091C7.29018 10.8091 7.51116 10.8995 7.76227 11.231L9.80138 13.8627L14.0904 6.97209C14.2812 6.67075 14.5424 6.51004 14.8036 6.51004C15.2455 6.51004 15.6574 6.81138 15.6574 7.28347C15.6574 7.50446 15.5268 7.73549 15.4062 7.94642L10.6853 15.3795C10.4743 15.7109 10.1831 15.8717 9.8415 15.8717Z" fill="#253168" />
+                            </svg>
+                            <span>Всё включено</span>
+                          </div>
+                          <div className={styles.feature}>
+                            <img src="/airplane.svg" alt="Прямой рейс" />
+                            <span>Прямой рейс</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className={styles.hotel}>
-                        <div className={styles.hotelImage}>
-                          <img src="/medina.svg" alt="Медина" />
+                        <div className={styles.hotelInfo}>
+                          <div className={styles.hotel}>
+                            <div className={styles.hotelImage}>
+                              <img src="/mekka.svg" alt="Отель" />
+                            </div>
+                            <div className={styles.hotelContent}>
+                              <span className={styles.hotelName}>
+                                {booking.tour_data?.hotel_mekka || "Отель в Мекке"}
+                              </span>
+                              <span className={styles.distance}>
+                                {booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={styles.hotel}>
+                            <div className={styles.hotelImage}>
+                              <img src="/medina.svg" alt="Медина" />
+                            </div>
+                            <div className={styles.hotelContent}>
+                              <span className={styles.hotelName}>
+                                {booking.tour_data?.hotel_medina || "Отель в Медине"}
+                              </span>
+                              <span className={styles.distance}>
+                                {booking.tour_data?.distance_medina || "Расстояние до мечети"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className={styles.hotelContent}>
-                          <span className={styles.hotelName}>5* отель в Медине</span>
-                          <span className={styles.distance}>Расстояние до мечети 150 м.</span>
+                        <div className={styles.wrapper}>
+                          <div className={styles.tourPrice}>
+                            <div className={styles.priceStatus}>
+                              Ожидает оплаты ({booking.tour_data?.tourists?.length || 1} чел)
+                            </div>
+                            <div className={styles.priceAmount}>
+                              <span className={styles.priceKzt}>
+                                ~{Math.round(booking.tour_price * 547)}₸
+                              </span>
+                              <span className={styles.priceUsd}>
+                                ${booking.tour_price}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={styles.tourDates}>
+                            <div className={styles.dateRange}>
+                              <span className={styles.date}>
+                                {booking.tour_data?.flightOutboundDate ? 
+                                  new Date(booking.tour_data.flightOutboundDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : 
+                                  'Дата вылета'
+                                }
+                              </span>
+                              <span className={styles.arrow}>→</span>
+                              <span className={styles.date}>
+                                {booking.tour_data?.flightInboundDate ? 
+                                  new Date(booking.tour_data.flightInboundDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : 
+                                  'Дата возвращения'
+                                }
+                              </span>
+                            </div>
+                            <div className={styles.dateLabels}>
+                              <span className={styles.departure}>Вылет</span>
+                              <span className={styles.return}>Обратно</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className={styles.wrapper}>
-                      <div className={styles.tourPrice}>
-                        <div className={styles.priceStatus}>Оплачено (1 чел)</div>
-                        <div className={styles.priceAmount}>
-                          <span className={styles.priceKzt}>1 312 500₸</span>
-                          <span className={styles.priceUsd}>$2400</span>
-                        </div>
-                      </div>
-                      <div className={styles.tourDates}>
-                        <div className={styles.dateRange}>
-                          <span className={styles.date}>24 авг</span>
-                          <span className={styles.arrow}>→</span>
-                          <span className={styles.date}>31 авг</span>
-                        </div>
-                        <div className={styles.dateLabels}>
-                          <span className={styles.departure}>Вылет</span>
-                          <span className={styles.return}>Обратно</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.tourActions}>
-                      <button className={styles.payBtn}>Оплатить</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.tourCard}>
-                  <div className={styles.tourImage}>
-                    <img src="/tour_1.png" alt="Отель в Медине" />
-                  </div>
-                  <div className={styles.tourContent}>
-                    <div className={styles.tourContents}>
-                    <div className={styles.timerContainer}>
-                      <div className={styles.timerBox}>
-                        <span className={styles.timerText}>Оплатите до истечения брони</span>
-                        <span className={styles.timer}>
-                          {String(timer1.minutes).padStart(2, '0')}:{String(timer1.seconds).padStart(2, '0')}
-                        </span>
-                      </div>
-                    </div>
-                    <h3 className={styles.tourTitle}>3 дня в Медине · 3 дня в Мекке</h3>
-                    </div>
-                    <div className={styles.tourFeatures}>
-                      <div className={styles.feature}>
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M10.9565 21.2053C16.5614 21.2053 21.202 16.5547 21.202 10.9598C21.202 5.35492 16.5514 0.714294 10.9464 0.714294C5.35156 0.714294 0.710938 5.35492 0.710938 10.9598C0.710938 16.5547 5.36161 21.2053 10.9565 21.2053Z" fill="white" />
-                          <path d="M9.8415 15.8717C9.50001 15.8717 9.21875 15.731 8.95759 15.3795L6.43638 12.2857C6.28572 12.0848 6.19531 11.8638 6.19531 11.6328C6.19531 11.1808 6.54688 10.8091 6.99888 10.8091C7.29018 10.8091 7.51116 10.8995 7.76227 11.231L9.80138 13.8627L14.0904 6.97209C14.2812 6.67075 14.5424 6.51004 14.8036 6.51004C15.2455 6.51004 15.6574 6.81138 15.6574 7.28347C15.6574 7.50446 15.5268 7.73549 15.4062 7.94642L10.6853 15.3795C10.4743 15.7109 10.1831 15.8717 9.8415 15.8717Z" fill="#253168" />
-                        </svg>
-                        <span>Всё включено</span>
-                      </div>
-                      <div className={styles.feature}>
-                        <img src="/airplane.svg" alt="Прямой рейс" />
-                        <span>Прямой рейс</span>
-                      </div>
-                    </div>
-                    <div className={styles.hotelInfo}>
-                      <div className={styles.hotel}>
-                        <div className={styles.hotelImage}>
-                          <img src="/mekka.svg" alt="Отель" />
-                        </div>
-                        <div className={styles.hotelContent}>
-                          <span className={styles.hotelName}>5* отель в Мекке</span>
-                          <span className={styles.distance}>Расстояние до Каабы 50 м.</span>
-                        </div>
-                      </div>
-                      <div className={styles.hotel}>
-                        <div className={styles.hotelImage}>
-                          <img src="/medina.svg" alt="Медина" />
-                        </div>
-                        <div className={styles.hotelContent}>
-                          <span className={styles.hotelName}>5* отель в Медине</span>
-                          <span className={styles.distance}>Расстояние до мечети 150 м.</span>
+                        <div className={styles.tourActions}>
+                          <button 
+                            className={styles.payBtn}
+                            onClick={() => {
+                              window.open(`/api/kaspi/create-payment?booking_id=${booking.booking_id}`, '_blank');
+                            }}
+                          >
+                            Оплатить
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div className={styles.wrapper}>
-                      <div className={styles.tourPrice}>
-                        <div className={styles.priceStatus}>Оплачено (1 чел)</div>
-                        <div className={styles.priceAmount}>
-                          <span className={styles.priceKzt}>1 312 500₸</span>
-                          <span className={styles.priceUsd}>$2400</span>
-                        </div>
-                      </div>
-                      <div className={styles.tourDates}>
-                        <div className={styles.dateRange}>
-                          <span className={styles.date}>24 авг</span>
-                          <span className={styles.arrow}>→</span>
-                          <span className={styles.date}>31 авг</span>
-                        </div>
-                        <div className={styles.dateLabels}>
-                          <span className={styles.departure}>Вылет</span>
-                          <span className={styles.return}>Обратно</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.tourActions}>
-                      <button className={styles.payBtn}>Оплатить</button>
-                    </div>
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
             )}
 

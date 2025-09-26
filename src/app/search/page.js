@@ -95,8 +95,9 @@ function SearchPageContent({ searchParams }) {
               </Suspense>
             </div>
           </div>
-          <Breadcrumbs items={breadcrumbItems} />
-
+          <div className={styles.wrap}>       
+                   <Breadcrumbs items={breadcrumbItems} />
+              </div>
           <div className={styles.content}>
             
             <div className={styles.leftColumn}>

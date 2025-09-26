@@ -123,6 +123,29 @@
   margin-bottom: 24px;
 }
 
+.navButtonHidden {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: transparent;
+  cursor: default;
+  padding: 4px 8px;
+  border-radius: 4px;
+  visibility: hidden;
+}
+
+.secondCalendar {
+  display: block;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+.desktopOnly {
+  display: block;
+}
+
 .calendar {
   flex: 1;
 }
@@ -191,6 +214,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .day:hover:not(.disabled):not(.empty) {
@@ -221,6 +245,7 @@
   background-color: #eff6ff;
   color: #1f2937;
 }
+
 
 .footer {
   display: flex;
@@ -372,6 +397,18 @@ overflow: hidden;
     padding: 20px;
   }
   
+  .secondCalendar {
+    display: none;
+  }
+  
+  .mobileOnly {
+    display: block;
+  }
+  
+  .desktopOnly {
+    display: none;
+  }
+  
   .calendar {
     flex: none;
     padding: 0 20px  0;
@@ -469,6 +506,18 @@ overflow: hidden;
   
   .calendars {
     padding: 16px;
+  }
+  
+  .secondCalendar {
+    display: none;
+  }
+  
+  .mobileOnly {
+    display: block;
+  }
+  
+  .desktopOnly {
+    display: none;
   }
   
   .calendarHeader h3 {

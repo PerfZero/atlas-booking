@@ -1163,6 +1163,7 @@ function atlas_get_tours($request) {
                 'pilgrimage_type' => get_field('pilgrimage_type', $post_id),
                 'tour_start_date' => get_field('tour_start_date', $post_id),
                 'tour_end_date' => get_field('tour_end_date', $post_id),
+                'tour_duration_days' => get_field('tour_duration_days', $post_id),
                 'rating' => get_field('rating', $post_id),
                 'reviews_count' => get_field('reviews_count', $post_id),
                 'spots_left' => get_field('spots_left', $post_id),

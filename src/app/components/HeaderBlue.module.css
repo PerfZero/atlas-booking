@@ -182,6 +182,19 @@
     
     .nav {
       gap: 15px;
+      display: none;
+    }
+
+    .title{
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start ;
+      font-size: 20px;
+      gap: 10px;
+    }
+
+    .title img{
+      width: 25px;
     }
     
     .registerBtn,

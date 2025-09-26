@@ -1197,4 +1197,12 @@ padding: 6px 8px;
     height: 44px;
     font-size: 16px;
   }
+
+  .warp{
+    padding: 0 16px;
+  }
+}
+
+.wrap{
+  padding: 0 16px;
 }

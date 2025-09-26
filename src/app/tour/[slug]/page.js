@@ -177,8 +177,9 @@ export default function TourDetailPage({ params }) {
               />
             </div>
           </div>
-
-          <Breadcrumbs items={breadcrumbItems} />
+              <div className={styles.wrap}>       
+                   <Breadcrumbs items={breadcrumbItems} />
+              </div>
 
           <div className={styles.tourHeaderBlock}>
             <span className={styles.tourHeaderName}>{tour.name} </span>
@@ -857,7 +858,7 @@ export default function TourDetailPage({ params }) {
             </div>
           </div>
 
-          <div className={styles.accommodationOptions}>
+          <div id="accommodation-options" className={styles.accommodationOptions}>
             <div className={styles.accommodationOptionsHeader}>
               <div className={styles.accommodationOptionsTitle}>
                 <img src="/bad.svg" alt="bed" />
@@ -866,18 +867,34 @@ export default function TourDetailPage({ params }) {
             </div>
 
             <div className={styles.roomOptionsGrid}>
-              {Array.isArray(tour.room_options) && tour.room_options.map((room, index) => (
+              {(() => {
+                const roomOptions = Array.isArray(tour.room_options) && tour.room_options.length > 0 
+                  ? tour.room_options 
+                  : [{
+                      type: 'double',
+                      price: 2400,
+                      old_price: null,
+                      spots_left: 4,
+                      description: 'В номере с Вами будут размещены +1 человек'
+                    }];
+                
+                return roomOptions.map((room, index) => (
                 <div key={index} className={styles.roomCard}>
                   <div className={styles.roomHeader}>
                     <div className={styles.roomIcons}>
                       <div className={styles.smallBeds}>
-                        <img src="/room.svg" alt="bed" />
-                        <img src="/room.svg" alt="bed" />
-                        <img src="/room.svg" alt="bed" />
-                        <img src="/room.svg" alt="bed" />
+                        {Array.from({ length: room.type === 'single' ? 1 : 
+                                           room.type === 'double' ? 2 :
+                                           room.type === 'triple' ? 3 :
+                                           room.type === 'quadruple' ? 4 : 4 }).map((_, i) => (
+                          <img key={i} src="/room.svg" alt="bed" />
+                        ))}
                       </div>
                     </div>
-                    <h3>{room.type}</h3>
+                    <h3>{room.type === 'single' ? 'Одноместный номер' : 
+                          room.type === 'double' ? 'Двухместный номер' :
+                          room.type === 'triple' ? 'Трехместный номер' :
+                          room.type === 'quadruple' ? 'Четырехместный номер' : room.type}</h3>
                   </div>
 
                   <div className={styles.roomInfo}>
@@ -885,36 +902,40 @@ export default function TourDetailPage({ params }) {
                       <img src="/human.svg" alt="person" />
                       <div className={styles.roomSectionContent}>
                         <h4>Проживание</h4>
-                        <span>{room.description}</span>
+                        <span>{room.description || 'В номере с Вами будут размещены +1 человек'}</span>
                       </div>
                     </div>
                     <div className={styles.roomSection}>
                       <img src="/bad.svg" alt="bed" />
                       <div className={styles.roomSectionContent}>
                         <h4>Типы кровати</h4>
-                        <span>4 односпальных кровати</span>
+                        <span>{room.type === 'single' ? '1 односпальная кровать' :
+                               room.type === 'double' ? '2 односпальные кровати' :
+                               room.type === 'triple' ? '3 односпальные кровати' :
+                               room.type === 'quadruple' ? '4 односпальные кровати' : '4 односпальных кровати'}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className={styles.availabilityInfo}>
                     <img src="/alert.svg" alt="alert" />
-                    <span>Осталось {room.spots_left} мест</span>
+                    <span>Осталось {room.spots_left || 4} мест</span>
                   </div>
 
                   <div className={styles.roomPrice}>
                     <p>Без скрытых платежей</p>
                     <div className={styles.priceInfo}>
-                      <span className={styles.currentPrice}>${room.price}</span>
+                      <span className={styles.currentPrice}>${room.price || 2400}</span>
                       {room.old_price && <span className={styles.oldPrice}>От ${room.old_price}</span>}
                     </div>
-                    <p className={styles.additionalPrice}>~{Math.round(room.price * 547)}T</p>
+                    <p className={styles.additionalPrice}>~{Math.round((room.price || 2400) * 547)}T</p>
                   </div>
 
                   <button className={styles.bookButton} onClick={handleBooking}>Перейти к бронированию</button>
                   <p className={styles.roomDescription}>Оформите бронирование на себя и до 3-х спутников в одном номере.</p>
                 </div>
-              ))}
+              ));
+              })()}
 
 
             </div>
@@ -1036,7 +1057,6 @@ export default function TourDetailPage({ params }) {
 
         </div>
       </main>
-
       <Footer />
       <BottomNavigation />
     </div>

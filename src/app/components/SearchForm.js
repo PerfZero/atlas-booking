@@ -5,6 +5,7 @@ import CustomSelect from './CustomSelect';
 import DatePicker from './DatePicker';
 import styles from './SearchForm.module.css';
 import Toast from './Toast';
+import { getTours } from '../../lib/wordpress-api';
 
 function SearchFormWithParams({ className = '', isHomePage = false }) {
   const searchParams = useSearchParams();
@@ -25,6 +26,7 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   const [dateError, setDateError] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [showResults, setShowResults] = useState(false);
+  const [availableTours, setAvailableTours] = useState([]);
 
   const cityOptions = [
     { value: 'almaty', label: 'Алматы' },
@@ -107,6 +109,19 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isDatePickerOpen]);
+
+  useEffect(() => {
+    const loadTours = async () => {
+      try {
+        const tours = await getTours();
+        setAvailableTours(tours);
+      } catch (error) {
+        console.error('Ошибка загрузки туров:', error);
+      }
+    };
+
+    loadTours();
+  }, []);
 
   useEffect(() => {
     const departureCity = searchParams.get('departureCity');
@@ -231,6 +246,7 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
             onDateSelect={handleDateSelect}
             selectedStartDate={selectedStartDate}
             selectedEndDate={selectedEndDate}
+            availableTours={availableTours}
           />
         </div>
         
