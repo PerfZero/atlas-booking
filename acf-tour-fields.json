@@ -86,74 +86,41 @@
       "key": "field_tour_pilgrimage_type",
       "label": "Тип паломничества",
       "name": "pilgrimage_type",
-      "type": "select",
+      "type": "taxonomy",
       "instructions": "Выберите тип паломничества",
       "required": 1,
-      "choices": {
-        "umrah": "Умра",
-        "hajj": "Хадж"
-      },
-      "default_value": "umrah",
+      "taxonomy": "pilgrimage_type",
+      "field_type": "select",
       "allow_null": 0,
-      "multiple": 0,
+      "add_term": 1,
+      "save_terms": 1,
+      "load_terms": 1,
+      "return_format": "id",
+      "multiple": 0
+    },
+    {
+      "key": "field_tour_pilgrims_choice",
+      "label": "Выбор паломников",
+      "name": "pilgrims_choice",
+      "type": "true_false",
+      "instructions": "Отметить, если тур является выбором паломников",
+      "required": 0,
+      "default_value": 0,
       "ui": 1,
-      "return_format": "value",
-      "ajax": 0,
-      "placeholder": ""
+      "ui_on_text": "Да",
+      "ui_off_text": "Нет"
     },
     {
-      "key": "field_tour_tab_dates",
-      "label": "Даты",
-      "name": "",
-      "type": "tab",
-      "instructions": "",
+      "key": "field_tour_all_inclusive",
+      "label": "Все включено",
+      "name": "all_inclusive",
+      "type": "true_false",
+      "instructions": "Отметить, если в туре все включено",
       "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "placement": "left",
-      "endpoint": 0
-    },
-    {
-      "key": "field_tour_start_date",
-      "label": "Дата начала тура",
-      "name": "tour_start_date",
-      "type": "date_picker",
-      "instructions": "Дата начала тура",
-      "required": 0,
-      "display_format": "d/m/Y",
-      "return_format": "Y-m-d",
-      "first_day": 1
-    },
-    {
-      "key": "field_tour_end_date",
-      "label": "Дата окончания тура",
-      "name": "tour_end_date",
-      "type": "date_picker",
-      "instructions": "Дата окончания тура",
-      "required": 0,
-      "display_format": "d/m/Y",
-      "return_format": "Y-m-d",
-      "first_day": 1
-    },
-    {
-      "key": "field_tour_tab_rating",
-      "label": "Рейтинг и отзывы",
-      "name": "",
-      "type": "tab",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "placement": "left",
-      "endpoint": 0
+      "default_value": 1,
+      "ui": 1,
+      "ui_on_text": "Да",
+      "ui_off_text": "Нет"
     },
     {
       "key": "field_tour_rating",
@@ -186,23 +153,158 @@
       "step": ""
     },
     {
-      "key": "field_tour_spots_left",
-      "label": "Осталось мест",
-      "name": "spots_left",
-      "type": "number",
-      "instructions": "Количество оставшихся мест",
-      "required": 0,
-      "default_value": "10",
-      "placeholder": "10",
-      "prepend": "",
-      "append": "",
-      "min": "0",
-      "max": "",
-      "step": ""
+      "key": "field_tour_flight_type",
+      "label": "Тип перелета",
+      "name": "flight_type",
+      "type": "select",
+      "instructions": "Выберите тип перелета",
+      "required": 1,
+      "choices": {
+        "direct": "Прямой рейс",
+        "transfer": "С пересадкой"
+      },
+      "default_value": "direct",
+      "allow_null": 0,
+      "multiple": 0,
+      "ui": 1,
+      "return_format": "value",
+      "ajax": 0,
+      "placeholder": ""
     },
     {
-      "key": "field_tour_tab_hotels",
-      "label": "Отели",
+      "key": "field_tour_hotels_info",
+      "label": "Информация об отелях",
+      "name": "hotels_info",
+      "type": "repeater",
+      "instructions": "Добавьте информацию об отелях",
+      "required": 0,
+      "collapsed": "field_tour_hotel_city",
+      "min": 0,
+      "max": 2,
+      "layout": "block",
+      "button_label": "Добавить отель",
+      "sub_fields": [
+        {
+          "key": "field_tour_hotel_city",
+          "label": "Город",
+          "name": "city",
+          "type": "select",
+          "instructions": "Выберите город",
+          "required": 1,
+          "choices": {
+            "mekka": "Мекка",
+            "medina": "Медина"
+          },
+          "default_value": "mekka",
+          "allow_null": 0,
+          "multiple": 0,
+          "ui": 1,
+          "return_format": "value",
+          "ajax": 0,
+          "placeholder": ""
+        },
+        {
+          "key": "field_tour_hotel_text",
+          "label": "Текст отеля",
+          "name": "hotel_text",
+          "type": "text",
+          "instructions": "Текст для отображения отеля",
+          "required": 1,
+          "default_value": "5★ отель в Мекке",
+          "placeholder": "5★ отель в Мекке",
+          "maxlength": ""
+        },
+        {
+          "key": "field_tour_hotel_distance_text",
+          "label": "Текст расстояния",
+          "name": "distance_text",
+          "type": "text",
+          "instructions": "Текст с расстоянием",
+          "required": 0,
+          "default_value": "Расстояние до Каабы 50 м.",
+          "placeholder": "Расстояние до Каабы 50 м.",
+          "maxlength": ""
+        }
+      ]
+    },
+    {
+      "key": "field_tour_tab_dates",
+      "label": "Даты туров",
+      "name": "",
+      "type": "tab",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "placement": "left",
+      "endpoint": 0
+    },
+    {
+      "key": "field_tour_dates",
+      "label": "Даты туров",
+      "name": "tour_dates",
+      "type": "repeater",
+      "instructions": "Добавьте доступные даты для этого тура",
+      "required": 0,
+      "collapsed": "field_tour_date_start",
+      "min": 0,
+      "max": 0,
+      "layout": "block",
+      "button_label": "Добавить дату тура",
+      "sub_fields": [
+        {
+          "key": "field_tour_date_duration",
+          "label": "Длительность",
+          "name": "duration",
+          "type": "select",
+          "instructions": "Длительность этого тура",
+          "required": 1,
+          "choices": {
+            "7": "7 дней",
+            "10": "10 дней"
+          },
+          "default_value": "7",
+          "allow_null": 0,
+          "multiple": 0,
+          "ui": 1,
+          "return_format": "value",
+          "ajax": 0,
+          "placeholder": ""
+        },
+        {
+          "key": "field_tour_date_start",
+          "label": "Дата начала",
+          "name": "date_start",
+          "type": "date_picker",
+          "instructions": "Дата начала тура",
+          "required": 1,
+          "display_format": "d/m/Y",
+          "return_format": "Y-m-d",
+          "first_day": 1
+        },
+        {
+          "key": "field_tour_date_end",
+          "label": "Дата окончания",
+          "name": "date_end",
+          "type": "text",
+          "instructions": "Дата окончания тура (рассчитывается автоматически)",
+          "required": 0,
+          "default_value": "",
+          "placeholder": "Будет рассчитана автоматически",
+          "prepend": "",
+          "append": "",
+          "maxlength": "",
+          "readonly": 1
+        }
+      ]
+    },
+    {
+      "key": "field_tour_tab_services",
+      "label": "Услуги и сервисы",
       "name": "",
       "type": "tab",
       "instructions": "",
@@ -220,69 +322,89 @@
       "key": "field_tour_hotel_mekka",
       "label": "Отель в Мекке",
       "name": "hotel_mekka",
-      "type": "text",
-      "instructions": "Название отеля в Мекке",
+      "type": "post_object",
+      "instructions": "Выберите отель в Мекке",
       "required": 0,
-      "default_value": "5* отель в Мекке",
-      "placeholder": "5* отель в Мекке",
-      "prepend": "",
-      "append": "",
-      "maxlength": ""
+      "post_type": ["hotel"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": 0
     },
     {
       "key": "field_tour_hotel_medina",
       "label": "Отель в Медине",
       "name": "hotel_medina",
-      "type": "text",
-      "instructions": "Название отеля в Медине",
+      "type": "post_object",
+      "instructions": "Выберите отель в Медине",
       "required": 0,
-      "default_value": "5* отель в Медине",
-      "placeholder": "5* отель в Медине",
-      "prepend": "",
-      "append": "",
-      "maxlength": ""
+      "post_type": ["hotel"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": 0
     },
     {
-      "key": "field_tour_distance_mekka",
-      "label": "Расстояние до Каабы",
-      "name": "distance_mekka",
-      "type": "text",
-      "instructions": "Расстояние от отеля до Каабы",
+      "key": "field_tour_transfers",
+      "label": "Трансферы",
+      "name": "transfers",
+      "type": "post_object",
+      "instructions": "Выберите трансферы для тура",
       "required": 0,
-      "default_value": "50 м.",
-      "placeholder": "50 м.",
-      "prepend": "",
-      "append": "",
-      "maxlength": ""
+      "post_type": ["transfer"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 1,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": 0
     },
     {
-      "key": "field_tour_distance_medina",
-      "label": "Расстояние до мечети",
-      "name": "distance_medina",
-      "type": "text",
-      "instructions": "Расстояние от отеля до мечети Пророка",
+      "key": "field_tour_transfer_type",
+      "label": "Тип трансфера",
+      "name": "transfer_type",
+      "type": "select",
+      "instructions": "Выберите тип трансфера",
       "required": 0,
-      "default_value": "150 м.",
-      "placeholder": "150 м.",
-      "prepend": "",
-      "append": "",
-      "maxlength": ""
-    },
-    {
-      "key": "field_tour_tab_services",
-      "label": "Услуги",
-      "name": "",
-      "type": "tab",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
+      "choices": {
+        "bus_train": "BUS + TRAIN",
+        "bus_full": "BUS FULL", 
+        "gmc_train": "GMC + TRAIN",
+        "gmc_full": "GMC FULL"
       },
-      "placement": "left",
-      "endpoint": 0
+      "default_value": "bus_train",
+      "allow_null": 0,
+      "multiple": 0,
+      "ui": 1,
+      "return_format": "value",
+      "ajax": 0,
+      "placeholder": ""
+    },
+    {
+      "key": "field_tour_services",
+      "label": "Услуги",
+      "name": "services",
+      "type": "checkbox",
+      "instructions": "Выберите включенные услуги",
+      "required": 0,
+      "choices": {
+        "hajj_kit": "Хадж-набор",
+        "excursion": "Экскурсия", 
+        "visa_insurance": "Виза и медстраховка",
+        "guide_services": "Услуги гида",
+        "support": "Поддержка"
+      },
+      "allow_custom": 0,
+      "save_custom": 0,
+      "default_value": [],
+      "layout": "vertical",
+      "toggle": 0,
+      "return_format": "value",
+      "conditional_logic": 0
     },
     {
       "key": "field_tour_flight_type",
@@ -325,24 +447,49 @@
       "placeholder": ""
     },
     {
-      "key": "field_tour_transfer_type",
-      "label": "Тип трансфера",
-      "name": "transfer_type",
-      "type": "select",
-      "instructions": "Выберите тип трансфера",
+      "key": "field_tour_spots_left",
+      "label": "Осталось мест",
+      "name": "spots_left",
+      "type": "number",
+      "instructions": "Количество оставшихся мест",
       "required": 0,
-      "choices": {
-        "bus": "Автобус",
-        "train": "Поезд",
-        "gmc": "GMC"
-      },
-      "default_value": "bus",
-      "allow_null": 0,
-      "multiple": 0,
+      "default_value": "10",
+      "placeholder": "10",
+      "prepend": "",
+      "append": "",
+      "min": "0",
+      "max": "",
+      "step": ""
+    },
+    {
+      "key": "field_tour_hajj_kits",
+      "label": "Хадж наборы",
+      "name": "hajj_kits",
+      "type": "post_object",
+      "instructions": "Выберите хадж наборы для тура",
+      "required": 0,
+      "post_type": ["hajj_kit"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 1,
+      "return_format": "id",
       "ui": 1,
-      "return_format": "value",
-      "ajax": 0,
-      "placeholder": ""
+      "conditional_logic": 0
+    },
+    {
+      "key": "field_tour_package_includes",
+      "label": "Что включено в пакет",
+      "name": "package_includes",
+      "type": "post_object",
+      "instructions": "Выберите услуги, включенные в пакет",
+      "required": 0,
+      "post_type": ["package_includes"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 1,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": 0
     },
     {
       "key": "field_tour_tab_flights",
@@ -361,341 +508,137 @@
       "endpoint": 0
     },
     {
+      "key": "field_tour_flight_type",
+      "label": "Тип рейса",
+      "name": "flight_type",
+      "type": "select",
+      "instructions": "Выберите тип рейса",
+      "required": 0,
+      "choices": {
+        "direct": "Прямой рейс",
+        "connecting": "Рейс с пересадкой"
+      },
+      "default_value": "direct",
+      "allow_null": 0,
+      "multiple": 0,
+      "ui": 0,
+      "ajax": 0,
+      "placeholder": "",
+      "return_format": "value"
+    },
+    {
       "key": "field_tour_flight_outbound",
       "label": "Рейс туда",
       "name": "flight_outbound",
-      "type": "group",
-      "instructions": "Информация о рейсе туда",
+      "type": "post_object",
+      "instructions": "Выберите рейс туда",
       "required": 0,
-      "layout": "block",
-      "sub_fields": [
-        {
-          "key": "field_tour_flight_outbound_airline",
-          "label": "Авиакомпания",
-          "name": "airline",
-          "type": "text",
-          "instructions": "Название авиакомпании",
-          "required": 0,
-          "default_value": "Air Astana",
-          "placeholder": "Air Astana"
-        },
-        {
-          "key": "field_tour_flight_outbound_number",
-          "label": "Номер рейса",
-          "name": "number",
-          "type": "text",
-          "instructions": "Номер рейса",
-          "required": 0,
-          "default_value": "KC 911",
-          "placeholder": "KC 911"
-        },
-        {
-          "key": "field_tour_flight_outbound_departure_airport",
-          "label": "Аэропорт вылета",
-          "name": "departure_airport",
-          "type": "text",
-          "instructions": "Код аэропорта вылета",
-          "required": 0,
-          "default_value": "ALA",
-          "placeholder": "ALA"
-        },
-        {
-          "key": "field_tour_flight_outbound_arrival_airport",
-          "label": "Аэропорт прилета",
-          "name": "arrival_airport",
-          "type": "text",
-          "instructions": "Код аэропорта прилета",
-          "required": 0,
-          "default_value": "MED",
-          "placeholder": "MED"
-        },
-        {
-          "key": "field_tour_flight_outbound_departure_time",
-          "label": "Время вылета",
-          "name": "departure_time",
-          "type": "time_picker",
-          "instructions": "Время вылета",
-          "required": 0,
-          "display_format": "H:i",
-          "return_format": "H:i"
-        },
-        {
-          "key": "field_tour_flight_outbound_arrival_time",
-          "label": "Время прилета",
-          "name": "arrival_time",
-          "type": "time_picker",
-          "instructions": "Время прилета",
-          "required": 0,
-          "display_format": "H:i",
-          "return_format": "H:i"
-        },
-        {
-          "key": "field_tour_flight_outbound_duration",
-          "label": "Время в пути",
-          "name": "duration",
-          "type": "text",
-          "instructions": "Время в пути",
-          "required": 0,
-          "default_value": "6 ч 20 м",
-          "placeholder": "6 ч 20 м"
-        }
+      "post_type": ["flight"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_tour_flight_type",
+            "operator": "==",
+            "value": "direct"
+          }
+        ]
       ]
     },
     {
       "key": "field_tour_flight_inbound",
       "label": "Рейс обратно",
       "name": "flight_inbound",
-      "type": "group",
-      "instructions": "Информация о рейсе обратно",
+      "type": "post_object",
+      "instructions": "Выберите рейс обратно",
       "required": 0,
-      "layout": "block",
-      "sub_fields": [
-        {
-          "key": "field_tour_flight_inbound_airline",
-          "label": "Авиакомпания",
-          "name": "airline",
-          "type": "text",
-          "instructions": "Название авиакомпании",
-          "required": 0,
-          "default_value": "Air Astana",
-          "placeholder": "Air Astana"
-        },
-        {
-          "key": "field_tour_flight_inbound_number",
-          "label": "Номер рейса",
-          "name": "number",
-          "type": "text",
-          "instructions": "Номер рейса",
-          "required": 0,
-          "default_value": "KC 912",
-          "placeholder": "KC 912"
-        },
-        {
-          "key": "field_tour_flight_inbound_departure_airport",
-          "label": "Аэропорт вылета",
-          "name": "departure_airport",
-          "type": "text",
-          "instructions": "Код аэропорта вылета",
-          "required": 0,
-          "default_value": "MED",
-          "placeholder": "MED"
-        },
-        {
-          "key": "field_tour_flight_inbound_arrival_airport",
-          "label": "Аэропорт прилета",
-          "name": "arrival_airport",
-          "type": "text",
-          "instructions": "Код аэропорта прилета",
-          "required": 0,
-          "default_value": "ALA",
-          "placeholder": "ALA"
-        },
-        {
-          "key": "field_tour_flight_inbound_departure_time",
-          "label": "Время вылета",
-          "name": "departure_time",
-          "type": "time_picker",
-          "instructions": "Время вылета",
-          "required": 0,
-          "display_format": "H:i",
-          "return_format": "H:i"
-        },
-        {
-          "key": "field_tour_flight_inbound_arrival_time",
-          "label": "Время прилета",
-          "name": "arrival_time",
-          "type": "time_picker",
-          "instructions": "Время прилета",
-          "required": 0,
-          "display_format": "H:i",
-          "return_format": "H:i"
-        },
-        {
-          "key": "field_tour_flight_inbound_duration",
-          "label": "Время в пути",
-          "name": "duration",
-          "type": "text",
-          "instructions": "Время в пути",
-          "required": 0,
-          "default_value": "6 ч 20 м",
-          "placeholder": "6 ч 20 м"
-        }
+      "post_type": ["flight"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_tour_flight_type",
+            "operator": "==",
+            "value": "direct"
+          }
+        ]
       ]
     },
     {
-      "key": "field_tour_tab_hotel_details",
-      "label": "Детали отелей",
-      "name": "",
-      "type": "tab",
-      "instructions": "",
+      "key": "field_tour_flight_outbound_connecting",
+      "label": "Рейс туда",
+      "name": "flight_outbound_connecting",
+      "type": "post_object",
+      "instructions": "Выберите рейс туда",
       "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "placement": "left",
-      "endpoint": 0
-    },
-    {
-      "key": "field_tour_hotel_mekka_details",
-      "label": "Детали отеля в Мекке",
-      "name": "hotel_mekka_details",
-      "type": "group",
-      "instructions": "Подробная информация об отеле в Мекке",
-      "required": 0,
-      "layout": "block",
-      "sub_fields": [
-        {
-          "key": "field_tour_hotel_mekka_description",
-          "label": "Описание отеля",
-          "name": "description",
-          "type": "textarea",
-          "instructions": "Подробное описание отеля",
-          "required": 0,
-          "default_value": "Отель расположен в комплексе Abraj Al Bait с прямым доступом к Аль-Хараму. Впечатляющий вид на Каабу, просторные номера, высокий уровень сервиса.",
-          "placeholder": "Описание отеля..."
-        },
-        {
-          "key": "field_tour_hotel_mekka_amenities",
-          "label": "Удобства отеля",
-          "name": "amenities",
-          "type": "repeater",
-          "instructions": "Список удобств отеля",
-          "required": 0,
-          "collapsed": "",
-          "min": 0,
-          "max": 0,
-          "layout": "table",
-          "button_label": "Добавить удобство",
-          "sub_fields": [
-            {
-              "key": "field_tour_hotel_mekka_amenity_text",
-              "label": "Удобство",
-              "name": "amenity_text",
-              "type": "text",
-              "instructions": "Название удобства",
-              "required": 1,
-              "default_value": "",
-              "placeholder": "Бесплатный Wi-Fi"
-            }
-          ]
-        },
-        {
-          "key": "field_tour_hotel_mekka_rating",
-          "label": "Рейтинг отеля",
-          "name": "rating",
-          "type": "number",
-          "instructions": "Рейтинг отеля от 1 до 10",
-          "required": 0,
-          "default_value": "9.3",
-          "placeholder": "9.3",
-          "min": "1",
-          "max": "10",
-          "step": "0.1"
-        },
-        {
-          "key": "field_tour_hotel_mekka_gallery",
-          "label": "Галерея отеля",
-          "name": "gallery",
-          "type": "gallery",
-          "instructions": "Фотографии отеля",
-          "required": 0,
-          "return_format": "array",
-          "preview_size": "medium",
-          "insert": "append",
-          "library": "all",
-          "min": "",
-          "max": "",
-          "min_width": "",
-          "min_height": "",
-          "min_size": "",
-          "max_width": "",
-          "max_height": "",
-          "max_size": "",
-          "mime_types": ""
-        }
+      "post_type": ["flight"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_tour_flight_type",
+            "operator": "==",
+            "value": "connecting"
+          }
+        ]
       ]
     },
     {
-      "key": "field_tour_hotel_medina_details",
-      "label": "Детали отеля в Медине",
-      "name": "hotel_medina_details",
-      "type": "group",
-      "instructions": "Подробная информация об отеле в Медине",
+      "key": "field_tour_flight_connecting",
+      "label": "Рейс пересадки",
+      "name": "flight_connecting",
+      "type": "post_object",
+      "instructions": "Выберите рейс пересадки",
       "required": 0,
-      "layout": "block",
-      "sub_fields": [
-        {
-          "key": "field_tour_hotel_medina_description",
-          "label": "Описание отеля",
-          "name": "description",
-          "type": "textarea",
-          "instructions": "Подробное описание отеля",
-          "required": 0,
-          "default_value": "Отель расположен рядом с мечетью Пророка. Комфортные номера, высокий уровень сервиса и удобное расположение.",
-          "placeholder": "Описание отеля..."
-        },
-        {
-          "key": "field_tour_hotel_medina_amenities",
-          "label": "Удобства отеля",
-          "name": "amenities",
-          "type": "repeater",
-          "instructions": "Список удобств отеля",
-          "required": 0,
-          "collapsed": "",
-          "min": 0,
-          "max": 0,
-          "layout": "table",
-          "button_label": "Добавить удобство",
-          "sub_fields": [
-            {
-              "key": "field_tour_hotel_medina_amenity_text",
-              "label": "Удобство",
-              "name": "amenity_text",
-              "type": "text",
-              "instructions": "Название удобства",
-              "required": 1,
-              "default_value": "",
-              "placeholder": "Бесплатный Wi-Fi"
-            }
-          ]
-        },
-        {
-          "key": "field_tour_hotel_medina_rating",
-          "label": "Рейтинг отеля",
-          "name": "rating",
-          "type": "number",
-          "instructions": "Рейтинг отеля от 1 до 10",
-          "required": 0,
-          "default_value": "9.1",
-          "placeholder": "9.1",
-          "min": "1",
-          "max": "10",
-          "step": "0.1"
-        },
-        {
-          "key": "field_tour_hotel_medina_gallery",
-          "label": "Галерея отеля",
-          "name": "gallery",
-          "type": "gallery",
-          "instructions": "Фотографии отеля",
-          "required": 0,
-          "return_format": "array",
-          "preview_size": "medium",
-          "insert": "append",
-          "library": "all",
-          "min": "",
-          "max": "",
-          "min_width": "",
-          "min_height": "",
-          "min_size": "",
-          "max_width": "",
-          "max_height": "",
-          "max_size": "",
-          "mime_types": ""
-        }
+      "post_type": ["flight"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_tour_flight_type",
+            "operator": "==",
+            "value": "connecting"
+          }
+        ]
+      ]
+    },
+    {
+      "key": "field_tour_flight_inbound_connecting",
+      "label": "Рейс обратно",
+      "name": "flight_inbound_connecting",
+      "type": "post_object",
+      "instructions": "Выберите рейс обратно",
+      "required": 0,
+      "post_type": ["flight"],
+      "taxonomy": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "return_format": "id",
+      "ui": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_tour_flight_type",
+            "operator": "==",
+            "value": "connecting"
+          }
+        ]
       ]
     },
     {
@@ -804,8 +747,8 @@
       ]
     },
     {
-      "key": "field_tour_tab_package",
-      "label": "Что включено",
+      "key": "field_tour_tab_reviews",
+      "label": "Отзывы паломников",
       "name": "",
       "type": "tab",
       "instructions": "",
@@ -820,180 +763,116 @@
       "endpoint": 0
     },
     {
-      "key": "field_tour_package_includes",
-      "label": "Что входит в пакет",
-      "name": "package_includes",
+      "key": "field_tour_reviews",
+      "label": "Отзывы паломников",
+      "name": "reviews",
       "type": "repeater",
-      "instructions": "Список того, что входит в стоимость тура",
+      "instructions": "Добавьте отзывы паломников о туре",
       "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
       "collapsed": "",
       "min": 0,
       "max": 0,
-      "layout": "table",
-      "button_label": "Добавить услугу",
+      "layout": "block",
+      "button_label": "Добавить отзыв",
       "sub_fields": [
         {
-          "key": "field_tour_package_service_title",
-          "label": "Название услуги",
-          "name": "service_title",
+          "key": "field_tour_review_name",
+          "label": "Имя паломника",
+          "name": "name",
           "type": "text",
-          "instructions": "Название услуги",
+          "instructions": "Имя и фамилия паломника",
           "required": 1,
+          "conditional_logic": 0,
+          "wrapper": {
+            "width": "50",
+            "class": "",
+            "id": ""
+          },
           "default_value": "",
-          "placeholder": "Перелёт"
+          "placeholder": "Ахмед Алиев",
+          "prepend": "",
+          "append": "",
+          "maxlength": ""
         },
         {
-          "key": "field_tour_package_service_description",
-          "label": "Описание услуги",
-          "name": "service_description",
-          "type": "text",
-          "instructions": "Краткое описание услуги",
-          "required": 0,
+          "key": "field_tour_review_rating",
+          "label": "Оценка",
+          "name": "rating",
+          "type": "number",
+          "instructions": "Оценка от 1 до 5",
+          "required": 1,
+          "conditional_logic": 0,
+          "wrapper": {
+            "width": "50",
+            "class": "",
+            "id": ""
+          },
+          "default_value": 5,
+          "placeholder": "5",
+          "prepend": "",
+          "append": "",
+          "min": 1,
+          "max": 5,
+          "step": 1
+        },
+        {
+          "key": "field_tour_review_text",
+          "label": "Текст отзыва",
+          "name": "text",
+          "type": "textarea",
+          "instructions": "Текст отзыва паломника",
+          "required": 1,
+          "conditional_logic": 0,
+          "wrapper": {
+            "width": "",
+            "class": "",
+            "id": ""
+          },
           "default_value": "",
-          "placeholder": "Авиабилеты туда и обратно включены в стоимость тура"
-        }
-      ]
-    },
-    {
-      "key": "field_tour_tab_hajj_kit",
-      "label": "Хадж набор",
-      "name": "",
-      "type": "tab",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "placement": "left",
-      "endpoint": 0
-    },
-    {
-      "key": "field_tour_hajj_kit_male",
-      "label": "Набор для мужчин",
-      "name": "hajj_kit_male",
-      "type": "group",
-      "instructions": "Информация о хадж наборе для мужчин",
-      "required": 0,
-      "layout": "block",
-      "sub_fields": [
-        {
-          "key": "field_tour_hajj_kit_male_description",
-          "label": "Описание набора",
-          "name": "description",
-          "type": "textarea",
-          "instructions": "Описание хадж набора для мужчин",
-          "required": 0,
-          "default_value": "Atlas Collection — полный набор для хаджа и умры, включающий удобную одежду, компактные сумки, рюкзаки, путеводители, дуа и мелкие принадлежности.",
-          "placeholder": "Описание набора..."
+          "placeholder": "Очень доволен поездкой! Всё было организовано на высшем уровне...",
+          "maxlength": "",
+          "rows": 4,
+          "new_lines": "br"
         },
         {
-          "key": "field_tour_hajj_kit_male_items",
-          "label": "Что входит в набор",
-          "name": "items",
-          "type": "repeater",
-          "instructions": "Список предметов в наборе",
+          "key": "field_tour_review_date",
+          "label": "Дата поездки",
+          "name": "date",
+          "type": "date_picker",
+          "instructions": "Дата когда паломник ездил в тур",
           "required": 0,
-          "collapsed": "",
-          "min": 0,
-          "max": 0,
-          "layout": "table",
-          "button_label": "Добавить предмет",
-          "sub_fields": [
-            {
-              "key": "field_tour_hajj_kit_male_item_text",
-              "label": "Предмет",
-              "name": "item_text",
-              "type": "text",
-              "instructions": "Название предмета",
-              "required": 1,
-              "default_value": "",
-              "placeholder": "Одежда для мужчин: футболка, штаны, кепка, рюкзак"
-            }
-          ]
+          "conditional_logic": 0,
+          "wrapper": {
+            "width": "50",
+            "class": "",
+            "id": ""
+          },
+          "display_format": "d.m.Y",
+          "return_format": "Y-m-d",
+          "first_day": 1
         },
         {
-          "key": "field_tour_hajj_kit_male_gallery",
-          "label": "Фото набора",
-          "name": "gallery",
-          "type": "gallery",
-          "instructions": "Фотографии хадж набора для мужчин",
+          "key": "field_tour_review_photo",
+          "label": "Фото паломника",
+          "name": "photo",
+          "type": "image",
+          "instructions": "Фото паломника (необязательно)",
           "required": 0,
+          "conditional_logic": 0,
+          "wrapper": {
+            "width": "50",
+            "class": "",
+            "id": ""
+          },
           "return_format": "array",
-          "preview_size": "medium",
-          "insert": "append",
+          "preview_size": "thumbnail",
           "library": "all",
-          "min": "",
-          "max": "",
-          "min_width": "",
-          "min_height": "",
-          "min_size": "",
-          "max_width": "",
-          "max_height": "",
-          "max_size": "",
-          "mime_types": ""
-        }
-      ]
-    },
-    {
-      "key": "field_tour_hajj_kit_female",
-      "label": "Набор для женщин",
-      "name": "hajj_kit_female",
-      "type": "group",
-      "instructions": "Информация о хадж наборе для женщин",
-      "required": 0,
-      "layout": "block",
-      "sub_fields": [
-        {
-          "key": "field_tour_hajj_kit_female_description",
-          "label": "Описание набора",
-          "name": "description",
-          "type": "textarea",
-          "instructions": "Описание хадж набора для женщин",
-          "required": 0,
-          "default_value": "Atlas Collection — полный набор для хаджа и умры, включающий удобную одежду, компактные сумки, рюкзаки, путеводители, дуа и мелкие принадлежности.",
-          "placeholder": "Описание набора..."
-        },
-        {
-          "key": "field_tour_hajj_kit_female_items",
-          "label": "Что входит в набор",
-          "name": "items",
-          "type": "repeater",
-          "instructions": "Список предметов в наборе",
-          "required": 0,
-          "collapsed": "",
-          "min": 0,
-          "max": 0,
-          "layout": "table",
-          "button_label": "Добавить предмет",
-          "sub_fields": [
-            {
-              "key": "field_tour_hajj_kit_female_item_text",
-              "label": "Предмет",
-              "name": "item_text",
-              "type": "text",
-              "instructions": "Название предмета",
-              "required": 1,
-              "default_value": "",
-              "placeholder": "Одежда для женщин: платье, абайя, хиджаб, рюкзак"
-            }
-          ]
-        },
-        {
-          "key": "field_tour_hajj_kit_female_gallery",
-          "label": "Фото набора",
-          "name": "gallery",
-          "type": "gallery",
-          "instructions": "Фотографии хадж набора для женщин",
-          "required": 0,
-          "return_format": "array",
-          "preview_size": "medium",
-          "insert": "append",
-          "library": "all",
-          "min": "",
-          "max": "",
           "min_width": "",
           "min_height": "",
           "min_size": "",

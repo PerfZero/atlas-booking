@@ -4,7 +4,15 @@ export function formatPrice(price) {
 }
 
 export function formatDate(date) {
-  return new Date(date).toLocaleDateString('ru-RU');
+  if (!date) return "";
+  try {
+    // Парсим дату как локальную дату, чтобы избежать проблем с часовыми поясами
+    const [year, month, day] = date.split('-');
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('ru-RU');
+  } catch {
+    return date;
+  }
 }
 
 export function truncateText(text, maxLength = 100) {

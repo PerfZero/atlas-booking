@@ -129,8 +129,14 @@ function AuthPageContent() {
         };
         login(userData);
         
-        // Перенаправляем на профиль
-        router.push('/profile');
+        // Проверяем, есть ли данные для бронирования
+        if (bookingQuery) {
+          // Перенаправляем на страницу бронирования с данными тура
+          router.push(`/booking?${bookingQuery}`);
+        } else {
+          // Перенаправляем на профиль
+          router.push('/profile');
+        }
       } else {
         setCodeError(true);
       }

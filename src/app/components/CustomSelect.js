@@ -28,6 +28,11 @@ export default function CustomSelect({
     };
   }, []);
 
+  useEffect(() => {
+    const newSelectedOption = options.find(option => option.value === value) || null;
+    setSelectedOption(newSelectedOption);
+  }, [value, options]);
+
   const handleSelect = (option) => {
     setSelectedOption(option);
     onChange(option.value);

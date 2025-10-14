@@ -1,20 +1,28 @@
 "use client";
  import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
  
 import { useAuth } from "../../contexts/AuthContext";
 import { getProfile, updateProfile, getMyBookings } from "../../lib/wordpress-api";
 import HeaderProfile from "../components/HeaderProfile";
 import Footer from "../components/Footer";
 import BottomNavigation from "../components/BottomNavigation";
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+
+if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
+  pdfMake.vfs = pdfFonts.pdfMake.vfs;
+} else if (pdfFonts.vfs) {
+  pdfMake.vfs = pdfFonts.vfs;
+}
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("tourist-data");
-  const [timer1, setTimer1] = useState({ minutes: 19, seconds: 32 });
-  const [timer2, setTimer2] = useState({ minutes: 15, seconds: 48 });
+  const [bookingTimers, setBookingTimers] = useState({});
   const [profileLoading, setProfileLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [bookings, setBookings] = useState([]);
@@ -34,6 +42,56 @@ export default function ProfilePage() {
     passportExpiryDate: ""
   });
 
+  // Синхронизация таба с URL
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['tourist-data', 'bookings', 'pending-payment'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // Обновление таймеров каждую секунду
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTimers = {};
+      bookings.forEach((booking) => {
+        if (booking.status === 'pending') {
+          const timeRemaining = calculateTimeRemaining(booking.booking_date || booking.bookingDate);
+          newTimers[booking.booking_id] = timeRemaining;
+        }
+      });
+      setBookingTimers(newTimers);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [bookings]);
+
+  // Функция для переключения таба
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tab);
+    router.replace(url.pathname + url.search);
+  };
+
+  // Функция для расчета времени до истечения брони
+  const calculateTimeRemaining = (bookingDate) => {
+    const bookingTime = new Date(bookingDate);
+    const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000); // 20 минут
+    const now = new Date();
+    const timeRemaining = expirationTime.getTime() - now.getTime();
+    
+    
+    if (timeRemaining <= 0) {
+      return { minutes: 0, seconds: 0, expired: true };
+    }
+    
+    const minutes = Math.floor(timeRemaining / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+    
+    return { minutes, seconds, expired: false };
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     try {
@@ -44,113 +102,435 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDownloadVoucher = (booking) => {
+  const handleDownloadVoucher = async (booking) => {
+    console.log('=== ДАННЫЕ БРОНИРОВАНИЯ ===');
+    console.log('Полные данные бронирования:', booking);
+    console.log('=== ДАННЫЕ ТУРА ===');
+    console.log('Данные тура:', booking.tour_data);
+    console.log('Тип рейса:', booking.tour_data?.flight_type);
+    console.log('Рейс туда:', booking.tour_data?.flight_outbound);
+    console.log('Рейс обратно:', booking.tour_data?.flight_inbound);
+    console.log('Рейс с пересадкой туда:', booking.tour_data?.flight_outbound_connecting);
+    console.log('Пересадка:', booking.tour_data?.flight_connecting);
+    console.log('Рейс с пересадкой обратно:', booking.tour_data?.flight_inbound_connecting);
+    console.log('Услуги тура:', booking.tour_data?.services);
+    console.log('Трансферы тура:', booking.tour_data?.transfers);
+    
     const norm = (v) => (v == null ? '' : String(v));
-    const extractStrings = (val) => {
-      const out = [];
-      const visit = (v) => {
-        if (v == null) return;
-        if (typeof v === 'string') {
-          const s = v.trim();
-          if (s && !s.startsWith('http') && !s.endsWith('.svg') && !s.endsWith('.png')) out.push(s);
-          return;
-        }
-        if (typeof v === 'number' || typeof v === 'boolean') { out.push(String(v)); return; }
-        if (Array.isArray(v)) { v.forEach(visit); return; }
-        if (typeof v === 'object') {
-          const preferred = ['label','name','title','text','value','rendered','description','ru','kz','en'];
-          for (const k of preferred) {
-            if (v[k] != null) visit(v[k]);
-          }
-          Object.entries(v).forEach(([k, vv]) => {
-            if (preferred.includes(k)) return;
-            if (['icon','image','url','src'].includes(k)) return;
-            visit(vv);
-          });
-        }
-      };
-      visit(val);
-      return out;
-    };
     const tourists = Array.isArray(booking.tour_data?.tourists) ? booking.tour_data.tourists : [];
-    const features = [];
+    
+    // Функция для преобразования ключа типа трансфера в читаемое название
+    const getTransferTypeName = (type) => {
+      const transferTypes = {
+        'bus_train': 'BUS + TRAIN',
+        'bus_full': 'BUS FULL',
+        'gmc_train': 'GMC + TRAIN', 
+        'gmc_full': 'GMC FULL'
+      };
+      return transferTypes[type] || type;
+    };
 
-    const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8" />
-    <title>Ваучер</title>
-    <style>
-      :root { --primary:#253168; --text:#111; --muted:#667085; --border:#E4E7EC; }
-      * { box-sizing: border-box; }
-      body { font-family: Arial, sans-serif; color:var(--text); padding:0; background:#fff; }
-      .voucher { width:100%; margin:0; background:#fff; overflow:hidden; }
-      .header { background:var(--primary); color:#fff; padding:18px 18px 12px; }
-      .header h1 { margin:0; font-size:22px; font-weight:600; letter-spacing:0.2px; }
-      .content { padding:24px 28px; }
-      .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; }
-      .row { margin:6px 0; }
-      .muted { color:var(--muted); }
-      .badge { display:inline-block; padding:6px 10px; border-radius:999px; background:#f1f2f7; color:var(--primary); font-weight:600; font-size:12px; }
-      .section { border:1px solid var(--border); border-radius:12px; padding:16px; margin:16px 0; }
-      .section h2 { margin:0 0 10px; font-size:16px; font-weight:600; color:#0f172a; }
-      .two { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
-    </style></head><body>
-      <div class="voucher">
-        <div class="header"><h1>Atlas Tourism — Ваучер бронирования</h1></div>
-        <div class="content">
-          <div class="grid">
-            <div class="row">Номер брони: <strong>${norm(booking.booking_id)}</strong></div>
-            <div class="row">Статус: <span class="badge">${booking.status === 'paid' ? 'Оплачено' : 'Ожидает оплаты'}</span></div>
-          </div>
+    // Конвертируем SVG в PNG через Canvas
+    let logoBase64 = '';
+    let qrBase64 = '';
+    
+    // Загружаем QR-код
+    try {
+      const response = await fetch('/qr.jpg');
+      const blob = await response.blob();
+      const reader = new FileReader();
+      qrBase64 = await new Promise((resolve) => {
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.log('Не удалось загрузить QR-код:', error);
+    }
+    
+    try {
+      const svgCode = `<svg width="406" height="158" viewBox="0 0 406 158" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M381.598 82.0682C371.656 82.0682 366.414 77.3683 363.341 73.9338C360.449 70.4992 359.003 67.4262 358.46 65.4378L357.918 63.8109L365.329 60.3763L365.872 62.184C366.775 64.8955 368.583 67.4262 369.487 68.6916C372.198 72.1261 376.898 74.2953 381.779 74.2953C390.637 74.2953 397.506 67.7877 397.506 59.2917C397.506 55.1341 395.517 51.8803 391.179 49.3496C389.19 48.265 385.033 46.0958 379.068 43.2036C372.018 39.769 367.86 37.5998 365.149 32.8999C363.341 30.0077 362.618 27.1154 362.618 23.6809C362.618 13.9195 369.487 3.79663 382.864 3.79663C391.179 3.79663 398.229 7.95424 402.206 15.1849L402.748 16.4502L396.421 21.6924L395.517 19.704C391.902 12.8349 385.937 11.7503 382.864 11.7503C374.729 11.7503 371.114 17.7156 371.114 23.5001C371.114 29.8269 375.091 31.9961 382.683 35.7922C382.683 35.7922 385.394 37.0575 386.479 37.5998C391.36 39.9498 394.433 41.3959 397.506 43.5651C401.121 46.0958 406.002 50.4342 406.002 59.111C406.002 72.1261 395.336 82.0682 381.598 82.0682Z" fill="black"/>
+<path d="M62.9065 81.5253L35.9724 19.8842L8.85753 81.5253H0L35.9724 -6.10352e-05L71.9448 81.5253H62.9065Z" fill="black"/>
+<path d="M318.509 81.5256L291.575 19.8845L264.46 81.5256H255.422L291.575 0.000244141L327.547 81.5256H318.509Z" fill="black"/>
+<path d="M112.984 81.1639V13.0152H94.0039V5.06152H140.099V13.0152H121.3V81.1639H112.984Z" fill="black"/>
+<path d="M182.398 80.8028V4.70038H190.894V73.0299H225.24L221.986 80.8028H182.398Z" fill="black"/>
+<path d="M226.506 154.555L227.59 154.013C228.494 153.651 229.759 151.663 229.759 149.674V134.309H227.048V130.152H234.64V149.494C234.64 154.013 231.386 156.363 229.217 156.905H228.675L226.506 154.555ZM258.14 154.555L259.224 154.193C260.128 153.651 261.393 151.844 261.393 149.855V134.49H258.682V130.332H266.093V149.674C266.093 154.013 263.02 156.363 260.851 156.905L260.309 157.086L258.14 154.555ZM201.921 152.747L200.656 150.036H188.726L187.46 152.747H182.58L192.883 130.152H196.679L206.983 152.747H201.921ZM198.848 145.878L194.872 136.84L190.714 145.878H198.848ZM155.284 152.747V143.709H143.353V152.747H138.473V130.152H143.353V139.19H155.284V130.152H160.165V152.747H155.284Z" fill="black"/>
+<path d="M42.6618 81.7061L35.9735 96.7096L29.2852 81.7061L35.9735 66.5217L42.6618 81.7061Z" fill="#253168"/>
+</svg>`;
+      
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      // Увеличиваем разрешение в 2 раза для лучшего качества
+      const scale = 2;
+      canvas.width = 406 * scale;
+      canvas.height = 158 * scale;
+      
+      // Включаем сглаживание
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      const img = new Image();
+      const svgBlob = new Blob([svgCode], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      logoBase64 = await new Promise((resolve) => {
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0);
+          const pngData = canvas.toDataURL('image/png');
+          URL.revokeObjectURL(url);
+          resolve(pngData);
+        };
+        img.src = url;
+      });
+    } catch (error) {
+      console.log('Не удалось конвертировать SVG:', error);
+    }
 
-      <div class="section">
-        <h2>Данные тура</h2>
-        <div class="two">
-          <div>Тур: <strong>${norm(booking.tour_title || booking.tour_data?.name)}</strong></div>
-          <div>Пакет: <span class="muted">${norm(booking.tour_data?.packageName || 'Турпакет')}</span></div>
-          
-          <div>Длительность: <span class="muted">${norm(booking.tour_data?.duration)}</span></div>
-          <div>Даты: <span class="muted">${formatDate(booking.tour_data?.flightOutboundDate || booking.tour_data?.date)} — ${formatDate(booking.tour_data?.flightInboundDate || booking.tour_data?.endDate)}</span></div>
-          ${booking.tour_data?.flightOutboundTime || booking.tour_data?.flightInboundTime ? `<div>Время вылета: <span class="muted">${norm(booking.tour_data?.flightOutboundTime)}</span></div><div>Время прилета: <span class="muted">${norm(booking.tour_data?.flightInboundTime)}</span></div>` : ''}
-          ${booking.tour_data?.hotel_mekka || booking.tour_data?.hotel_medina ? `<div>Отель в Мекке: <span class="muted">${norm(booking.tour_data?.hotel_mekka)}</span></div><div>Отель в Медине: <span class="muted">${norm(booking.tour_data?.hotel_medina)}</span></div>` : ''}
-          <div>Цена: <strong>$${norm(booking.tour_price)}</strong></div>
-        </div>
-      </div>
+    const docDefinition = {
+      pageSize: 'A4',
+      pageMargins: [20, 20, 20, 20],
+      content: [
+        {
+          columns: [
+            {
+              width: 200,
+              image: logoBase64 || 'ATLAS HAJJ',
+              fit: [200, 80],
+              alignment: 'left'
+            },
+            {
+              width: '*',
+              text: [
+                { text: '№ ваучера: ', bold: true, fontSize: 10, color: '#333' },
+                { text: `U${String(booking.booking_id).padStart(6, '0')}`, bold: true, fontSize: 10, color: '#253168' },
+                { text: '\nТуроператор: ', bold: true, fontSize: 10, color: '#333' },
+                { text: 'ATLAS TOURISM LLP', bold: true, fontSize: 10, color: '#253168' },
+                { text: '\nДата ваучера: ', bold: true, fontSize: 10, color: '#333' },
+                { text: new Date().toLocaleDateString('ru-RU'), bold: true, fontSize: 10, color: '#253168' }
+              ],
+              alignment: 'right'
+            }
+          ]
+        },
+        { text: '', margin: [0, 2] },
+        {
+          text: 'Список туристов',
+          style: 'sectionHeader',
+          margin: [0, 0, 0, 4]
+        },
+        {
+          table: {
+            widths: ['*', '*', '*', '*', '*', '*'],
+            body: [
+              [
+                { text: 'ФИО', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Дата рождения', bold: true, fillColor: '#f5f5f5' },
+                { text: '№ паспорта', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Номер телефона', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' }
+              ],
+              ...tourists.map(t => [
+                { text: `${norm(t.firstName)} ${norm(t.lastName)}` },
+                { text: norm(t.birthDate) },
+                { text: norm(t.passportNumber) },
+                { text: norm(t.phone || '') },
+                { text: '' },
+                { text: '' }
+              ])
+            ]
+          },
+          layout: 'noBorders',
+        },
+        { text: '', margin: [0, 2] },
+        {
+          text: 'Детали перелета',
+          style: 'sectionHeader',
+          margin: [0, 0, 0, 4]
+        },
+        ...(booking.tour_data?.flight_type === 'direct' ? [
+          {
+            table: {
+              widths: ['*', '*', '*', '*', '*', '*'],
+              body: [
+                [
+                  { text: 'Авиалиния', bold: true, fillColor: '#f5f5f5' },
+                  { text: '№ рейса', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Дата вылета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Время вылета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Время прилета', bold: true, fillColor: '#f5f5f5' },
+                  { text: '', fillColor: '#f5f5f5' }
+                ],
+                [
+                  { text: norm(booking.tour_data?.flight_outbound?.airline) || 'Air Astana' },
+                  { text: norm(booking.tour_data?.flight_outbound?.number) || 'НД' },
+                  { text: booking.tour_data?.flight_outbound?.departure_date || formatDate(booking.tour_data?.tour_dates?.[0]?.date_start || booking.tour_data?.flightOutboundDate || booking.tour_data?.date) },
+                  { text: norm(booking.tour_data?.flight_outbound?.departure_time) || 'НД' },
+                  { text: norm(booking.tour_data?.flight_outbound?.arrival_time) || 'НД' },
+                  { text: '' }
+                ],
+                [
+                  { text: norm(booking.tour_data?.flight_inbound?.airline) || 'Air Astana' },
+                  { text: norm(booking.tour_data?.flight_inbound?.number) || 'НД' },
+                  { text: booking.tour_data?.flight_inbound?.departure_date || formatDate(booking.tour_data?.tour_dates?.[0]?.date_end || booking.tour_data?.flightInboundDate || booking.tour_data?.endDate) },
+                  { text: norm(booking.tour_data?.flight_inbound?.departure_time) || 'НД' },
+                  { text: norm(booking.tour_data?.flight_inbound?.arrival_time) || 'НД' },
+                  { text: '' }
+                ]
+              ]
+            },
+            layout: 'noBorders'
+          }
+        ] : booking.tour_data?.flight_type === 'connecting' ? [
+          {
+            table: {
+              widths: ['*', '*', '*', '*', '*', '*'],
+              body: [
+                [
+                  { text: 'Авиалиния', bold: true, fillColor: '#f5f5f5' },
+                  { text: '№ рейса', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Дата вылета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Время вылета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Время прилета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Пересадка', bold: true }
+                ],
+                [
+                  { text: norm(booking.tour_data?.flight_outbound_connecting?.airline) || 'Air Astana' },
+                  { text: norm(booking.tour_data?.flight_outbound_connecting?.number) || 'НД' },
+                  { text: booking.tour_data?.flight_outbound_connecting?.departure_date || formatDate(booking.tour_data?.tour_dates?.[0]?.date_start || booking.tour_data?.flightOutboundDate || booking.tour_data?.date) },
+                  { text: norm(booking.tour_data?.flight_outbound_connecting?.departure_time) || 'НД' },
+                  { text: norm(booking.tour_data?.flight_outbound_connecting?.arrival_time) || 'НД' },
+                  { text: norm(booking.tour_data?.flight_connecting?.connecting_airport) || 'НД' }
+                ],
+                [
+                  { text: 'Пересадка', bold: true, fillColor: '#e8f4fd', style: 'connectingCell' },
+                  { text: 'Ожидание', bold: true, fillColor: '#e8f4fd', style: 'connectingCell' },
+                  { text: booking.tour_data?.flight_connecting?.connecting_airport || 'НД', fillColor: '#e8f4fd', style: 'connectingCell' },
+                  { text: booking.tour_data?.flight_connecting?.connecting_wait_time || 'НД', fillColor: '#e8f4fd', style: 'connectingCell' },
+                  { text: '', fillColor: '#e8f4fd' },
+                  { text: '', fillColor: '#e8f4fd' }
+                ],
+                [
+                  { text: norm(booking.tour_data?.flight_connecting?.airline) || 'Air Astana' },
+                  { text: norm(booking.tour_data?.flight_connecting?.number) || 'НД' },
+                  { text: booking.tour_data?.flight_connecting?.departure_date || 'НД' },
+                  { text: norm(booking.tour_data?.flight_connecting?.departure_time) || 'НД' },
+                  { text: norm(booking.tour_data?.flight_connecting?.arrival_time) || 'НД' },
+                  { text: 'Медина', bold: true }
+                ],
+                [
+                  { text: norm(booking.tour_data?.flight_inbound_connecting?.airline) || 'Air Astana' },
+                  { text: norm(booking.tour_data?.flight_inbound_connecting?.number) || 'НД' },
+                  { text: booking.tour_data?.flight_inbound_connecting?.departure_date || formatDate(booking.tour_data?.tour_dates?.[0]?.date_end || booking.tour_data?.flightInboundDate || booking.tour_data?.endDate) },
+                  { text: norm(booking.tour_data?.flight_inbound_connecting?.departure_time) || 'НД' },
+                  { text: norm(booking.tour_data?.flight_inbound_connecting?.arrival_time) || 'НД' },
+                  { text: 'Обратно', bold: true }
+                ]
+              ]
+            },
+            layout: 'noBorders'
+          }
+        ] : [
+          {
+            table: {
+              widths: ['*', '*', '*', '*', '*', '*'],
+              body: [
+                [
+                  { text: 'Авиалиния', bold: true, fillColor: '#f5f5f5' },
+                  { text: '№ рейса', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Дата вылета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Время вылета', bold: true, fillColor: '#f5f5f5' },
+                  { text: 'Время прилета', bold: true, fillColor: '#f5f5f5' },
+                  { text: '', fillColor: '#f5f5f5' }
+                ],
+                [
+                  { text: 'НД' },
+                  { text: 'НД' },
+                  { text: 'НД' },
+                  { text: 'НД' },
+                  { text: 'НД' },
+                  { text: '' }
+                ]
+              ]
+            },
+            layout: 'noBorders'
+          }
+        ]),
+        { text: '', margin: [0, 2] },
+        {
+          text: 'Детали проживания',
+          style: 'sectionHeader',
+          margin: [0, 0, 0, 4]
+        },
+        {
+          table: {
+            widths: ['*', '*', '*', '*', '*', '*'],
+            body: [
+              [
+                { text: 'Отель в Медине', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: 'Отель в Мекке', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' }
+              ],
+              [
+                { text: norm(booking.tour_data?.hotels?.medina?.short_name) || norm(booking.tour_data?.hotel_medina) || 'НД' },
+                { text: '' },
+                { text: '' },
+                { text: norm(booking.tour_data?.hotels?.mekka?.short_name) || norm(booking.tour_data?.hotel_mekka) || 'НД' },
+                { text: '' },
+                { text: '' }
+              ],
+              [
+                { text: 'Заезд', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Выезд', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: 'Заезд', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Выезд', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' }
+              ],
+              [
+                { text: booking.tour_data?.hotels?.medina?.check_in ? new Date(booking.tour_data.hotels.medina.check_in).toLocaleDateString('ru-RU') : 'НД' },
+                { text: booking.tour_data?.hotels?.medina?.check_out ? new Date(booking.tour_data.hotels.medina.check_out).toLocaleDateString('ru-RU') : 'НД' },
+                { text: '' },
+                { text: booking.tour_data?.hotels?.mekka?.check_in ? new Date(booking.tour_data.hotels.mekka.check_in).toLocaleDateString('ru-RU') : 'НД' },
+                { text: booking.tour_data?.hotels?.mekka?.check_out ? new Date(booking.tour_data.hotels.mekka.check_out).toLocaleDateString('ru-RU') : 'НД' },
+                { text: '' }
+              ],
+              [
+                { text: 'Тип номера', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Тип размещения', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: 'Тип номера', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Тип размещения', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' }
+              ],
+              [
+                { text: norm(booking.tour_data?.hotels?.medina?.room_type) || 'НД' },
+                { text: norm(booking.tour_data?.roomType?.toUpperCase()) || 'НД' },
+                { text: '' },
+                { text: norm(booking.tour_data?.hotels?.mekka?.room_type) || 'НД' },
+                { text: norm(booking.tour_data?.roomType?.toUpperCase()) || 'НД' },
+                { text: '' }
+              ],
+              [
+                { text: 'Питание', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: 'Питание', bold: true, fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' },
+                { text: '', fillColor: '#f5f5f5' }
+              ],
+              [
+                { text: norm(booking.tour_data?.hotels?.medina?.meal_plan) || 'НД' },
+                { text: '' },
+                { text: '' },
+                { text: norm(booking.tour_data?.hotels?.mekka?.meal_plan) || 'НД' },
+                { text: '' },
+                { text: '' }
+              ]
+            ]
+          },
+          layout: 'noBorders'
+        },
+        { text: '', margin: [0, 2] },
+        {
+          text: 'Трансфер и сервис',
+          style: 'sectionHeader',
+          margin: [0, 0, 0, 4]
+        },
+        {
+          table: {
+            widths: ['*', '*', '*', '*', '*', '*'],
+            body: [
+              [
+                { text: 'Трансфер', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Хадж-набор', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Экскурсия', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Виза и медстраховка', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Услуги гида', bold: true, fillColor: '#f5f5f5' },
+                { text: 'Поддержка', bold: true, fillColor: '#f5f5f5' }
+              ],
+              [
+                { text: getTransferTypeName(booking.tour_data?.transfer_type) || 'BUS + TRAIN' },
+                { text: booking.tour_data?.services?.includes('hajj_kit') ? 'ВКЛ' : 'НЕТ', bold: true, color: booking.tour_data?.services?.includes('hajj_kit') ? '#253168' : '#999' },
+                { text: booking.tour_data?.services?.includes('excursion') ? 'ВКЛ' : 'НЕТ', bold: true, color: booking.tour_data?.services?.includes('excursion') ? '#253168' : '#999' },
+                { text: booking.tour_data?.services?.includes('visa_insurance') ? 'ВКЛ' : 'НЕТ', bold: true, color: booking.tour_data?.services?.includes('visa_insurance') ? '#253168' : '#999' },
+                { text: booking.tour_data?.services?.includes('guide_services') ? 'ВКЛ' : 'НЕТ', bold: true, color: booking.tour_data?.services?.includes('guide_services') ? '#253168' : '#999' },
+                { text: booking.tour_data?.services?.includes('support') ? 'ВКЛ' : 'НЕТ', bold: true, color: booking.tour_data?.services?.includes('support') ? '#253168' : '#999' }
+              ]
+            ]
+          },
+          layout: 'noBorders',
+        },
+        { text: '', margin: [0, 2] },
+        {
+          columns: [
+            {
+              width: '*',
+              text: [
+                { text: 'Важная информация', style: 'sectionHeader' },
+                { text: '\n\nПожалуйста, прибывайте в аэропорт за 4 часа до вылета. Наш гид встретит вас и организует сбор группы, сопровождая на всех этапах — от сдачи багажа до прохождения паспортного контроля.\n\nДля въезда в Саудовскую Аравию необходим действующий загранпаспорт и туристическая виза. Медицинская страховка включена и покрывает базовые расходы. При желании вы можете оформить расширенное страховое покрытие.\n\nХадж-набор будет выдан в аэропорту. Пожалуйста, сохраняйте все материалы и документы до конца поездки. Гид будет рядом и поможет с любыми вопросами.\n\nЭкскурсии к святым местам включены. Расписание может корректироваться с учётом безопасности. Трансфер предоставляется на всём маршруте. Проживание организовано с питанием (завтрак и ужин). Дополнительные напитки и блюда оплачиваются отдельно.\n\nЕсли у вас возникнут вопросы — напишите нам в WhatsApp.\n\nЖелаем вам спокойного и благополучного паломничества!' }
+              ]
+            },
+            {
+              width: '*',
+              stack: [
+                { text: 'Контактная информация', style: 'sectionHeader' },
+                { text: '\nЕсли у вас возникли вопросы или трудности — отсканируйте QR-код ниже.\n' },
+                {
+                  image: qrBase64 || 'QR-код недоступен',
+                  width: 100,
+                  alignment: 'left',
+                  margin: [0, 8, 0, 8]
+                },
+                { text: 'Если QR-код не работает, свяжитесь с нами по WhatsApp: +7 702 151 0000' }
+              ]
+            }
+          ]
+        }
+      ],
+      styles: {
+        headerLabel: {
+          fontSize: 14,
+          bold: true,
+          color: '#333'
+        },
+        headerValue: {
+          fontSize: 14,
+          bold: true,
+          color: '#253168'
+        },
+        sectionHeader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 5, 0, 2]
+        },
+        tableHeader: {
+          fontSize: 11,
+          bold: true,
+          color: '#333',
+          margin: [4, 3, 4, 3]
+        },
+        tableCell: {
+          fontSize: 8,
+          margin: [4, 3, 4, 3]
+        },
+        connectingCell: {
+          fontSize: 10,
+          color: '#253168',
+          bold: true,
+          margin: [4, 3, 4, 3]
+        }
+      },
+      defaultStyle: {
+        fontSize: 10,
+        font: 'Roboto'
+      }
+    };
 
-      <div class="section">
-        <h2>Туристы</h2>
-        ${tourists.map((t, idx) => `
-          <div class="two">
-            <div><strong>${idx+1}. ${norm(t.firstName)} ${norm(t.lastName)}</strong></div>
-            <div>Тип: <span class="muted">${t.type === 'adult' ? 'Взрослый' : t.type === 'child' ? 'Ребенок' : 'Младенец'}</span></div>
-            <div>Дата рождения: <span class="muted">${norm(t.birthDate)}</span></div>
-            <div>Пол: <span class="muted">${t.gender === 'male' ? 'Мужской' : t.gender === 'female' ? 'Женский' : ''}</span></div>
-            <div>ИИН: <span class="muted">${norm(t.iin)}</span></div>
-            <div>Паспорт: <span class="muted">${norm(t.passportNumber)}</span></div>
-            ${t.phone ? `<div>Телефон: <span class="muted">${norm(t.phone)}</span></div>` : ''}
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="section">
-        <h2>Условия</h2>
-        <ul>
-          <li>Ваучер подтверждает факт бронирования турпакета.</li>
-          <li>Для вылета необходим действующий загранпаспорт и виза (если требуется).</li>
-          <li>Подробности маршрута и отелей уточняйте у менеджера.</li>
-        </ul>
-      </div>
-        </div>
-      </div>
-    </body></html>`;
-
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => {
-      try { w.print(); } catch (_) {}
-    }, 300);
+    pdfMake.createPdf(docDefinition).download(`voucher-${norm(booking.booking_id)}.pdf`);
   };
 
   
@@ -217,7 +597,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (
-      (activeTab === 'booked-tours' || activeTab === 'pending-payment') &&
+      (activeTab === 'bookings' || activeTab === 'pending-payment') &&
       isAuthenticated &&
       user?.token &&
       !bookingsLoading &&
@@ -228,32 +608,17 @@ export default function ProfilePage() {
     }
   }, [activeTab, isAuthenticated, user?.token, bookingsLoading, hasLoadedBookings]);
 
-  useEffect(() => {
-    if (activeTab !== 'pending-payment') return;
-    const interval = setInterval(() => {
-      setTimer1(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { minutes: prev.minutes - 1, seconds: 59 };
-        }
-        return prev;
-      });
-
-      setTimer2(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { minutes: prev.minutes - 1, seconds: 59 };
-        }
-        return prev;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeTab]);
 
   const handleInputChange = (field, value) => {
+    if (field === "passportNumber") {
+      value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    } else if (field === "firstName" || field === "lastName") {
+      value = value.toUpperCase().replace(/[^A-Z]/g, '');
+    } else if (field === "iin") {
+      value = value.replace(/[^0-9]/g, '');
+    } else if (field === "phone") {
+      value = value.replace(/[^0-9+]/g, '');
+    }
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -307,19 +672,19 @@ export default function ProfilePage() {
           <div className={styles.tabs}>
             <button 
               className={`${styles.tab} ${activeTab === "tourist-data" ? styles.active : ""}`}
-              onClick={() => setActiveTab("tourist-data")}
+              onClick={() => handleTabChange("tourist-data")}
             >
               Данные туриста
             </button>
             <button 
-              className={`${styles.tab} ${activeTab === "booked-tours" ? styles.active : ""}`}
-              onClick={() => setActiveTab("booked-tours")}
+              className={`${styles.tab} ${activeTab === "bookings" ? styles.active : ""}`}
+              onClick={() => handleTabChange("bookings")}
             >
               Забронированные туры
             </button>
             <button 
               className={`${styles.tab} ${activeTab === "pending-payment" ? styles.active : ""}`}
-              onClick={() => setActiveTab("pending-payment")}
+              onClick={() => handleTabChange("pending-payment")}
             >
               Туры ожидающие оплаты
             </button>
@@ -350,6 +715,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        placeholder="Только английские заглавные буквы"
                       />
                     </div>
 
@@ -385,6 +751,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        placeholder="Только английские заглавные буквы"
                       />
                     </div>
 
@@ -404,6 +771,7 @@ export default function ProfilePage() {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
+                        placeholder="Только цифры и знак +"
                       />
                     </div>
 
@@ -415,6 +783,7 @@ export default function ProfilePage() {
                           type="text"
                           value={formData.passportNumber}
                           onChange={(e) => handleInputChange("passportNumber", e.target.value)}
+                          placeholder="Только английские заглавные буквы и цифры"
                         />
                       </div>
                     </div>
@@ -445,6 +814,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.iin}
                         onChange={(e) => handleInputChange("iin", e.target.value)}
+                        placeholder="Только цифры"
                       />
                     </div>
                   </div>
@@ -465,7 +835,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {activeTab === "booked-tours" && (
+            {activeTab === "bookings" && (
               <div className={styles.leftColumn}>
                 {bookingsLoading ? (
                   <div className={styles.loading}>Загрузка бронирований...</div>
@@ -501,32 +871,37 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className={styles.hotelInfo}>
-                          <div className={styles.hotel}>
-                            <div className={styles.hotelImage}>
-                              <img src="/mekka.svg" alt="Отель" />
+                          {Array.isArray(booking.tour_data?.hotels_info) && booking.tour_data.hotels_info.length > 0 ? (
+                            booking.tour_data.hotels_info.map((hotel, index) => (
+                            <div key={index} className={styles.hotel}>
+                              <div className={styles.hotelImage}>
+                                <img src={hotel.city === 'mekka' ? "/mekka.svg" : "/medina.svg"} alt={hotel.city === 'mekka' ? "Отель" : "Медина"} />
+                              </div>
+                              <div className={styles.hotelContent}>
+                                <span className={styles.hotelName}>
+                                  {hotel.hotel_text || (hotel.city === 'mekka' ? "Отель в Мекке" : "Отель в Медине")}
+                                </span>
+                                <span className={styles.distance}>
+                                  {hotel.distance_text || (hotel.city === 'mekka' ? "Расстояние до Каабы" : "Расстояние до мечети")}
+                                </span>
+                              </div>
                             </div>
-                            <div className={styles.hotelContent}>
-                              <span className={styles.hotelName}>
-                                {booking.tour_data?.hotel_mekka || "Отель в Мекке"}
-                              </span>
-                              <span className={styles.distance}>
-                                {booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
-                              </span>
+                          ))
+                          ) : (
+                            <div className={styles.hotel}>
+                              <div className={styles.hotelImage}>
+                                <img src="/mekka.svg" alt="Отель" />
+                              </div>
+                              <div className={styles.hotelContent}>
+                                <span className={styles.hotelName}>
+                                  {booking.tour_data?.hotels?.mekka?.short_name || booking.tour_data?.hotel_mekka || "Отель в Мекке"}
+                                </span>
+                                <span className={styles.distance}>
+                                  {booking.tour_data?.hotels?.mekka?.distance || booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <div className={styles.hotel}>
-                            <div className={styles.hotelImage}>
-                              <img src="/medina.svg" alt="Медина" />
-                            </div>
-                            <div className={styles.hotelContent}>
-                              <span className={styles.hotelName}>
-                                {booking.tour_data?.hotel_medina || "Отель в Медине"}
-                              </span>
-                              <span className={styles.distance}>
-                                {booking.tour_data?.distance_medina || "Расстояние до мечети"}
-                              </span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                         <div className={styles.wrapper}>
                           <div className={styles.tourPrice}>
@@ -546,8 +921,8 @@ export default function ProfilePage() {
                           <div className={styles.tourDates}>
                             <div className={styles.dateRange}>
                               <span className={styles.date}>
-                                {booking.tour_data?.flightOutboundDate ? 
-                                  new Date(booking.tour_data.flightOutboundDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : 
+                                {booking.tour_data?.tour_dates?.[0]?.date_start || booking.tour_data?.flightOutboundDate ? 
+                                  new Date(booking.tour_data?.tour_dates?.[0]?.date_start || booking.tour_data.flightOutboundDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : 
                                   'Дата вылета'
                                 }
                               </span>
@@ -576,24 +951,7 @@ export default function ProfilePage() {
                             Скачать ваучер
                           </button>
                         </div>
-                        
-                        {/* Информация о туристах */}
-                        {booking.tour_data?.tourists && booking.tour_data.tourists.length > 0 && (
-                          <div className={styles.touristsInfo}>
-                            <h4>Туристы:</h4>
-                            {booking.tour_data.tourists.map((tourist, index) => (
-                              <div key={index} className={styles.touristInfo}>
-                                <strong>{index + 1}. {tourist.firstName} {tourist.lastName}</strong>
-                                <div>Тип: {tourist.type === 'adult' ? 'Взрослый' : tourist.type === 'child' ? 'Ребенок' : 'Младенец'}</div>
-                                <div>Дата рождения: {tourist.birthDate}</div>
-                                <div>Пол: {tourist.gender === 'male' ? 'Мужской' : 'Женский'}</div>
-                                <div>ИИН: {tourist.iin}</div>
-                                <div>Паспорт: {tourist.passportNumber}</div>
-                                {tourist.phone && <div>Телефон: {tourist.phone}</div>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                
                       </div>
                     </div>
                   ))
@@ -623,17 +981,33 @@ export default function ProfilePage() {
                       </div>
                       <div className={styles.tourContent}>
                         <div className={styles.tourContents}>
-                          <div className={styles.timerContainer}>
-                            <div className={styles.timerBox}>
-                              <span className={styles.timerText}>Оплатите до истечения брони</span>
-                              <span className={styles.timer}>
-                                {index === 0 ? 
-                                  `${String(timer1.minutes).padStart(2, '0')}:${String(timer1.seconds).padStart(2, '0')}` :
-                                  `${String(timer2.minutes).padStart(2, '0')}:${String(timer2.seconds).padStart(2, '0')}`
-                                }
-                              </span>
-                            </div>
-                          </div>
+                          {booking.status === 'pending' && (() => {
+                            const timer = bookingTimers[booking.booking_id];
+                            if (timer && timer.expired) {
+                              return (
+                                <div className={styles.timerContainer}>
+                                  <div className={styles.timerBox} style={{backgroundColor: '#e81142'}}>
+                                    <span className={styles.timerText} style={{color: 'white'}}>Время бронирования истекло</span>
+                                    <span className={styles.timer} style={{color: 'white'}}>
+                                      00:00
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            } else if (timer && !timer.expired) {
+                              return (
+                                <div className={styles.timerContainer}>
+                                  <div className={styles.timerBox}>
+                                    <span className={styles.timerText}>Оплатите до истечения брони</span>
+                                    <span className={styles.timer}>
+                                      {`${String(timer.minutes).padStart(2, '0')}:${String(timer.seconds).padStart(2, '0')}`}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                           <h3 className={styles.tourTitle}>
                             {booking.tour_data?.duration || booking.tour_title || "Тур"}
                           </h3>
@@ -652,32 +1026,37 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className={styles.hotelInfo}>
-                          <div className={styles.hotel}>
-                            <div className={styles.hotelImage}>
-                              <img src="/mekka.svg" alt="Отель" />
+                          {Array.isArray(booking.tour_data?.hotels_info) && booking.tour_data.hotels_info.length > 0 ? (
+                            booking.tour_data.hotels_info.map((hotel, index) => (
+                            <div key={index} className={styles.hotel}>
+                              <div className={styles.hotelImage}>
+                                <img src={hotel.city === 'mekka' ? "/mekka.svg" : "/medina.svg"} alt={hotel.city === 'mekka' ? "Отель" : "Медина"} />
+                              </div>
+                              <div className={styles.hotelContent}>
+                                <span className={styles.hotelName}>
+                                  {hotel.hotel_text || (hotel.city === 'mekka' ? "Отель в Мекке" : "Отель в Медине")}
+                                </span>
+                                <span className={styles.distance}>
+                                  {hotel.distance_text || (hotel.city === 'mekka' ? "Расстояние до Каабы" : "Расстояние до мечети")}
+                                </span>
+                              </div>
                             </div>
-                            <div className={styles.hotelContent}>
-                              <span className={styles.hotelName}>
-                                {booking.tour_data?.hotel_mekka || "Отель в Мекке"}
-                              </span>
-                              <span className={styles.distance}>
-                                {booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
-                              </span>
+                          ))
+                          ) : (
+                            <div className={styles.hotel}>
+                              <div className={styles.hotelImage}>
+                                <img src="/mekka.svg" alt="Отель" />
+                              </div>
+                              <div className={styles.hotelContent}>
+                                <span className={styles.hotelName}>
+                                  {booking.tour_data?.hotels?.mekka?.short_name || booking.tour_data?.hotel_mekka || "Отель в Мекке"}
+                                </span>
+                                <span className={styles.distance}>
+                                  {booking.tour_data?.hotels?.mekka?.distance || booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <div className={styles.hotel}>
-                            <div className={styles.hotelImage}>
-                              <img src="/medina.svg" alt="Медина" />
-                            </div>
-                            <div className={styles.hotelContent}>
-                              <span className={styles.hotelName}>
-                                {booking.tour_data?.hotel_medina || "Отель в Медине"}
-                              </span>
-                              <span className={styles.distance}>
-                                {booking.tour_data?.distance_medina || "Расстояние до мечети"}
-                              </span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                         <div className={styles.wrapper}>
                           <div className={styles.tourPrice}>
@@ -696,8 +1075,8 @@ export default function ProfilePage() {
                           <div className={styles.tourDates}>
                             <div className={styles.dateRange}>
                               <span className={styles.date}>
-                                {booking.tour_data?.flightOutboundDate ? 
-                                  new Date(booking.tour_data.flightOutboundDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : 
+                                {booking.tour_data?.tour_dates?.[0]?.date_start || booking.tour_data?.flightOutboundDate ? 
+                                  new Date(booking.tour_data?.tour_dates?.[0]?.date_start || booking.tour_data.flightOutboundDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : 
                                   'Дата вылета'
                                 }
                               </span>
@@ -718,11 +1097,88 @@ export default function ProfilePage() {
                         <div className={styles.tourActions}>
                           <button 
                             className={styles.payBtn}
-                            onClick={() => {
-                              window.open(`/api/kaspi/create-payment?booking_id=${booking.booking_id}`, '_blank');
+                            disabled={(() => {
+                              const timer = bookingTimers[booking.booking_id];
+                              return timer && timer.expired;
+                            })()}
+                            style={(() => {
+                              const timer = bookingTimers[booking.booking_id];
+                              if (timer && timer.expired) {
+                                return {
+                                  backgroundColor: '#ccc',
+                                  color: '#666',
+                                  cursor: 'not-allowed',
+                                  opacity: 0.6
+                                };
+                              }
+                              return {};
+                            })()}
+                            onClick={async () => {
+                              try {
+                                const token = localStorage.getItem('atlas_token');
+                                if (!token) {
+                                  router.push('/auth?mode=login');
+                                  return;
+                                }
+
+                                console.log('Данные бронирования:', booking);
+                                
+                                if (!booking.tour_price || booking.tour_price <= 0) {
+                                  alert('Не удалось определить цену тура');
+                                  return;
+                                }
+
+                                const amount = Math.round(booking.tour_price * 547);
+                                const paymentRequestData = {
+                                  order_id: booking.booking_id,
+                                  amount: amount,
+                                  tour_id: parseInt(booking.tour_id),
+                                  token: token
+                                };
+                                
+                                console.log('Отправляем запрос на создание платежа:', paymentRequestData);
+                                const paymentResponse = await fetch('https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/create-payment', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify(paymentRequestData)
+                                });
+                                
+                                console.log('Получен ответ от сервера:', {
+                                  status: paymentResponse.status,
+                                  statusText: paymentResponse.statusText,
+                                  headers: Object.fromEntries(paymentResponse.headers.entries())
+                                });
+
+                                if (!paymentResponse.ok) {
+                                  const errorData = await paymentResponse.json();
+                                  throw new Error(errorData.message || 'Ошибка создания платежа');
+                                }
+                        
+                                const paymentResult = await paymentResponse.json();
+                                console.log('Получен ответ от бэкенда:', paymentResult);
+                                
+                                if (paymentResult.success && paymentResult.payment_url) {
+                                  console.log('Получен URL для оплаты:', paymentResult.payment_url);
+                                  
+                                  window.location.href = paymentResult.payment_url;
+                                } else {
+                                  throw new Error('Неверный ответ от сервера');
+                                }
+                              } catch (error) {
+                                console.error('Ошибка при оплате:', error);
+                                alert('Ошибка при оплате: ' + error.message);
+                              }
                             }}
                           >
-                            Оплатить
+                            {(() => {
+                              const timer = bookingTimers[booking.booking_id];
+                              if (timer && timer.expired) {
+                                return 'Время истекло';
+                              }
+                              return 'Оплатить';
+                            })()}
                           </button>
                         </div>
                       </div>

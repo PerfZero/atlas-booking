@@ -10,7 +10,7 @@
 }
 
 .title {
-    font: 600 24px var(--font-primary); 
+    font: 600 32px var(--font-primary); 
     text-align: center;
     color: #333;
   margin-bottom: 24px;
@@ -53,6 +53,7 @@
 .cardDescription {
     font: 500 16px var(--font-primary);
     color: #333;
+    flex: 1;
 
     line-height: 1.193;
 }
@@ -107,6 +108,7 @@
 
   .cardTitle {
     font-size: 20px;
+    text-align: center;
   }
 
   .cardDescription {

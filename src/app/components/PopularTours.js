@@ -32,10 +32,54 @@ function PopularToursContent() {
     loadTours();
   }, []);
 
-  const getTourUrl = (tourSlug) => {
+  const getTourUrl = (tourSlug, tour = null) => {
+    // Функция для поиска ближайшей даты
+    const getNearestDate = (tourData) => {
+      if (!tourData?.tour_dates || !Array.isArray(tourData.tour_dates) || tourData.tour_dates.length === 0) {
+        return null;
+      }
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Фильтруем только будущие даты и сортируем по дате начала
+      const futureDates = tourData.tour_dates
+        .filter(dateRange => {
+          if (!dateRange.date_start) return false;
+          const startDate = new Date(dateRange.date_start);
+          return startDate >= today;
+        })
+        .sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+      
+      return futureDates.length > 0 ? futureDates[0] : null;
+    };
+    
+    const nearestDate = tour ? getNearestDate(tour) : null;
+    
     if (searchParams && searchParams.toString()) {
-      return `/tour/${tourSlug}?${searchParams.toString()}`;
+      const params = new URLSearchParams(searchParams);
+      
+      // Если есть ближайшая дата, обновляем параметры
+      if (nearestDate) {
+        params.set('startDate', nearestDate.date_start);
+        params.set('endDate', nearestDate.date_end);
+        params.set('travelDate', 'custom');
+      }
+      
+      return `/tour/${tourSlug}?${params.toString()}`;
     }
+    
+    // Если нет searchParams, но есть ближайшая дата, создаем параметры
+    if (nearestDate) {
+      const params = new URLSearchParams({
+        startDate: nearestDate.date_start,
+        endDate: nearestDate.date_end,
+        travelDate: 'custom',
+        from: 'popular' // Помечаем, что пришли с популярных
+      });
+      return `/tour/${tourSlug}?${params.toString()}`;
+    }
+    
     return `/tour/${tourSlug}`;
   };
 
@@ -86,7 +130,7 @@ function PopularToursContent() {
         <div className={styles.cards}>
           {tours.map((tour) => (
             <div key={tour.id} className={styles.card}>
-              <Link href={getTourUrl(tour.slug)} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link href={getTourUrl(tour.slug, tour)} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.imageContainer}>
                   <Image 
                     src={tour.featured_image || '/tour_1.png'} 

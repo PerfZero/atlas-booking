@@ -320,7 +320,7 @@ color: rgba(51, 51, 51, 0.5);
 .bookingForm h3 {
     font: 600 24px / 133% var(--font-primary);
     color: #333;
-  margin: 0 0 24px 0;
+  margin: 0 0 0 0;
 }
 
 .formGrid {
@@ -461,6 +461,12 @@ color: #717680;
   margin: 8px 0 0 0;
 }
 
+.nameHint {
+  font: 400 12px / 133% var(--font-primary);
+  color: #535862;
+  margin: 4px 0 0 0;
+}
+
 
 .addTourist {
     font: 600 14px / 143% var(--font-primary);
@@ -588,6 +594,110 @@ max-width: 450px;
   align-items: center;
 }
 
+.managerSection {
+  margin: 32px 0;
+  padding: 24px;
+  background: rgba(242, 242, 247, 0.5);
+  border-radius: 12px;
+  border: 1px solid #e3e3e3;
+}
+
+.managerInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  font: 400 16px / 150% var(--font-primary);
+  color: #181d27;
+  background: #f8f9fa;
+  transition: all 0.2s;
+}
+
+.managerInput:focus {
+  outline: none;
+  border-color: #253168;
+  box-shadow: 0 0 0 3px rgba(37, 49, 104, 0.1);
+}
+
+.congratulationsBlock {
+  margin-bottom: 24px;
+  background: #F2F2F780;
+  border: 1px solid #E3E3E3;
+  border-radius: 12px;
+  max-width: 768px;
+  padding: 16px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.congratulationsContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.congratulationsIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.congratulationsText {
+  flex: 1;
+}
+
+.congratulationsTitle {
+  font: 600 16px / 120% var(--font-primary);
+  color: #2e7d32;
+  margin-bottom: 4px;
+}
+
+.congratulationsSubtitle {
+  font: 400 14px / 140% var(--font-primary);
+  color: #4a4a4a;
+}
+
+.congratulationsClose {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.congratulationsClose:hover {
+  color: #333;
+}
+
+.progressBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #4CAF50;
+  width: 100%;
+  animation: progressAnimation 5s linear forwards;
+  border-radius: 0 3px 3px 0;
+}
+
+@keyframes progressAnimation {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
 .reviewActions {
   display: flex;
   flex-direction: column;
@@ -672,11 +782,24 @@ padding: 10px 16px;
 background: #253168;
 border-radius: 8px;
 margin-top: 24px;
+cursor: pointer;
+transition: background-color 0.2s;
 
 }
 
 .paymentButton:hover {
   background: #1a2347;
+}
+
+.paymentButton:disabled {
+  background: #e3e3e3;
+  border-color: #e3e3e3;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.paymentButton:disabled:hover {
+  background: #e3e3e3;
 }
 
 @media (max-width: 768px) {
@@ -713,6 +836,10 @@ margin-top: 24px;
   .rightColumn {
     border-radius: 16px;
     padding: 16px;
+  }
+
+  .costDetails{
+    order: 3;
   }
   
   .costDetails h3,
@@ -1042,6 +1169,30 @@ margin-top: 24px;
   .paymentButton {
     padding: 6px 10px;
     font-size: 13px;
+  }
+  
+  .managerSection {
+    margin: 24px 0;
+    padding: 16px;
+  }
+  
+  .managerInput {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .congratulationsBlock {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+  }
+  
+  .congratulationsTitle {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .congratulationsSubtitle {
+    font-size: 12px;
   }
   
   .currentPrice {

@@ -296,3 +296,22 @@ export async function getMyBookings(token) {
     return { success: false, error: error.message };
   }
 }
+
+export async function createKaspiPayment(paymentData) {
+  try {
+    const response = await fetch(`${API_BASE}/kaspi-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentData)
+    });
+    
+    if (!response.ok) throw new Error('Ошибка создания платежа Kaspi');
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Ошибка создания платежа Kaspi:', error);
+    return { success: false, error: error.message };
+  }
+}

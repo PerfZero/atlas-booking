@@ -91,13 +91,17 @@ export default function DatePicker({
     const selectedDuration = parseInt(selectedTab);
     
     return availableTours.some(tour => {
-      const startDate = tour.tour_start_date;
-      const tourDuration = tour.tour_duration_days ? parseInt(tour.tour_duration_days) : 7;
+      if (!tour.tour_dates || !Array.isArray(tour.tour_dates)) return false;
       
-      if (!startDate) return false;
-      
-      // Показываем дату как доступную только если длительность тура совпадает с выбранной вкладкой
-      return dateStr === startDate && tourDuration === selectedDuration;
+      return tour.tour_dates.some(dateRange => {
+        const startDate = dateRange.date_start;
+        const tourDuration = dateRange.duration ? parseInt(dateRange.duration) : 7;
+        
+        if (!startDate) return false;
+        
+        // Показываем дату как доступную только если длительность тура совпадает с выбранной вкладкой
+        return dateStr === startDate && tourDuration === selectedDuration;
+      });
     });
   };
 
@@ -108,9 +112,9 @@ export default function DatePicker({
     if (!date || isDateDisabled(date)) return;
     
     // Автоматически выбираем дату начала и конца на основе выбранной длительности
-    const duration = selectedTab === '7' ? 7 : 10;
+    const duration = selectedTab === '7' ? 6 : 9; // -1 день, так как считаем включительно
     const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + duration - 1);
+    endDate.setDate(endDate.getDate() + duration);
     
     setStartDate(date);
     setEndDate(endDate);
@@ -329,12 +333,7 @@ export default function DatePicker({
             <button 
               onClick={(e) => handleConfirm(e)} 
               className={styles.confirmButton}
-              disabled={!startDate || !endDate || (() => {
-                if (!startDate || !endDate) return true;
-                const daysDiff = calculateDaysDiff(startDate, endDate);
-                const maxDays = selectedTab === '7' ? 7 : 10;
-                return daysDiff !== maxDays;
-              })()}
+              disabled={!startDate || !endDate}
             >
               Выбрать
             </button>

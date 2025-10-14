@@ -11,22 +11,69 @@ export default function TourCard({ tour, searchParams = null }) {
   const tourDuration = tour.duration || '3 дня в Медине · 3 дня в Мекке';
   const tourTags = Array.isArray(tour.tags) ? tour.tags : ['Умра'];
   
+  // Функция для поиска ближайшей даты
+  const getNearestDate = () => {
+    if (!tour.tour_dates || !Array.isArray(tour.tour_dates) || tour.tour_dates.length === 0) {
+      return null;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Фильтруем только будущие даты и сортируем по дате начала
+    const futureDates = tour.tour_dates
+      .filter(dateRange => {
+        if (!dateRange.date_start) return false;
+        const startDate = new Date(dateRange.date_start);
+        return startDate >= today;
+      })
+      .sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    
+    return futureDates.length > 0 ? futureDates[0] : null;
+  };
+  
   const getTourUrl = () => {
+    const nearestDate = getNearestDate();
+    let baseUrl = '';
+    
     if (searchParams) {
       const params = new URLSearchParams(searchParams);
-      return `/tour/${tourSlug}?${params.toString()}`;
+      
+      // Если есть ближайшая дата, обновляем параметры
+      if (nearestDate) {
+        params.set('startDate', nearestDate.date_start);
+        params.set('endDate', nearestDate.date_end);
+        params.set('travelDate', 'custom');
+      }
+      
+      baseUrl = `/tour/${tourSlug}?${params.toString()}`;
+    } else if (nearestDate) {
+      // Если нет searchParams, но есть ближайшая дата, создаем параметры
+      const params = new URLSearchParams({
+        startDate: nearestDate.date_start,
+        endDate: nearestDate.date_end,
+        travelDate: 'custom',
+        from: 'popular' // Помечаем, что пришли с популярных
+      });
+      baseUrl = `/tour/${tourSlug}?${params.toString()}`;
+    } else {
+      baseUrl = `/tour/${tourSlug}`;
     }
-    return `/tour/${tourSlug}`;
+    
+    // Добавляем якорь к отзывам паломников
+    return `${baseUrl}#pilgrim-reviews`;
   };
   
   return (
     <div className={styles.tourCard}>
       <Link href={getTourUrl()} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className={styles.tourImage}>
-          <div className={styles.cardBadge}>
-            <span className={styles.badgeIcon}><img src="/chos.svg" alt="★" /></span>
-            <span>Выбор паломников</span>
-          </div>
+          {tour.pilgrims_choice && (
+            <div className={styles.cardBadge}>
+              <span className={styles.badgeIcon}><img src="/chos.svg" alt="★" /></span>
+              <span>Выбор паломников</span>
+            </div>
+          )}
           <img src={tourImage} alt={tour.name} />
           <div className={styles.imageOverlay}>
             <div className={styles.tourTags}>
@@ -55,10 +102,12 @@ export default function TourCard({ tour, searchParams = null }) {
           </div>
         </div>
         <div className={styles.featureButtons}>
-          <div className={styles.allInclusiveBtn}>
-            <span className={styles.featureIcon}><img src="/all.svg" alt="★" /></span>
-            <span>Всё включено</span>
-          </div>
+          {tour.all_inclusive && (
+            <div className={styles.allInclusiveBtn}>
+              <span className={styles.featureIcon}><img src="/all.svg" alt="★" /></span>
+              <span>Всё включено</span>
+            </div>
+          )}
           {tourSpotsLeft && (
             <div className={styles.spotsLeft}>
               <span className={styles.spotsIcon}><img src="/alert.svg" alt="★" /></span>
@@ -73,24 +122,19 @@ export default function TourCard({ tour, searchParams = null }) {
               {tour.flight_type === 'direct' ? 'Прямой рейс' : 'С пересадкой'}
             </span>
           </div>
-          <div className={styles.feature}>
-            <span className={styles.featureIcon}><img src="/mekka.svg" alt="★" /></span>
-            <div className={styles.featureTextContainer}>
-              <span className={styles.featureText}>{tour.hotel_mekka || '5★ отель в Мекке'}</span>
-              <span className={styles.featureSubtext}>
-                Расстояние до Каабы {tour.distance_mekka || '50 м.'}
+          {Array.isArray(tour.hotels_info) && tour.hotels_info.map((hotel, index) => (
+            <div key={index} className={styles.feature}>
+              <span className={styles.featureIcon}>
+                <img src={hotel.city === 'mekka' ? "/mekka.svg" : "/medina.svg"} alt="★" />
               </span>
+              <div className={styles.featureTextContainer}>
+                <span className={styles.featureText}>{hotel.hotel_text || '5★ отель'}</span>
+                <span className={styles.featureSubtext}>
+                  {hotel.distance_text || 'Расстояние до Каабы 50 м.'}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className={styles.feature}>
-            <span className={styles.featureIcon}><img src="/medina.svg" alt="★" /></span>
-            <div className={styles.featureTextContainer}>
-              <span className={styles.featureText}>{tour.hotel_medina || '5★ отель в Медине'}</span>
-              <span className={styles.featureSubtext}>
-                Расстояние до мечети {tour.distance_medina || '150 м.'}
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
         <div className={styles.tourPrice}>
           <div className={styles.priceNote}>Без скрытых платежей</div>

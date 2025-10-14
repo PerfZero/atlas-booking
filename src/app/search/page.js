@@ -4,10 +4,11 @@ import { useSearchParams } from 'next/navigation';
 import { searchToursWithFilters } from '../../lib/wordpress-api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import SearchForm from '../components/SearchForm';
+import SearchFormWithParams from '../components/SearchForm';
 import Breadcrumbs from '../components/Breadcrumbs';
 import styles from './page.module.css';
 import TourCard from '../components/TourCard';
+import TourCardSkeleton from '../components/TourCardSkeleton';
 import SearchFilters from '../components/SearchFilters';
 import MobileFilters from '../components/MobileFilters';
 import CustomSortSelect from '../components/CustomSortSelect';
@@ -91,7 +92,7 @@ function SearchPageContent({ searchParams }) {
             
             <div className={styles.searchFormWrapper}>
               <Suspense fallback={<div>Loading...</div>}>
-                <SearchForm className={styles.searchForm} isHomePage={false} />
+                <SearchFormWithParams className={styles.searchForm} isHomePage={false} />
               </Suspense>
             </div>
           </div>
@@ -161,9 +162,11 @@ function SearchPageContent({ searchParams }) {
 
                 <div className={styles.tourCards}>
                   {loading ? (
-                    <div className={styles.loading}>
-                      <h3>Загрузка туров...</h3>
-                    </div>
+                    <>
+                      <TourCardSkeleton />
+                      <TourCardSkeleton />
+                      <TourCardSkeleton />
+                    </>
                   ) : filteredResults.length > 0 ? (
                     filteredResults.map((tour) => (
                       <TourCard 

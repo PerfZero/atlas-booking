@@ -15,6 +15,8 @@ function BookingPageContent() {
   const { user, isAuthenticated } = useAuth();
   const [tourData, setTourData] = useState(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
+  const [managerId, setManagerId] = useState("");
+  const [showCongratulations, setShowCongratulations] = useState(true);
   const [tourists, setTourists] = useState([
     {
       id: 1,
@@ -53,11 +55,25 @@ function BookingPageContent() {
         flightOutboundTime: searchParams.get("flightOutboundTime"),
         flightInboundTime: searchParams.get("flightInboundTime"),
         flightOutboundDate: searchParams.get("flightOutboundDate"),
-        flightInboundDate: searchParams.get("flightInboundDate")
+        flightInboundDate: searchParams.get("flightInboundDate"),
+        roomType: searchParams.get("roomType"),
+        roomCapacity: searchParams.get("roomCapacity"),
+        roomDescription: searchParams.get("roomDescription")
       };
       setTourData(data);
     }
   }, [searchParams]);
+
+  // Автоматическое скрытие блока поздравления через 5 секунд
+  useEffect(() => {
+    if (showCongratulations) {
+      const timer = setTimeout(() => {
+        setShowCongratulations(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showCongratulations]);
 
   const calculateAge = (birthDate) => {
     if (!birthDate || birthDate.length !== 10) return null;
@@ -91,6 +107,62 @@ function BookingPageContent() {
     }
     
     return null;
+  };
+
+  const validateTourist = (tourist) => {
+    const errors = {};
+    
+    if (!tourist.lastName || tourist.lastName.trim() === '') {
+      errors.lastName = 'Фамилия обязательна';
+    }
+    
+    if (!tourist.firstName || tourist.firstName.trim() === '') {
+      errors.firstName = 'Имя обязательно';
+    }
+    
+    if (!tourist.birthDate || tourist.birthDate.trim() === '') {
+      errors.birthDate = 'Дата рождения обязательна';
+    }
+    
+    if (!tourist.gender || tourist.gender.trim() === '') {
+      errors.gender = 'Пол обязателен';
+    }
+    
+    if (!tourist.iin || tourist.iin.trim() === '') {
+      errors.iin = 'ИИН обязателен';
+    } else if (tourist.iin.length !== 12) {
+      errors.iin = 'ИИН должен содержать 12 цифр';
+    }
+    
+    if (!tourist.passportNumber || tourist.passportNumber.trim() === '') {
+      errors.passportNumber = 'Номер паспорта обязателен';
+    }
+    
+    if (!tourist.passportIssueDate || tourist.passportIssueDate.trim() === '') {
+      errors.passportIssueDate = 'Дата выдачи паспорта обязательна';
+    }
+    
+    if (!tourist.passportExpiryDate || tourist.passportExpiryDate.trim() === '') {
+      errors.passportExpiryDate = 'Срок действия паспорта обязателен';
+    }
+    
+    if (tourist.id === 1 && (!tourist.phone || tourist.phone.trim() === '')) {
+      errors.phone = 'Номер телефона обязателен';
+    }
+    
+    const ageError = validateAge(tourist.id, tourist.type, tourist.birthDate);
+    if (ageError) {
+      errors.age = ageError;
+    }
+    
+    return errors;
+  };
+
+  const isFormReady = () => {
+    return tourists.every(tourist => {
+      const errors = validateTourist(tourist);
+      return Object.keys(errors).length === 0;
+    });
   };
 
   const applyDateMask = (value) => {
@@ -161,6 +233,8 @@ function BookingPageContent() {
       maskedValue = applyIinMask(value);
     } else if (field === 'passportNumber') {
       maskedValue = applyPassportMask(value);
+    } else if (field === 'lastName' || field === 'firstName') {
+      maskedValue = value.toUpperCase().replace(/[^A-Z\s]/g, '');
     }
 
     setTourists(prev => prev.map(tourist => 
@@ -168,6 +242,13 @@ function BookingPageContent() {
         ? { ...tourist, [field]: maskedValue }
         : tourist
     ));
+
+    // Очищаем ошибку для этого поля при вводе
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`${touristId}-${field}`];
+      return newErrors;
+    });
 
     if (field === 'birthDate' || field === 'type') {
       const tourist = tourists.find(t => t.id === touristId);
@@ -216,22 +297,32 @@ function BookingPageContent() {
     e.preventDefault();
     
     const newErrors = {};
+    let hasErrors = false;
+    
     tourists.forEach(tourist => {
-      const ageError = validateAge(tourist.id, tourist.type, tourist.birthDate);
-      if (ageError) {
-        newErrors[`${tourist.id}-age`] = ageError;
+      const touristErrors = validateTourist(tourist);
+      if (Object.keys(touristErrors).length > 0) {
+        hasErrors = true;
+        Object.keys(touristErrors).forEach(field => {
+          newErrors[`${tourist.id}-${field}`] = touristErrors[field];
+        });
       }
     });
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length === 0) {
+    if (!hasErrors) {
       setIsReviewMode(true);
     }
   };
 
   const handleEdit = () => {
     setIsReviewMode(false);
+  };
+
+  const handleChangeSelection = () => {
+    // Возвращаемся к странице тура с якорем на секцию размещения
+    window.location.href = `/tour/${tourData.slug}#accommodation-options`;
   };
 
   const handlePayment = async () => {
@@ -314,7 +405,33 @@ function BookingPageContent() {
       
       <main className={styles.main}>
         <div className={styles.container}>
-        
+          {showCongratulations && (
+            <div className={styles.congratulationsBlock}>
+              <div className={styles.congratulationsContent}>
+                <div className={styles.congratulationsIcon}>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 18.3333C14.6024 18.3333 18.3333 14.6024 18.3333 10C18.3333 5.39763 14.6024 1.66667 10 1.66667C5.39763 1.66667 1.66667 5.39763 1.66667 10C1.66667 14.6024 5.39763 18.3333 10 18.3333Z" fill="#4CAF50"/>
+                    <path d="M6.25 10L8.75 12.5L13.75 7.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className={styles.congratulationsText}>
+                  <div className={styles.congratulationsTitle}>Поздравляем! Вы успешно прошли регистрацию!</div>
+                  <div className={styles.congratulationsSubtitle}>Отныне, Вы можете продолжить бронирование и управлять им через личный кабинет.</div>
+                </div>
+                <button 
+                  className={styles.congratulationsClose}
+                  onClick={() => setShowCongratulations(false)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div className={styles.progressBar}>
+                <div className={styles.progressFill}></div>
+              </div>
+            </div>
+          )}
 
           <div className={styles.content}>
             <div className={styles.leftColumn}>
@@ -400,14 +517,20 @@ function BookingPageContent() {
                   <div className={styles.separator}></div>
                   
                   <div className={styles.accommodationInfo}>
-                    <div className={styles.accommodationTitle}>4-х местное размещение</div>
+                    <div className={styles.accommodationTitle}>
+                      {tourData.roomCapacity ? `${tourData.roomCapacity}-х местное размещение` : '4-х местное размещение'}
+                    </div>
                     <div className={styles.accommodationDetails}>
-                      <div className={styles.accommodationItem}>В номере с Вами будут размещены +3 человека</div>
-                      <div className={styles.accommodationItem}>4 односпальных кровати</div>
+                      <div className={styles.accommodationItem}>
+                        {tourData.roomDescription || 'В номере с Вами будут размещены +3 человека'}
+                      </div>
+                      <div className={styles.accommodationItem}>
+                        {tourData.roomCapacity ? `${tourData.roomCapacity} односпальных кровати` : '4 односпальных кровати'}
+                      </div>
                     </div>
                     <div className={styles.accommodationType}>
                       <div className={styles.accommodationTypeLabel}>Ваш тип размещения</div>
-                      <button className={styles.changeSelection}>Изменить выбор</button>
+                      <button className={styles.changeSelection} onClick={handleChangeSelection}>Изменить выбор</button>
                     </div>
                   </div>
                 </div>
@@ -421,7 +544,7 @@ function BookingPageContent() {
                     {tourists.map((tourist, index) => (
                       <div key={tourist.id} className={styles.touristForm}>
                         <div className={styles.touristHeader}>
-                          <h3>Данные {index + 1}-го туриста</h3>
+                          <h3>{index === 0 ? 'Введите ваши данные' : `Данные ${index + 1}-го туриста`}</h3>
                           {tourists.length > 1 && index > 0 && (
                             <button 
                               type="button" 
@@ -477,9 +600,16 @@ function BookingPageContent() {
                               type="text"
                               value={tourist.lastName}
                               onChange={(e) => handleInputChange(tourist.id, "lastName", e.target.value)}
-                              placeholder="Введите фамилию как в загран. паспорте"
+                              placeholder="IVANOV"
                               required
+                              className={errors[`${tourist.id}-lastName`] ? styles.error : ''}
                             />
+                            <p className={styles.nameHint}>
+                              Только английскими заглавными буквами
+                            </p>
+                            {errors[`${tourist.id}-lastName`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-lastName`]}</div>
+                            )}
                           </div>
 
                           <div className={styles.formGroup}>
@@ -488,9 +618,16 @@ function BookingPageContent() {
                               type="text"
                               value={tourist.firstName}
                               onChange={(e) => handleInputChange(tourist.id, "firstName", e.target.value)}
-                              placeholder="Введите имя как в загран. паспорте"
+                              placeholder="IVAN"
                               required
+                              className={errors[`${tourist.id}-firstName`] ? styles.error : ''}
                             />
+                            <p className={styles.nameHint}>
+                              Только английскими заглавными буквами
+                            </p>
+                            {errors[`${tourist.id}-firstName`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-firstName`]}</div>
+                            )}
                           </div>
 
                           <div className={styles.formGroup}>
@@ -502,9 +639,12 @@ function BookingPageContent() {
                               placeholder="дд.мм.гггг"
                               maxLength={10}
                               required
-                              className={index > 0 && errors[`${tourist.id}-age`] ? styles.error : ''}
+                              className={errors[`${tourist.id}-birthDate`] || errors[`${tourist.id}-age`] ? styles.error : ''}
                             />
-                            {index > 0 && errors[`${tourist.id}-age`] && (
+                            {errors[`${tourist.id}-birthDate`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-birthDate`]}</div>
+                            )}
+                            {errors[`${tourist.id}-age`] && (
                               <div className={styles.errorMessage}>{errors[`${tourist.id}-age`]}</div>
                             )}
                           </div>
@@ -533,6 +673,9 @@ function BookingPageContent() {
                                 Женщина
                               </label>
                             </div>
+                            {errors[`${tourist.id}-gender`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-gender`]}</div>
+                            )}
                           </div>
 
                           <div className={styles.formGroup}>
@@ -544,7 +687,11 @@ function BookingPageContent() {
                               placeholder="Введите Ваш ИИН"
                               maxLength={12}
                               required
+                              className={errors[`${tourist.id}-iin`] ? styles.error : ''}
                             />
+                            {errors[`${tourist.id}-iin`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-iin`]}</div>
+                            )}
                           </div>
 
                           <div className={styles.formGroup}>
@@ -558,8 +705,12 @@ function BookingPageContent() {
                                 placeholder="123456789"
                                 maxLength={9}
                                 required
+                                className={errors[`${tourist.id}-passportNumber`] ? styles.error : ''}
                               />
                             </div>
+                            {errors[`${tourist.id}-passportNumber`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-passportNumber`]}</div>
+                            )}
                           </div>
 
                           <div className={styles.formGroup}>
@@ -571,7 +722,11 @@ function BookingPageContent() {
                               placeholder="дд.мм.гггг"
                               maxLength={10}
                               required
+                              className={errors[`${tourist.id}-passportIssueDate`] ? styles.error : ''}
                             />
+                            {errors[`${tourist.id}-passportIssueDate`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-passportIssueDate`]}</div>
+                            )}
                           </div>
 
                           <div className={styles.formGroup}>
@@ -583,7 +738,11 @@ function BookingPageContent() {
                               placeholder="дд.мм.гггг"
                               maxLength={10}
                               required
+                              className={errors[`${tourist.id}-passportExpiryDate`] ? styles.error : ''}
                             />
+                            {errors[`${tourist.id}-passportExpiryDate`] && (
+                              <div className={styles.errorMessage}>{errors[`${tourist.id}-passportExpiryDate`]}</div>
+                            )}
                           </div>
 
                           {index === 0 && (
@@ -595,10 +754,14 @@ function BookingPageContent() {
                                 onChange={(e) => handleInputChange(tourist.id, "phone", e.target.value)}
                                 placeholder="+7 --- ---- ----"
                                 required
+                                className={errors[`${tourist.id}-phone`] ? styles.error : ''}
                               />
                               <p className={styles.phoneNote}>
                                 По этому номеру телефона Вы подпишите договор и получите ваучер.
                               </p>
+                              {errors[`${tourist.id}-phone`] && (
+                                <div className={styles.errorMessage}>{errors[`${tourist.id}-phone`]}</div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -676,6 +839,19 @@ function BookingPageContent() {
                       </div>
                     ))}
 
+                    <div className={styles.managerSection}>
+                      <div className={styles.reviewGroup}>
+                        <label>ID менеджера</label>
+                        <input
+                          type="text"
+                          value={managerId}
+                          onChange={(e) => setManagerId(e.target.value)}
+                          placeholder="Введите ID менеджера"
+                          className={styles.managerInput}
+                        />
+                      </div>
+                    </div>
+
                     <div className={styles.reviewActions}>
                       <button className={styles.kaspiButton} onClick={handlePayment}>
                         Оплатить через Kaspi
@@ -689,7 +865,11 @@ function BookingPageContent() {
               </div>
               
               {!isReviewMode && (
-                <button className={styles.paymentButton} onClick={handleSubmit}>
+                <button 
+                  className={styles.paymentButton} 
+                  onClick={handleSubmit}
+                  disabled={!isFormReady()}
+                >
                   Перейти к оплате
                 </button>
               )}

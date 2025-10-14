@@ -12,6 +12,105 @@ if ( ! defined( '_S_VERSION' ) ) {
 	define( '_S_VERSION', '1.0.0' );
 }
 
+// Подключаем функции для хадж наборов
+require_once get_template_directory() . '/hajj-kit-functions.php';
+
+// Подключаем функции для услуг в пакете
+require_once get_template_directory() . '/package-includes-functions.php';
+
+// Подключаем функции для рейсов
+require_once get_template_directory() . '/flight-functions.php';
+
+// Функция для получения данных рейса
+function get_flight_data($flight_id) {
+    if (!$flight_id) return null;
+    
+    $flight = get_post($flight_id);
+    if (!$flight || $flight->post_type !== 'flight') return null;
+    
+    $flight_type = get_field('flight_type', $flight_id);
+    
+    $flight_data = array(
+        'id' => $flight->ID,
+        'number' => $flight->post_title, // Номер рейса
+        'flight_type' => $flight_type,
+    );
+    
+    // Добавляем основные поля рейса (время, аэропорты) для всех типов рейсов
+    $flight_data['departure_airport'] = get_field('departure_airport', $flight_id);
+    $flight_data['departure_city'] = get_field('departure_city', $flight_id);
+    $flight_data['arrival_airport'] = get_field('arrival_airport', $flight_id);
+    
+    // Форматируем время вылета и прилета
+    $departure_time_raw = get_field('departure_time', $flight_id);
+    $arrival_time_raw = get_field('arrival_time', $flight_id);
+    
+    if ($departure_time_raw) {
+        $departure_date = new DateTime($departure_time_raw);
+        $flight_data['departure_time'] = $departure_date->format('H:i');
+        
+        // Форматируем дату на русском языке
+        $months = [
+            1 => 'янв', 2 => 'фев', 3 => 'мар', 4 => 'апр', 5 => 'май', 6 => 'июн',
+            7 => 'июл', 8 => 'авг', 9 => 'сен', 10 => 'окт', 11 => 'ноя', 12 => 'дек'
+        ];
+        $days = [
+            'Mon' => 'Пн', 'Tue' => 'Вт', 'Wed' => 'Ср', 'Thu' => 'Чт',
+            'Fri' => 'Пт', 'Sat' => 'Сб', 'Sun' => 'Вс'
+        ];
+        
+        $day_name = $days[$departure_date->format('D')] ?? $departure_date->format('D');
+        $month_name = $months[$departure_date->format('n')] ?? $departure_date->format('M');
+        $flight_data['departure_date'] = $day_name . ', ' . $departure_date->format('j') . ' ' . $month_name;
+    } else {
+        $flight_data['departure_time'] = null;
+        $flight_data['departure_date'] = null;
+    }
+    
+    if ($arrival_time_raw) {
+        $arrival_date = new DateTime($arrival_time_raw);
+        $flight_data['arrival_time'] = $arrival_date->format('H:i');
+        
+        // Форматируем дату на русском языке
+        $months = [
+            1 => 'янв', 2 => 'фев', 3 => 'мар', 4 => 'апр', 5 => 'май', 6 => 'июн',
+            7 => 'июл', 8 => 'авг', 9 => 'сен', 10 => 'окт', 11 => 'ноя', 12 => 'дек'
+        ];
+        $days = [
+            'Mon' => 'Пн', 'Tue' => 'Вт', 'Wed' => 'Ср', 'Thu' => 'Чт',
+            'Fri' => 'Пт', 'Sat' => 'Сб', 'Sun' => 'Вс'
+        ];
+        
+        $day_name = $days[$arrival_date->format('D')] ?? $arrival_date->format('D');
+        $month_name = $months[$arrival_date->format('n')] ?? $arrival_date->format('M');
+        $flight_data['arrival_date'] = $day_name . ', ' . $arrival_date->format('j') . ' ' . $month_name;
+    } else {
+        $flight_data['arrival_time'] = null;
+        $flight_data['arrival_date'] = null;
+    }
+    
+    $flight_data['duration'] = get_field('duration', $flight_id);
+    
+    // Для прямых рейсов добавляем авиакомпанию
+    if ($flight_type === 'direct') {
+        $airline_id = get_field('airline', $flight_id);
+        $airline = $airline_id ? get_term($airline_id, 'airline') : null;
+        
+        $flight_data['airline'] = $airline ? $airline->name : '';
+        $flight_data['airline_logo'] = $airline ? get_field('logo', $airline) : null;
+    }
+    
+    // Для рейсов с пересадкой добавляем поля пересадки
+    if ($flight_type === 'connecting') {
+        $flight_data['connecting_airport'] = get_field('connecting_airport', $flight_id);
+        $flight_data['connecting_airport_code'] = get_field('connecting_airport_code', $flight_id);
+        $flight_data['connecting_wait_time'] = get_field('connecting_wait_time', $flight_id);
+    }
+    
+    return $flight_data;
+}
+
+
 /**
  * Sets up theme defaults and registers support for various WordPress features.
  *
@@ -104,6 +203,433 @@ function booking_setup() {
 	);
 }
 add_action( 'after_setup_theme', 'booking_setup' );
+
+// Регистрируем таксономию для типов паломничества
+function atlas_register_pilgrimage_taxonomy() {
+    register_taxonomy(
+        'pilgrimage_type',
+        'post',
+        array(
+            'labels' => array(
+                'name' => 'Типы паломничества',
+                'singular_name' => 'Тип паломничества',
+                'menu_name' => 'Типы паломничества',
+                'all_items' => 'Все типы',
+                'edit_item' => 'Редактировать тип',
+                'view_item' => 'Просмотреть тип',
+                'update_item' => 'Обновить тип',
+                'add_new_item' => 'Добавить новый тип',
+                'new_item_name' => 'Название нового типа',
+                'search_items' => 'Поиск типов',
+                'popular_items' => 'Популярные типы',
+                'separate_items_with_commas' => 'Разделить типы запятыми',
+                'add_or_remove_items' => 'Добавить или удалить типы',
+                'choose_from_most_used' => 'Выбрать из наиболее используемых',
+                'not_found' => 'Типы не найдены',
+            ),
+            'hierarchical' => true,
+            'public' => true,
+            'show_ui' => true,
+            'show_admin_column' => true,
+            'show_in_nav_menus' => true,
+            'show_tagcloud' => true,
+            'rewrite' => array('slug' => 'pilgrimage-type'),
+            'show_in_rest' => true,
+        )
+    );
+}
+add_action('init', 'atlas_register_pilgrimage_taxonomy');
+
+// Регистрируем пользовательский тип записи для отелей
+function atlas_register_hotel_post_type() {
+    register_post_type('hotel', array(
+        'labels' => array(
+            'name' => 'Отели',
+            'singular_name' => 'Отель',
+            'menu_name' => 'Отели',
+            'add_new' => 'Добавить отель',
+            'add_new_item' => 'Добавить новый отель',
+            'edit_item' => 'Редактировать отель',
+            'new_item' => 'Новый отель',
+            'view_item' => 'Просмотреть отель',
+            'search_items' => 'Поиск отелей',
+            'not_found' => 'Отели не найдены',
+            'not_found_in_trash' => 'В корзине отели не найдены',
+        ),
+        'public' => true,
+        'has_archive' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'show_in_nav_menus' => true,
+        'show_in_rest' => true,
+        'query_var' => true,
+        'rewrite' => array('slug' => 'hotel'),
+        'capability_type' => 'post',
+        'hierarchical' => false,
+        'menu_position' => 5,
+        'menu_icon' => 'dashicons-building',
+        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+        'show_in_admin_bar' => true,
+    ));
+}
+add_action('init', 'atlas_register_hotel_post_type');
+
+function atlas_register_transfer_post_type() {
+    register_post_type('transfer', array(
+        'labels' => array(
+            'name' => 'Трансферы',
+            'singular_name' => 'Трансфер',
+            'menu_name' => 'Трансферы',
+            'add_new' => 'Добавить трансфер',
+            'add_new_item' => 'Добавить новый трансфер',
+            'edit_item' => 'Редактировать трансфер',
+            'new_item' => 'Новый трансфер',
+            'view_item' => 'Просмотреть трансфер',
+            'search_items' => 'Поиск трансферов',
+            'not_found' => 'Трансферы не найдены',
+            'not_found_in_trash' => 'В корзине трансферы не найдены',
+        ),
+        'public' => true,
+        'has_archive' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'show_in_nav_menus' => true,
+        'show_in_rest' => true,
+        'query_var' => true,
+        'rewrite' => array('slug' => 'transfer'),
+        'capability_type' => 'post',
+        'hierarchical' => false,
+        'menu_position' => 6,
+        'menu_icon' => 'dashicons-car',
+        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+        'show_in_admin_bar' => true,
+    ));
+}
+add_action('init', 'atlas_register_transfer_post_type');
+
+
+// Создаем базовые типы паломничества при активации темы
+function atlas_create_default_pilgrimage_types() {
+    if (!get_option('atlas_pilgrimage_types_created')) {
+        $default_types = array(
+            'umrah' => 'Умра',
+            'hajj' => 'Хадж',
+            'ramadan' => 'Рамадан'
+        );
+        
+        foreach ($default_types as $slug => $name) {
+            if (!term_exists($slug, 'pilgrimage_type')) {
+                wp_insert_term($name, 'pilgrimage_type', array('slug' => $slug));
+            }
+        }
+        
+        update_option('atlas_pilgrimage_types_created', true);
+    }
+}
+add_action('after_setup_theme', 'atlas_create_default_pilgrimage_types');
+
+
+// Импортируем ACF поля для таксономии отелей
+function atlas_import_hotel_acf_fields() {
+    if (!get_option('atlas_hotel_acf_imported')) {
+        $acf_fields = json_decode(file_get_contents(get_template_directory() . '/acf-hotel-fields.json'), true);
+        
+        if ($acf_fields) {
+            acf_add_local_field_group($acf_fields);
+        }
+        
+        update_option('atlas_hotel_acf_imported', true);
+    }
+}
+add_action('acf/init', 'atlas_import_hotel_acf_fields');
+
+function atlas_import_transfer_acf_fields() {
+    if (!get_option('atlas_transfer_acf_imported')) {
+        $acf_fields = json_decode(file_get_contents(get_template_directory() . '/acf-transfer-fields.json'), true);
+        
+        if ($acf_fields) {
+            acf_add_local_field_group($acf_fields);
+        }
+        
+        update_option('atlas_transfer_acf_imported', true);
+    }
+}
+add_action('acf/init', 'atlas_import_transfer_acf_fields');
+
+
+// Вспомогательные функции для работы с трансферами
+function get_transfer_data($post_id, $field_name) {
+    $transfer_id = get_field($field_name, $post_id);
+    if ($transfer_id) {
+        $transfer_post = get_post($transfer_id);
+        if ($transfer_post && $transfer_post->post_type === 'transfer') {
+            return array(
+                'id' => $transfer_id,
+                'title' => $transfer_post->post_title,
+                'short_name' => get_field('short_name', $transfer_id),
+                'description' => get_field('description', $transfer_id),
+                'gallery' => get_field('gallery', $transfer_id)
+            );
+        }
+    }
+    return null;
+}
+
+function get_transfer_short_name($post_id, $field_name) {
+    $transfer_id = get_field($field_name, $post_id);
+    if ($transfer_id) {
+        $short_name = get_field('short_name', $transfer_id);
+        if ($short_name) {
+            return $short_name;
+        }
+        $transfer_post = get_post($transfer_id);
+        if ($transfer_post && $transfer_post->post_type === 'transfer') {
+            return $transfer_post->post_title;
+        }
+    }
+    return null;
+}
+
+
+function get_transfer_description($post_id, $field_name) {
+    $transfer_id = get_field($field_name, $post_id);
+    if ($transfer_id) {
+        return get_field('description', $transfer_id);
+    }
+    return null;
+}
+
+function get_transfer_gallery($post_id, $field_name) {
+    $transfer_id = get_field($field_name, $post_id);
+    if ($transfer_id) {
+        return get_field('gallery', $transfer_id);
+    }
+    return null;
+}
+
+function get_transfers_data($post_id) {
+    $transfer_ids = get_field('transfers', $post_id);
+    $transfers_data = array();
+    
+    if ($transfer_ids && is_array($transfer_ids)) {
+        foreach ($transfer_ids as $transfer_id) {
+            $transfer_post = get_post($transfer_id);
+            if ($transfer_post && $transfer_post->post_type === 'transfer') {
+                $transfers_data[] = array(
+                    'id' => $transfer_id,
+                    'name' => $transfer_post->post_title,
+                    'short_name' => get_field('short_name', $transfer_id),
+                    'description' => get_field('description', $transfer_id),
+                    'gallery' => get_field('gallery', $transfer_id)
+                );
+            }
+        }
+    }
+    
+    return $transfers_data;
+}
+
+
+// Вспомогательные функции для работы с отелями
+function get_hotel_data($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        $hotel_post = get_post($hotel_id);
+        if ($hotel_post && $hotel_post->post_type === 'hotel') {
+            return array(
+                'id' => $hotel_id,
+                'title' => $hotel_post->post_title,
+                'accommodation_text' => get_field('accommodation_text', $hotel_id),
+                'short_name' => get_field('short_name', $hotel_id),
+                'full_name' => get_field('full_name', $hotel_id),
+                'description' => get_field('description', $hotel_id),
+                'rating' => get_field('rating', $hotel_id),
+                'rating_text' => get_field('rating_text', $hotel_id),
+                'distance' => get_field('distance', $hotel_id),
+                'city' => get_field('city', $hotel_id),
+                'amenities' => get_field('amenities', $hotel_id),
+                'gallery' => get_field('gallery', $hotel_id),
+                'rating_categories' => get_field('rating_categories', $hotel_id),
+                'logo_image' => get_field('logo_image', $hotel_id),
+                'distance_number' => get_field('distance_number', $hotel_id),
+                'check_in' => get_field('check_in', $hotel_id),
+                'check_out' => get_field('check_out', $hotel_id),
+                'room_type' => get_field('room_type', $hotel_id),
+                'meal_plan' => get_field('meal_plan', $hotel_id),
+                'distance_text' => get_field('distance_text', $hotel_id)
+            );
+        }
+    }
+    return null;
+}
+
+function get_hotel_accommodation_text($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('accommodation_text', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_short_name($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        $short_name = get_field('short_name', $hotel_id);
+        if ($short_name) {
+            return $short_name;
+        }
+        // Fallback на обычное название
+        $hotel_post = get_post($hotel_id);
+        if ($hotel_post && $hotel_post->post_type === 'hotel') {
+            return $hotel_post->post_title;
+        }
+    }
+    return null;
+}
+
+function get_hotel_full_name($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        $full_name = get_field('full_name', $hotel_id);
+        if ($full_name) {
+            return $full_name;
+        }
+        // Fallback на обычное название
+        $hotel_post = get_post($hotel_id);
+        if ($hotel_post && $hotel_post->post_type === 'hotel') {
+            return $hotel_post->post_title;
+        }
+    }
+    return null;
+}
+
+function get_hotel_distance($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('distance', $hotel_id);
+    }
+    return get_field('distance_' . str_replace('hotel_', '', $field_name), $post_id); // Fallback для старых данных
+}
+
+function get_hotel_description($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('description', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_rating($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('rating', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_rating_text($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('rating_text', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_amenities($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('amenities', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_gallery($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('gallery', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_rating_categories($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('rating_categories', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_logo_image($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('logo_image', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_distance_number($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('distance_number', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_distance_text($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('distance_text', $hotel_id);
+    }
+    return null;
+}
+
+
+// Функция для очистки старых данных отелей
+function atlas_clean_old_hotel_data() {
+    if (get_option('atlas_hotel_data_cleaned')) {
+        return;
+    }
+    
+    // Получаем все туры
+    $tours = get_posts(array(
+        'post_type' => 'post',
+        'numberposts' => -1,
+        'post_status' => 'publish'
+    ));
+    
+    foreach ($tours as $tour) {
+        $hotel_mekka = get_field('hotel_mekka', $tour->ID);
+        $hotel_medina = get_field('hotel_medina', $tour->ID);
+        
+        // Если поле содержит строку вместо ID, очищаем его
+        if (is_string($hotel_mekka) && strpos($hotel_mekka, 'Проживание') !== false) {
+            update_field('hotel_mekka', '', $tour->ID);
+        }
+        
+        if (is_string($hotel_medina) && strpos($hotel_medina, 'Проживание') !== false) {
+            update_field('hotel_medina', '', $tour->ID);
+        }
+    }
+    
+    update_option('atlas_hotel_data_cleaned', true);
+}
+add_action('init', 'atlas_clean_old_hotel_data');
+
+// Хук для отладки сохранения полей отелей
+add_action('acf/save_post', 'debug_hotel_fields_save', 20);
+function debug_hotel_fields_save($post_id) {
+    if (get_post_type($post_id) !== 'post') {
+        return;
+    }
+    
+    $hotel_mekka = get_field('hotel_mekka', $post_id);
+    $hotel_medina = get_field('hotel_medina', $post_id);
+    
+    error_log('Hotel Mekka saved: ' . print_r($hotel_mekka, true));
+    error_log('Hotel Medina saved: ' . print_r($hotel_medina, true));
+}
 
 /**
  * Set the content width in pixels, based on the theme's design and stylesheet.
@@ -282,9 +808,24 @@ function atlas_bookings_admin_page() {
     echo '<h2 class="hndle ui-sortable-handle"><span>Список бронирований</span></h2>';
     echo '<div class="inside">';
     
+    echo '<div class="tablenav top">';
+    echo '<div class="alignleft actions bulkactions">';
+    echo '<select name="bulk_action" id="bulk_action">';
+    echo '<option value="-1">Массовые действия</option>';
+    echo '<option value="status_pending">Изменить статус на: Ожидает оплаты</option>';
+    echo '<option value="status_paid">Изменить статус на: Оплачено</option>';
+    echo '<option value="status_cancelled">Изменить статус на: Отменено</option>';
+    echo '<option value="status_confirmed">Изменить статус на: Подтверждено</option>';
+    echo '<option value="delete">Удалить выбранные</option>';
+    echo '</select>';
+    echo '<input type="submit" id="doaction" class="button action" value="Применить">';
+    echo '</div>';
+    echo '</div>';
+    
     echo '<table class="wp-list-table widefat fixed striped">';
     echo '<thead>';
     echo '<tr>';
+    echo '<td id="cb" class="manage-column column-cb check-column"><input id="cb-select-all-1" type="checkbox"></td>';
     echo '<th scope="col" class="manage-column column-id">ID</th>';
     echo '<th scope="col" class="manage-column column-user">Пользователь</th>';
     echo '<th scope="col" class="manage-column column-tour">Тур</th>';
@@ -301,6 +842,7 @@ function atlas_bookings_admin_page() {
         $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
         
         echo '<tr>';
+        echo '<th scope="row" class="check-column"><input type="checkbox" name="booking[]" value="' . esc_attr($booking_id) . '" data-user-id="' . esc_attr($booking['user_id']) . '"></th>';
         echo '<td class="column-id"><code>' . esc_html(substr($booking_id, 0, 8)) . '...</code></td>';
         echo '<td class="column-user">';
         echo '<strong>' . esc_html($booking['user_name']) . '</strong><br>';
@@ -317,11 +859,26 @@ function atlas_bookings_admin_page() {
         echo '</td>';
         echo '<td class="column-date">' . esc_html(date('d.m.Y H:i', strtotime($booking['booking_date']))) . '</td>';
         echo '<td class="column-status">';
-        echo '<span class="' . $status_class . ' inline">' . esc_html($booking['status']) . '</span>';
+        $status_text = '';
+        switch($booking['status']) {
+            case 'pending': $status_text = 'Ожидает оплаты'; break;
+            case 'paid': $status_text = 'Оплачено'; break;
+            case 'cancelled': $status_text = 'Отменено'; break;
+            case 'confirmed': $status_text = 'Подтверждено'; break;
+            default: $status_text = $booking['status'];
+        }
+        echo '<span class="' . $status_class . ' inline">' . esc_html($status_text) . '</span>';
         echo '</td>';
         echo '<td class="column-tourists">' . $tourists_count . '</td>';
         echo '<td class="column-actions">';
         echo '<button onclick="showBookingDetails(\'' . esc_js(json_encode($booking, JSON_UNESCAPED_UNICODE)) . '\')" class="button button-secondary">Просмотр</button>';
+        echo '<select onchange="changeBookingStatus(\'' . esc_js($booking_id) . '\', \'' . esc_js($booking['user_id']) . '\', this.value)" class="booking-status-select" style="margin: 0 5px;">';
+        echo '<option value="pending"' . ($booking['status'] === 'pending' ? ' selected' : '') . '>Ожидает оплаты</option>';
+        echo '<option value="paid"' . ($booking['status'] === 'paid' ? ' selected' : '') . '>Оплачено</option>';
+        echo '<option value="cancelled"' . ($booking['status'] === 'cancelled' ? ' selected' : '') . '>Отменено</option>';
+        echo '<option value="confirmed"' . ($booking['status'] === 'confirmed' ? ' selected' : '') . '>Подтверждено</option>';
+        echo '</select>';
+        echo '<button onclick="deleteBooking(\'' . esc_js($booking_id) . '\', \'' . esc_js($booking['user_id']) . '\')" class="button button-link-delete" style="color: #a00; margin-left: 5px;">Удалить</button>';
         echo '</td>';
         echo '</tr>';
     }
@@ -439,6 +996,53 @@ function atlas_bookings_admin_page() {
     
     .tourist-info-item strong {
         color: #23282d;
+    }
+    
+    .column-actions .button {
+        margin-right: 5px;
+    }
+    
+    .button-link-delete {
+        color: #a00 !important;
+        text-decoration: none;
+        border: none !important;
+        background: none !important;
+        padding: 0 !important;
+        font-size: 13px;
+    }
+    
+    .button-link-delete:hover {
+        color: #dc3232 !important;
+        text-decoration: underline;
+    }
+    
+    .button-link-delete:disabled {
+        color: #999 !important;
+        cursor: not-allowed;
+    }
+    
+    .booking-status-select {
+        font-size: 12px;
+        padding: 2px 5px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        background: #fff;
+        min-width: 120px;
+    }
+    
+    .booking-status-select:disabled {
+        background: #f1f1f1;
+        color: #999;
+        cursor: not-allowed;
+    }
+    
+    .column-actions {
+        white-space: nowrap;
+    }
+    
+    .column-actions .button,
+    .column-actions select {
+        vertical-align: middle;
     }
     </style>';
     
@@ -580,9 +1184,413 @@ function atlas_bookings_admin_page() {
             }
         }
     });
+    
+    // Функция смены статуса бронирования
+    function changeBookingStatus(bookingId, userId, newStatus) {
+        // Показываем индикатор загрузки
+        const selectElement = event.target;
+        const originalValue = selectElement.value;
+        selectElement.disabled = true;
+        
+        // Отправляем AJAX запрос
+        fetch(ajaxurl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "action=atlas_change_booking_status&booking_id=" + bookingId + "&user_id=" + userId + "&new_status=" + newStatus + "&nonce=" + atlas_admin_nonce
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Обновляем отображение статуса в таблице
+                const row = selectElement.closest("tr");
+                const statusCell = row.querySelector(".column-status span");
+                
+                // Обновляем класс и текст статуса
+                statusCell.className = newStatus === "pending" ? "notice-error inline" : "notice-success inline";
+                statusCell.textContent = getStatusText(newStatus);
+                
+                // Показываем уведомление
+                showNotice("Статус бронирования изменен на: " + getStatusText(newStatus), "success");
+                
+                // Обновляем статистику
+                updateStatistics();
+            } else {
+                // Возвращаем предыдущее значение
+                selectElement.value = originalValue;
+                showNotice("Ошибка при изменении статуса: " + (data.data || "Неизвестная ошибка"), "error");
+            }
+        })
+        .catch(error => {
+            console.error("Ошибка:", error);
+            selectElement.value = originalValue;
+            showNotice("Ошибка при изменении статуса", "error");
+        })
+        .finally(() => {
+            selectElement.disabled = false;
+        });
+    }
+    
+    // Функция получения текста статуса
+    function getStatusText(status) {
+        const statusTexts = {
+            "pending": "Ожидает оплаты",
+            "paid": "Оплачено",
+            "cancelled": "Отменено",
+            "confirmed": "Подтверждено"
+        };
+        return statusTexts[status] || status;
+    }
+
+    // Функция удаления бронирования
+    function deleteBooking(bookingId, userId) {
+        if (!confirm("Вы уверены, что хотите удалить это бронирование? Это действие нельзя отменить.")) {
+            return;
+        }
+        
+        // Показываем индикатор загрузки
+        const deleteButton = event.target;
+        const originalText = deleteButton.textContent;
+        deleteButton.textContent = "Удаление...";
+        deleteButton.disabled = true;
+        
+        // Отправляем AJAX запрос
+        fetch(ajaxurl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "action=atlas_delete_booking&booking_id=" + bookingId + "&user_id=" + userId + "&nonce=" + atlas_admin_nonce
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Удаляем строку из таблицы
+                const row = deleteButton.closest("tr");
+                row.style.opacity = "0.5";
+                row.style.transition = "opacity 0.3s";
+                setTimeout(() => {
+                    row.remove();
+                    // Обновляем статистику
+                    updateStatistics();
+                }, 300);
+                
+                // Показываем уведомление
+                showNotice("Бронирование успешно удалено", "success");
+            } else {
+                showNotice("Ошибка при удалении: " + (data.data || "Неизвестная ошибка"), "error");
+                deleteButton.textContent = originalText;
+                deleteButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error("Ошибка:", error);
+            showNotice("Ошибка при удалении бронирования", "error");
+            deleteButton.textContent = originalText;
+            deleteButton.disabled = false;
+        });
+    }
+    
+    // Функция обновления статистики
+    function updateStatistics() {
+        const rows = document.querySelectorAll("tbody tr");
+        let totalBookings = rows.length;
+        let pendingBookings = 0;
+        let totalTourists = 0;
+        
+        rows.forEach(row => {
+            const statusCell = row.querySelector(".column-status span");
+            if (statusCell && statusCell.textContent.trim() === "pending") {
+                pendingBookings++;
+            }
+            
+            const touristsCell = row.querySelector(".column-tourists");
+            if (touristsCell) {
+                totalTourists += parseInt(touristsCell.textContent) || 0;
+            }
+        });
+        
+        // Обновляем статистику в метабоксе
+        const statsTable = document.querySelector(".metabox-holder .postbox .inside table tbody");
+        if (statsTable) {
+            const rows = statsTable.querySelectorAll("tr");
+            if (rows[0]) rows[0].querySelector("td").textContent = totalBookings;
+            if (rows[1]) rows[1].querySelector("td").textContent = pendingBookings;
+            if (rows[2]) rows[2].querySelector("td").textContent = totalTourists;
+        }
+    }
+    
+    // Функция показа уведомлений
+    function showNotice(message, type) {
+        const notice = document.createElement("div");
+        notice.className = "notice notice-" + type + " is-dismissible";
+        notice.innerHTML = "<p>" + message + "</p>";
+        
+        const wrap = document.querySelector(".wrap");
+        wrap.insertBefore(notice, wrap.firstChild);
+        
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            notice.remove();
+        }, 5000);
+    }
+    
+    // Обработчик для "Выбрать все"
+    document.getElementById("cb-select-all-1").addEventListener("change", function() {
+        const checkboxes = document.querySelectorAll("input[name=\"booking[]\"]");
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+    
+    // Обработчик для массовых действий
+    document.getElementById("doaction").addEventListener("click", function(e) {
+        e.preventDefault();
+        
+        const bulkAction = document.getElementById("bulk_action").value;
+        const checkedBoxes = document.querySelectorAll("input[name=\"booking[]\"]:checked");
+        
+        if (bulkAction === "-1") {
+            showNotice("Выберите действие", "error");
+            return;
+        }
+        
+        if (checkedBoxes.length === 0) {
+            showNotice("Выберите бронирования для удаления", "error");
+            return;
+        }
+        
+        if (bulkAction.startsWith("status_")) {
+            const newStatus = bulkAction.replace("status_", "");
+            const statusText = getStatusText(newStatus);
+            
+            if (!confirm("Вы уверены, что хотите изменить статус выбранных бронирований на: " + statusText + "?")) {
+                return;
+            }
+            
+            // Показываем индикатор загрузки
+            this.value = "Изменение...";
+            this.disabled = true;
+            
+            // Собираем данные для изменения статуса
+            const bookingsToUpdate = [];
+            checkedBoxes.forEach(checkbox => {
+                bookingsToUpdate.push({
+                    bookingId: checkbox.value,
+                    userId: checkbox.dataset.userId
+                });
+            });
+            
+            // Изменяем статус по одному
+            let updatedCount = 0;
+            const totalCount = bookingsToUpdate.length;
+            
+            bookingsToUpdate.forEach((booking, index) => {
+                fetch(ajaxurl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: "action=atlas_change_booking_status&booking_id=" + booking.bookingId + "&user_id=" + booking.userId + "&new_status=" + newStatus + "&nonce=" + atlas_admin_nonce
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updatedCount++;
+                        
+                        // Обновляем отображение статуса в таблице
+                        const row = document.querySelector("input[value=\'" + booking.bookingId + "\']").closest("tr");
+                        const statusCell = row.querySelector(".column-status span");
+                        const statusSelect = row.querySelector(".booking-status-select");
+                        
+                        // Обновляем класс и текст статуса
+                        statusCell.className = newStatus === "pending" ? "notice-error inline" : "notice-success inline";
+                        statusCell.textContent = statusText;
+                        statusSelect.value = newStatus;
+                        
+                        // Если это последний элемент
+                        if (updatedCount === totalCount) {
+                            showNotice("Успешно изменен статус " + updatedCount + " бронирований на: " + statusText, "success");
+                            updateStatistics();
+                            document.getElementById("doaction").value = "Применить";
+                            document.getElementById("doaction").disabled = false;
+                        }
+                    } else {
+                        showNotice("Ошибка при изменении статуса бронирования " + booking.bookingId, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка:", error);
+                    showNotice("Ошибка при изменении статуса бронирования " + booking.bookingId, "error");
+                });
+            });
+            
+        } else if (bulkAction === "delete") {
+            if (!confirm("Вы уверены, что хотите удалить выбранные бронирования? Это действие нельзя отменить.")) {
+                return;
+            }
+            
+            // Показываем индикатор загрузки
+            this.value = "Удаление...";
+            this.disabled = true;
+            
+            // Собираем данные для удаления
+            const bookingsToDelete = [];
+            checkedBoxes.forEach(checkbox => {
+                bookingsToDelete.push({
+                    bookingId: checkbox.value,
+                    userId: checkbox.dataset.userId
+                });
+            });
+            
+            // Удаляем по одному
+            let deletedCount = 0;
+            const totalCount = bookingsToDelete.length;
+            
+            bookingsToDelete.forEach((booking, index) => {
+                fetch(ajaxurl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: "action=atlas_delete_booking&booking_id=" + booking.bookingId + "&user_id=" + booking.userId + "&nonce=" + atlas_admin_nonce
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        deletedCount++;
+                        
+                        // Удаляем строку из таблицы
+                        const row = document.querySelector("input[value=\'" + booking.bookingId + "\']").closest("tr");
+                        row.style.opacity = "0.5";
+                        row.style.transition = "opacity 0.3s";
+                        setTimeout(() => {
+                            row.remove();
+                        }, 300);
+                        
+                        // Если это последний элемент
+                        if (deletedCount === totalCount) {
+                            showNotice("Успешно удалено " + deletedCount + " бронирований", "success");
+                            updateStatistics();
+                            document.getElementById("doaction").value = "Применить";
+                            document.getElementById("doaction").disabled = false;
+                        }
+                    } else {
+                        showNotice("Ошибка при удалении бронирования " + booking.bookingId, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка:", error);
+                    showNotice("Ошибка при удалении бронирования " + booking.bookingId, "error");
+                });
+            });
+        }
+    });
     </script>';
     
     echo '</div>';
+}
+
+// AJAX обработчик для удаления бронирований
+add_action('wp_ajax_atlas_delete_booking', 'atlas_delete_booking_ajax');
+function atlas_delete_booking_ajax() {
+    // Проверяем nonce для безопасности
+    if (!wp_verify_nonce($_POST['nonce'], 'atlas_admin_nonce')) {
+        wp_die('Неверный nonce');
+    }
+    
+    // Проверяем права доступа
+    if (!current_user_can('manage_options')) {
+        wp_die('Недостаточно прав');
+    }
+    
+    $booking_id = sanitize_text_field($_POST['booking_id']);
+    $user_id = intval($_POST['user_id']);
+    
+    if (empty($booking_id) || empty($user_id)) {
+        wp_send_json_error('Неверные параметры');
+    }
+    
+    // Получаем бронирования пользователя
+    $user_bookings = get_user_meta($user_id, 'atlas_bookings', true);
+    
+    if (!is_array($user_bookings) || !isset($user_bookings[$booking_id])) {
+        wp_send_json_error('Бронирование не найдено');
+    }
+    
+    // Удаляем бронирование
+    unset($user_bookings[$booking_id]);
+    update_user_meta($user_id, 'atlas_bookings', $user_bookings);
+    
+    // Логируем удаление
+    error_log("Бронирование удалено: booking_id=$booking_id, user_id=$user_id");
+    
+    wp_send_json_success('Бронирование успешно удалено');
+}
+
+// AJAX обработчик для смены статуса бронирования
+add_action('wp_ajax_atlas_change_booking_status', 'atlas_change_booking_status_ajax');
+function atlas_change_booking_status_ajax() {
+    // Проверяем nonce для безопасности
+    if (!wp_verify_nonce($_POST['nonce'], 'atlas_admin_nonce')) {
+        wp_die('Неверный nonce');
+    }
+    
+    // Проверяем права доступа
+    if (!current_user_can('manage_options')) {
+        wp_die('Недостаточно прав');
+    }
+    
+    $booking_id = sanitize_text_field($_POST['booking_id']);
+    $user_id = intval($_POST['user_id']);
+    $new_status = sanitize_text_field($_POST['new_status']);
+    
+    // Валидируем статус
+    $allowed_statuses = array('pending', 'paid', 'cancelled', 'confirmed');
+    if (!in_array($new_status, $allowed_statuses)) {
+        wp_send_json_error('Неверный статус');
+    }
+    
+    if (empty($booking_id) || empty($user_id)) {
+        wp_send_json_error('Неверные параметры');
+    }
+    
+    // Получаем бронирования пользователя
+    $user_bookings = get_user_meta($user_id, 'atlas_bookings', true);
+    
+    if (!is_array($user_bookings) || !isset($user_bookings[$booking_id])) {
+        wp_send_json_error('Бронирование не найдено');
+    }
+    
+    // Обновляем статус
+    $user_bookings[$booking_id]['status'] = $new_status;
+    $user_bookings[$booking_id]['status_changed_at'] = current_time('mysql');
+    $user_bookings[$booking_id]['status_changed_by'] = get_current_user_id();
+    
+    update_user_meta($user_id, 'atlas_bookings', $user_bookings);
+    
+    // Логируем изменение статуса
+    error_log("Статус бронирования изменен: booking_id=$booking_id, user_id=$user_id, new_status=$new_status, changed_by=" . get_current_user_id());
+    
+    wp_send_json_success('Статус успешно изменен');
+}
+
+// Добавляем nonce и ajaxurl в админку
+add_action('admin_enqueue_scripts', 'atlas_admin_scripts');
+function atlas_admin_scripts($hook) {
+    if ($hook === 'toplevel_page_atlas-bookings') {
+        wp_localize_script('jquery', 'atlas_admin_ajax', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('atlas_admin_nonce')
+        ));
+        
+        // Добавляем переменные в глобальную область
+        echo '<script type="text/javascript">
+            var ajaxurl = "' . admin_url('admin-ajax.php') . '";
+            var atlas_admin_nonce = "' . wp_create_nonce('atlas_admin_nonce') . '";
+        </script>';
+    }
 }
 
     // API для отправки SMS
@@ -670,6 +1678,19 @@ add_action('rest_api_init', function() {
         'callback' => 'atlas_get_faq',
         'permission_callback' => '__return_true'
     ));
+    
+    register_rest_route('atlas-hajj/v1', '/hotels', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_hotels',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('atlas-hajj/v1', '/transfers', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_transfers',
+        'permission_callback' => '__return_true'
+    ));
+    
     
     register_rest_route('atlas/v1', '/kaspi/payment_app.cgi', array(
         'methods' => 'GET',
@@ -1160,43 +2181,83 @@ function atlas_get_tours($request) {
                 'old_price' => get_field('old_price', $post_id),
                 'duration' => get_field('duration', $post_id),
                 'departure_city' => get_field('departure_city', $post_id),
-                'pilgrimage_type' => get_field('pilgrimage_type', $post_id),
-                'tour_start_date' => get_field('tour_start_date', $post_id),
-                'tour_end_date' => get_field('tour_end_date', $post_id),
-                'tour_duration_days' => get_field('tour_duration_days', $post_id),
+                'pilgrimage_type' => wp_get_post_terms($post_id, 'pilgrimage_type', array('fields' => 'slugs'))[0] ?? null,
+                'tour_dates' => get_field('tour_dates', $post_id),
                 'rating' => get_field('rating', $post_id),
                 'reviews_count' => get_field('reviews_count', $post_id),
                 'spots_left' => get_field('spots_left', $post_id),
+                'pilgrims_choice' => get_field('pilgrims_choice', $post_id),
+                'all_inclusive' => get_field('all_inclusive', $post_id),
+                'flight_type' => get_field('flight_type', $post_id),
+                'hotels_info' => get_field('hotels_info', $post_id),
                 'features' => get_field('features', $post_id),
-                'hotel_mekka' => get_field('hotel_mekka', $post_id),
-                'hotel_medina' => get_field('hotel_medina', $post_id),
-                'distance_mekka' => get_field('distance_mekka', $post_id),
-                'distance_medina' => get_field('distance_medina', $post_id),
+                'hotel_mekka' => get_hotel_short_name($post_id, 'hotel_mekka'),
+                'hotel_medina' => get_hotel_short_name($post_id, 'hotel_medina'),
+                'hotel_mekka_accommodation_text' => get_hotel_accommodation_text($post_id, 'hotel_mekka'),
+                'hotel_medina_accommodation_text' => get_hotel_accommodation_text($post_id, 'hotel_medina'),
+                'hotel_mekka_short_name' => get_hotel_short_name($post_id, 'hotel_mekka'),
+                'hotel_medina_short_name' => get_hotel_short_name($post_id, 'hotel_medina'),
+                'hotel_mekka_full_name' => get_hotel_full_name($post_id, 'hotel_mekka'),
+                'hotel_medina_full_name' => get_hotel_full_name($post_id, 'hotel_medina'),
+                'distance_mekka' => get_hotel_distance($post_id, 'hotel_mekka'),
+                'distance_medina' => get_hotel_distance($post_id, 'hotel_medina'),
                 'flight_type' => get_field('flight_type', $post_id),
                 'food_type' => get_field('food_type', $post_id),
-                'transfer_type' => get_field('transfer_type', $post_id),
                 
                 // Новые поля для детальной страницы
                 'tags' => get_field('tags', $post_id),
                 'gallery' => get_field('gallery', $post_id),
                 
-                // Рейсы
-                'flight_outbound' => get_field('flight_outbound', $post_id),
-                'flight_inbound' => get_field('flight_inbound', $post_id),
                 
                 // Детали отелей
-                'hotel_mekka_details' => get_field('hotel_mekka_details', $post_id),
-                'hotel_medina_details' => get_field('hotel_medina_details', $post_id),
+                'hotel_mekka_details' => array(
+                    'description' => get_hotel_description($post_id, 'hotel_mekka'),
+                    'rating' => get_hotel_rating($post_id, 'hotel_mekka'),
+                    'rating_text' => get_hotel_rating_text($post_id, 'hotel_mekka'),
+                    'rating_categories' => get_hotel_rating_categories($post_id, 'hotel_mekka'),
+                    'amenities' => get_hotel_amenities($post_id, 'hotel_mekka'),
+                    'check_in' => get_hotel_check_in($post_id, 'hotel_mekka'),
+                    'check_out' => get_hotel_check_out($post_id, 'hotel_mekka'),
+                    'room_type' => get_hotel_room_type($post_id, 'hotel_mekka'),
+                    'meal_plan' => get_hotel_meal_plan($post_id, 'hotel_mekka'),
+                    'gallery' => get_hotel_gallery($post_id, 'hotel_mekka'),
+                    'logo_image' => get_hotel_logo_image($post_id, 'hotel_mekka'),
+                    'distance_number' => get_hotel_distance_number($post_id, 'hotel_mekka'),
+                    'distance_text' => get_hotel_distance_text($post_id, 'hotel_mekka')
+                ),
+                'hotel_medina_details' => array(
+                    'description' => get_hotel_description($post_id, 'hotel_medina'),
+                    'rating' => get_hotel_rating($post_id, 'hotel_medina'),
+                    'rating_text' => get_hotel_rating_text($post_id, 'hotel_medina'),
+                    'rating_categories' => get_hotel_rating_categories($post_id, 'hotel_medina'),
+                    'amenities' => get_hotel_amenities($post_id, 'hotel_medina'),
+                    'check_in' => get_hotel_check_in($post_id, 'hotel_medina'),
+                    'check_out' => get_hotel_check_out($post_id, 'hotel_medina'),
+                    'room_type' => get_hotel_room_type($post_id, 'hotel_medina'),
+                    'meal_plan' => get_hotel_meal_plan($post_id, 'hotel_medina'),
+                    'gallery' => get_hotel_gallery($post_id, 'hotel_medina'),
+                    'logo_image' => get_hotel_logo_image($post_id, 'hotel_medina'),
+                    'distance_number' => get_hotel_distance_number($post_id, 'hotel_medina'),
+                    'distance_text' => get_hotel_distance_text($post_id, 'hotel_medina')
+                ),
+                
+                // Трансферы
+                'transfers' => get_transfers_data($post_id),
+                
+                // Хадж наборы
+                'hajj_kits' => get_hajj_kits_data($post_id),
                 
                 // Варианты размещения
                 'room_options' => get_field('room_options', $post_id),
                 
                 // Что включено в пакет
-                'package_includes' => get_field('package_includes', $post_id),
+                'package_includes' => get_package_includes_data($post_id),
                 
-                // Хадж набор
-                'hajj_kit_male' => get_field('hajj_kit_male', $post_id),
-                'hajj_kit_female' => get_field('hajj_kit_female', $post_id)
+                // Хадж наборы
+                'hajj_kits' => get_hajj_kits_data($post_id),
+                
+                // Отзывы паломников
+                'reviews' => get_field('reviews', $post_id)
             );
         }
     }
@@ -1231,15 +2292,19 @@ function atlas_get_tour_by_slug($request) {
             'old_price' => get_field('old_price', $post_id),
             'duration' => get_field('duration', $post_id),
             'departure_city' => get_field('departure_city', $post_id),
-            'pilgrimage_type' => get_field('pilgrimage_type', $post_id),
-            'tour_start_date' => get_field('tour_start_date', $post_id),
-            'tour_end_date' => get_field('tour_end_date', $post_id),
+            'pilgrimage_type' => wp_get_post_terms($post_id, 'pilgrimage_type', array('fields' => 'slugs')),
+            'tour_dates' => get_field('tour_dates', $post_id),
             'rating' => get_field('rating', $post_id),
             'reviews_count' => get_field('reviews_count', $post_id),
             'spots_left' => get_field('spots_left', $post_id),
+            'pilgrims_choice' => get_field('pilgrims_choice', $post_id),
+            'all_inclusive' => get_field('all_inclusive', $post_id),
+            'flight_type' => get_field('flight_type', $post_id),
+            'hotels_info' => get_field('hotels_info', $post_id),
             'features' => get_field('features', $post_id),
-            'hotel_mekka' => get_field('hotel_mekka', $post_id),
-            'hotel_medina' => get_field('hotel_medina', $post_id),
+                'hotel_mekka' => get_hotel_data($post_id, 'hotel_mekka'),
+                'hotel_medina' => get_hotel_data($post_id, 'hotel_medina'),
+                'transfers' => get_transfers_data($post_id),
             'distance_mekka' => get_field('distance_mekka', $post_id),
             'distance_medina' => get_field('distance_medina', $post_id),
             'flight_type' => get_field('flight_type', $post_id),
@@ -1250,23 +2315,69 @@ function atlas_get_tour_by_slug($request) {
             'tags' => get_field('tags', $post_id),
             'gallery' => get_field('gallery', $post_id),
             
-            // Рейсы
-            'flight_outbound' => get_field('flight_outbound', $post_id),
-            'flight_inbound' => get_field('flight_inbound', $post_id),
             
             // Детали отелей
-            'hotel_mekka_details' => get_field('hotel_mekka_details', $post_id),
-            'hotel_medina_details' => get_field('hotel_medina_details', $post_id),
+            'hotel_mekka_details' => array(
+                'description' => get_hotel_description($post_id, 'hotel_mekka'),
+                'rating' => get_hotel_rating($post_id, 'hotel_mekka'),
+                'rating_text' => get_hotel_rating_text($post_id, 'hotel_mekka'),
+                'rating_categories' => get_hotel_rating_categories($post_id, 'hotel_mekka'),
+                'amenities' => get_hotel_amenities($post_id, 'hotel_mekka'),
+                'check_in' => get_hotel_check_in($post_id, 'hotel_mekka'),
+                'check_out' => get_hotel_check_out($post_id, 'hotel_mekka'),
+                'room_type' => get_hotel_room_type($post_id, 'hotel_mekka'),
+                'meal_plan' => get_hotel_meal_plan($post_id, 'hotel_mekka'),
+                'gallery' => get_hotel_gallery($post_id, 'hotel_mekka')
+            ),
+            'hotel_medina_details' => array(
+                'description' => get_hotel_description($post_id, 'hotel_medina'),
+                'rating' => get_hotel_rating($post_id, 'hotel_medina'),
+                'rating_text' => get_hotel_rating_text($post_id, 'hotel_medina'),
+                'rating_categories' => get_hotel_rating_categories($post_id, 'hotel_medina'),
+                'amenities' => get_hotel_amenities($post_id, 'hotel_medina'),
+                'check_in' => get_hotel_check_in($post_id, 'hotel_medina'),
+                'check_out' => get_hotel_check_out($post_id, 'hotel_medina'),
+                'room_type' => get_hotel_room_type($post_id, 'hotel_medina'),
+                'meal_plan' => get_hotel_meal_plan($post_id, 'hotel_medina'),
+                'gallery' => get_hotel_gallery($post_id, 'hotel_medina')
+            ),
             
             // Варианты размещения
             'room_options' => get_field('room_options', $post_id),
             
             // Что включено в пакет
-            'package_includes' => get_field('package_includes', $post_id),
+            'package_includes' => get_package_includes_data($post_id),
             
-            // Хадж набор
-            'hajj_kit_male' => get_field('hajj_kit_male', $post_id),
-            'hajj_kit_female' => get_field('hajj_kit_female', $post_id)
+            // Хадж наборы
+            'hajj_kits' => get_hajj_kits_data($post_id),
+            
+            // Услуги
+            'services' => get_field('services', $post_id) ?: [],
+            
+            // Тип трансфера
+            'transfer_type' => get_field('transfer_type', $post_id),
+            
+        // Отзывы паломников
+        'reviews' => get_field('reviews', $post_id),
+        
+        // Рейсы
+        'flight_type' => get_field('flight_type', $post_id),
+        'flight_outbound' => get_field('flight_outbound', $post_id) ? get_flight_data(get_field('flight_outbound', $post_id)) : null,
+        'flight_inbound' => get_field('flight_inbound', $post_id) ? get_flight_data(get_field('flight_inbound', $post_id)) : null,
+        'flight_outbound_connecting' => get_field('flight_outbound_connecting', $post_id) ? get_flight_data(get_field('flight_outbound_connecting', $post_id)) : null,
+        'flight_connecting' => get_field('flight_connecting', $post_id) ? get_flight_data(get_field('flight_connecting', $post_id)) : null,
+        'flight_inbound_connecting' => get_field('flight_inbound_connecting', $post_id) ? get_flight_data(get_field('flight_inbound_connecting', $post_id)) : null,
+        
+        // Отдельные поля отелей для совместимости с фронтендом
+        'hotel_mekka_accommodation_text' => get_hotel_accommodation_text($post_id, 'hotel_mekka'),
+            'hotel_mekka_short_name' => get_hotel_short_name($post_id, 'hotel_mekka'),
+            'hotel_mekka_full_name' => get_hotel_full_name($post_id, 'hotel_mekka'),
+            'hotel_mekka_distance' => get_hotel_distance($post_id, 'hotel_mekka'),
+            
+            'hotel_medina_accommodation_text' => get_hotel_accommodation_text($post_id, 'hotel_medina'),
+            'hotel_medina_short_name' => get_hotel_short_name($post_id, 'hotel_medina'),
+            'hotel_medina_full_name' => get_hotel_full_name($post_id, 'hotel_medina'),
+            'hotel_medina_distance' => get_hotel_distance($post_id, 'hotel_medina')
         );
         
         wp_reset_postdata();
@@ -1389,10 +2500,10 @@ function atlas_search_tours($request) {
     }
     
     if ($pilgrimage_type) {
-        $args['meta_query'][] = array(
-            'key' => 'pilgrimage_type',
-            'value' => $pilgrimage_type,
-            'compare' => '='
+        $args['tax_query'][] = array(
+            'taxonomy' => 'pilgrimage_type',
+            'field' => 'slug',
+            'terms' => $pilgrimage_type
         );
     }
     
@@ -1414,23 +2525,8 @@ function atlas_search_tours($request) {
         $args['meta_query'][] = $price_query;
     }
     
-    if ($start_date && $end_date) {
-        $args['meta_query'][] = array(
-            'relation' => 'OR',
-            array(
-                'key' => 'tour_start_date',
-                'value' => $start_date,
-                'compare' => '>=',
-                'type' => 'DATE'
-            ),
-            array(
-                'key' => 'tour_end_date',
-                'value' => $end_date,
-                'compare' => '<=',
-                'type' => 'DATE'
-            )
-        );
-    }
+    // Поиск по датам теперь будет обрабатываться в PHP после получения туров
+    // так как даты теперь хранятся в repeater поле
     
     $query = new WP_Query($args);
     $tours = array();
@@ -1451,15 +2547,19 @@ function atlas_search_tours($request) {
             'old_price' => get_field('old_price', $post_id),
             'duration' => get_field('duration', $post_id),
             'departure_city' => get_field('departure_city', $post_id),
-            'pilgrimage_type' => get_field('pilgrimage_type', $post_id),
-            'tour_start_date' => get_field('tour_start_date', $post_id),
-            'tour_end_date' => get_field('tour_end_date', $post_id),
+            'pilgrimage_type' => wp_get_post_terms($post_id, 'pilgrimage_type', array('fields' => 'slugs')),
+            'tour_dates' => get_field('tour_dates', $post_id),
             'rating' => get_field('rating', $post_id),
             'reviews_count' => get_field('reviews_count', $post_id),
             'spots_left' => get_field('spots_left', $post_id),
+            'pilgrims_choice' => get_field('pilgrims_choice', $post_id),
+            'all_inclusive' => get_field('all_inclusive', $post_id),
+            'flight_type' => get_field('flight_type', $post_id),
+            'hotels_info' => get_field('hotels_info', $post_id),
             'features' => get_field('features', $post_id),
-            'hotel_mekka' => get_field('hotel_mekka', $post_id),
-            'hotel_medina' => get_field('hotel_medina', $post_id),
+                'hotel_mekka' => get_hotel_data($post_id, 'hotel_mekka'),
+                'hotel_medina' => get_hotel_data($post_id, 'hotel_medina'),
+                'transfers' => get_transfers_data($post_id),
             'distance_mekka' => get_field('distance_mekka', $post_id),
             'distance_medina' => get_field('distance_medina', $post_id),
             'flight_type' => get_field('flight_type', $post_id),
@@ -1470,23 +2570,41 @@ function atlas_search_tours($request) {
             'tags' => get_field('tags', $post_id),
             'gallery' => get_field('gallery', $post_id),
             
-            // Рейсы
-            'flight_outbound' => get_field('flight_outbound', $post_id),
-            'flight_inbound' => get_field('flight_inbound', $post_id),
             
             // Детали отелей
-            'hotel_mekka_details' => get_field('hotel_mekka_details', $post_id),
-            'hotel_medina_details' => get_field('hotel_medina_details', $post_id),
+            'hotel_mekka_details' => array(
+                'description' => get_hotel_description($post_id, 'hotel_mekka'),
+                'rating' => get_hotel_rating($post_id, 'hotel_mekka'),
+                'rating_text' => get_hotel_rating_text($post_id, 'hotel_mekka'),
+                'rating_categories' => get_hotel_rating_categories($post_id, 'hotel_mekka'),
+                'amenities' => get_hotel_amenities($post_id, 'hotel_mekka'),
+                'check_in' => get_hotel_check_in($post_id, 'hotel_mekka'),
+                'check_out' => get_hotel_check_out($post_id, 'hotel_mekka'),
+                'room_type' => get_hotel_room_type($post_id, 'hotel_mekka'),
+                'meal_plan' => get_hotel_meal_plan($post_id, 'hotel_mekka'),
+                'gallery' => get_hotel_gallery($post_id, 'hotel_mekka')
+            ),
+            'hotel_medina_details' => array(
+                'description' => get_hotel_description($post_id, 'hotel_medina'),
+                'rating' => get_hotel_rating($post_id, 'hotel_medina'),
+                'rating_text' => get_hotel_rating_text($post_id, 'hotel_medina'),
+                'rating_categories' => get_hotel_rating_categories($post_id, 'hotel_medina'),
+                'amenities' => get_hotel_amenities($post_id, 'hotel_medina'),
+                'check_in' => get_hotel_check_in($post_id, 'hotel_medina'),
+                'check_out' => get_hotel_check_out($post_id, 'hotel_medina'),
+                'room_type' => get_hotel_room_type($post_id, 'hotel_medina'),
+                'meal_plan' => get_hotel_meal_plan($post_id, 'hotel_medina'),
+                'gallery' => get_hotel_gallery($post_id, 'hotel_medina')
+            ),
             
             // Варианты размещения
             'room_options' => get_field('room_options', $post_id),
             
             // Что включено в пакет
-            'package_includes' => get_field('package_includes', $post_id),
+            'package_includes' => get_package_includes_data($post_id),
             
             // Хадж набор
-            'hajj_kit_male' => get_field('hajj_kit_male', $post_id),
-            'hajj_kit_female' => get_field('hajj_kit_female', $post_id)
+            'hajj_kits' => get_hajj_kits_data($post_id)
         );
             
             $tours[] = $tour;
@@ -1494,6 +2612,30 @@ function atlas_search_tours($request) {
     }
     
     wp_reset_postdata();
+    
+    // Фильтрация по датам (если указаны)
+    if ($start_date && $end_date) {
+        $filtered_tours = array();
+        foreach ($tours as $tour) {
+            if (isset($tour['tour_dates']) && is_array($tour['tour_dates'])) {
+                foreach ($tour['tour_dates'] as $date_range) {
+                    if (isset($date_range['date_start']) && isset($date_range['date_end'])) {
+                        $tour_start = $date_range['date_start'];
+                        $tour_end = $date_range['date_end'];
+                        
+                        // Проверяем пересечение дат
+                        if (($tour_start >= $start_date && $tour_start <= $end_date) || 
+                            ($tour_end >= $start_date && $tour_end <= $end_date) ||
+                            ($tour_start <= $start_date && $tour_end >= $end_date)) {
+                            $filtered_tours[] = $tour;
+                            break; // Нашли подходящую дату для этого тура
+                        }
+                    }
+                }
+            }
+        }
+        $tours = $filtered_tours;
+    }
     
     if ($sort_by) {
         switch ($sort_by) {
@@ -1539,12 +2681,24 @@ function atlas_book_tour($request) {
     
     $user_data = $tokens[$token];
     $user_id = $user_data['user_id'];
-    
+      
     $tour = get_post($tour_id);
     
     if (!$tour) {
         return new WP_Error('tour_not_found', 'Tour not found', array('status' => 404));
     }
+    
+    // Получаем полные данные о туре для бронирования
+    $full_tour_data = array(
+        'hotel_mekka' => get_hotel_short_name($tour_id, 'hotel_mekka'),
+        'hotel_medina' => get_hotel_short_name($tour_id, 'hotel_medina'),
+        'duration' => get_field('duration', $tour_id),
+        'price' => $tour_data['price'] ?? get_field('price', $tour_id), // Используем цену из tour_data или ACF поле
+        'tour_dates' => get_field('tour_dates', $tour_id)
+    );
+    
+    // Объединяем данные тура с переданными данными
+    $combined_tour_data = array_merge($full_tour_data, $tour_data);
     
     $booking_data = array(
         'user_id' => $user_id,
@@ -1553,7 +2707,7 @@ function atlas_book_tour($request) {
         'tour_slug' => $tour->post_name,
         'booking_date' => current_time('mysql'),
         'status' => 'pending',
-        'tour_data' => $tour_data
+        'tour_data' => $combined_tour_data
     );
     
     // Обновляем профиль пользователя данными первого туриста
@@ -1625,8 +2779,57 @@ function atlas_get_my_bookings($request) {
         $tour = get_post($booking['tour_id']);
         if ($tour) {
             $booking['tour_image'] = get_the_post_thumbnail_url($booking['tour_id'], 'medium');
-            $booking['tour_price'] = get_field('price', $booking['tour_id']);
+            $booking['tour_price'] = $booking['tour_data']['price'] ?? get_field('price', $booking['tour_id']);
             $booking['tour_duration'] = get_field('duration', $booking['tour_id']);
+            
+            // Сохраняем оригинальные данные бронирования
+            $original_tour_data = $booking['tour_data'] ?? array();
+            
+            // Обновляем данные тура актуальными данными о рейсах
+            $booking['tour_data']['hotel_mekka'] = get_hotel_short_name($booking['tour_id'], 'hotel_mekka');
+            $booking['tour_data']['hotel_medina'] = get_hotel_short_name($booking['tour_id'], 'hotel_medina');
+            
+            // Добавляем полные данные отелей
+            $booking['tour_data']['hotels'] = array(
+                'mekka' => get_hotel_data($booking['tour_id'], 'hotel_mekka'),
+                'medina' => get_hotel_data($booking['tour_id'], 'hotel_medina')
+            );
+            
+            // Добавляем данные о рейсах
+            $booking['tour_data']['flight_type'] = get_field('flight_type', $booking['tour_id']);
+            $booking['tour_data']['flight_outbound'] = get_flight_data(get_field('flight_outbound', $booking['tour_id']));
+            $booking['tour_data']['flight_inbound'] = get_flight_data(get_field('flight_inbound', $booking['tour_id']));
+            $booking['tour_data']['flight_outbound_connecting'] = get_flight_data(get_field('flight_outbound_connecting', $booking['tour_id']));
+            $booking['tour_data']['flight_connecting'] = get_flight_data(get_field('flight_connecting', $booking['tour_id']));
+            $booking['tour_data']['flight_inbound_connecting'] = get_flight_data(get_field('flight_inbound_connecting', $booking['tour_id']));
+            
+                // Добавляем данные об услугах
+                $booking['tour_data']['services'] = get_field('services', $booking['tour_id']) ?: [];
+                $booking['tour_data']['transfers'] = get_field('transfers', $booking['tour_id']);
+                $booking['tour_data']['transfer_type'] = get_field('transfer_type', $booking['tour_id']);
+                
+                // Добавляем hotels_info
+                $booking['tour_data']['hotels_info'] = get_field('hotels_info', $booking['tour_id']) ?: [];
+                
+                // Проверяем истечение времени бронирования (20 минут)
+                if ($booking['status'] === 'pending') {
+                    $booking_time = strtotime($booking['booking_date']);
+                    $expiration_time = $booking_time + (20 * 60); // 20 минут
+                    $current_time = time();
+                    
+                    if ($current_time > $expiration_time) {
+                        // Обновляем статус на "expired" в базе данных
+                        global $wpdb;
+                        $wpdb->update(
+                            $wpdb->prefix . 'atlas_bookings',
+                            array('status' => 'expired'),
+                            array('booking_id' => $booking['booking_id']),
+                            array('%s'),
+                            array('%s')
+                        );
+                        $booking['status'] = 'expired';
+                    }
+                }
         }
         $bookings[] = array_merge(array('booking_id' => $booking_id), $booking);
     }
@@ -1635,6 +2838,39 @@ function atlas_get_my_bookings($request) {
         'success' => true,
         'bookings' => $bookings
     );
+}
+
+// Функции для получения деталей проживания отелей
+function get_hotel_check_in($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('check_in', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_check_out($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('check_out', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_room_type($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('room_type', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_meal_plan($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('meal_plan', $hotel_id);
+    }
+    return null;
 }
 
 function atlas_kaspi_payment_app($request) {
@@ -2283,7 +3519,36 @@ function atlas_get_kaspi_payment_status($request) {
         'success' => true,
         'payment' => $payment
     );
-}   
+}
+
+function atlas_get_pilgrimage_types($request) {
+    $terms = get_terms(array(
+        'taxonomy' => 'pilgrimage_type',
+        'hide_empty' => false,
+        'orderby' => 'name',
+        'order' => 'ASC'
+    ));
+    
+    if (is_wp_error($terms)) {
+        return new WP_Error('taxonomy_error', 'Failed to get pilgrimage types', array('status' => 500));
+    }
+    
+    $pilgrimage_types = array();
+    foreach ($terms as $term) {
+        $pilgrimage_types[] = array(
+            'id' => $term->term_id,
+            'slug' => $term->slug,
+            'name' => $term->name,
+            'description' => $term->description,
+            'count' => $term->count
+        );
+    }
+    
+    return array(
+        'success' => true,
+        'pilgrimage_types' => $pilgrimage_types
+    );
+}
 
 function atlas_process_kaspi_webhook($request) {
     $params = $request->get_params();
@@ -2345,5 +3610,302 @@ add_action('rest_api_init', function() {
         'callback' => 'atlas_kaspi_test_page',
         'permission_callback' => '__return_true'
     ));
+    
+    register_rest_route('atlas-hajj/v1', '/pilgrimage-types', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_pilgrimage_types',
+        'permission_callback' => '__return_true'
+    ));
 });
+
+// Функция для получения списка отелей
+function atlas_get_hotels($request) {
+    $hotels = get_posts(array(
+        'post_type' => 'hotel',
+        'post_status' => 'publish',
+        'numberposts' => -1,
+    ));
+    
+    $hotels_data = array();
+    
+    if ($hotels) {
+        foreach ($hotels as $hotel) {
+            $hotels_data[] = array(
+                'id' => $hotel->ID,
+                'name' => $hotel->post_title,
+                'slug' => $hotel->post_name,
+                'description' => get_field('description', $hotel->ID),
+                'rating' => get_field('rating', $hotel->ID),
+                'rating_text' => get_field('rating_text', $hotel->ID),
+                'distance' => get_field('distance', $hotel->ID),
+                'city' => get_field('city', $hotel->ID),
+                'amenities' => get_field('amenities', $hotel->ID) ?: array(),
+                'gallery' => get_field('gallery', $hotel->ID) ?: array()
+            );
+        }
+    }
+    
+    return $hotels_data;
+}
+
+function atlas_get_transfers($request) {
+    $transfers = get_posts(array(
+        'post_type' => 'transfer',
+        'post_status' => 'publish',
+        'numberposts' => -1,
+    ));
+    
+    $transfers_data = array();
+    
+    if ($transfers) {
+        foreach ($transfers as $transfer) {
+            $transfers_data[] = array(
+                'id' => $transfer->ID,
+                'name' => $transfer->post_title,
+                'slug' => $transfer->post_name,
+                'description' => get_field('description', $transfer->ID),
+                'short_name' => get_field('short_name', $transfer->ID),
+                'gallery' => get_field('gallery', $transfer->ID) ?: array()
+            );
+        }
+    }
+    
+    return $transfers_data;
+}
+
+// Валидация дат туров
+add_action('acf/validate_value/name=date_end', 'atlas_validate_tour_dates', 10, 4);
+function atlas_validate_tour_dates($valid, $value, $field, $input) {
+    if (!$valid) {
+        return $valid;
+    }
+    
+    // Получаем дату начала из того же repeater'а
+    $start_date_field = str_replace('date_end', 'date_start', $field['name']);
+    $start_date = $_POST['acf'][$field['parent']][$field['parent_repeater']][$start_date_field] ?? '';
+    
+    if (!empty($start_date) && !empty($value)) {
+        $start_timestamp = strtotime($start_date);
+        $end_timestamp = strtotime($value);
+        
+        if ($end_timestamp < $start_timestamp) {
+            $valid = 'Дата окончания не может быть раньше даты начала тура';
+        }
+    }
+    
+    return $valid;
+}
+
+// JavaScript для валидации дат в админке
+add_action('acf/input/admin_footer', 'atlas_tour_dates_validation_script');
+function atlas_tour_dates_validation_script() {
+    ?>
+    <script type="text/javascript">
+    jQuery(document).ready(function($) {
+        // Валидация дат в repeater'е дат туров
+        $(document).on('change', 'input[name*="date_start"], input[name*="date_end"]', function() {
+            var $row = $(this).closest('[data-name="tour_dates"] .acf-row');
+            var startDate = $row.find('input[name*="date_start"]').val();
+            var endDate = $row.find('input[name*="date_end"]').val();
+            
+            if (startDate && endDate) {
+                var start = new Date(startDate);
+                var end = new Date(endDate);
+                
+                if (end < start) {
+                    alert('Дата окончания не может быть раньше даты начала тура');
+                    $(this).val('');
+                }
+            }
+        });
+        
+        // Автоматическое заполнение даты окончания при изменении даты начала
+        $(document).on('change blur keyup', 'input[name*="date_start"]', function() {
+            var $row = $(this).closest('[data-name="tour_dates"] .acf-row');
+            updateEndDate($row);
+        });
+        
+        // Автоматическое заполнение при изменении длительности в repeater'е
+        $(document).on('change', 'select[name*="duration"]', function() {
+            var $row = $(this).closest('[data-name="tour_dates"] .acf-row');
+            updateEndDate($row);
+        });
+        
+        // Функция для обновления даты окончания
+        function updateEndDate($row) {
+            var startDateField = $row.find('input[name*="date_start"]');
+            var endDateField = $row.find('input[name*="date_end"]');
+            var durationField = $row.find('select[name*="duration"]');
+            
+            var startDate = startDateField.val();
+            var duration = durationField.val() || '7';
+            
+            if (startDate) {
+                var start;
+                
+                // Проверяем формат даты (YYYYMMDD или YYYY-MM-DD)
+                if (startDate.length === 8 && /^\d{8}$/.test(startDate)) {
+                    // Формат YYYYMMDD
+                    var year = startDate.substring(0, 4);
+                    var month = startDate.substring(4, 6);
+                    var day = startDate.substring(6, 8);
+                    start = new Date(year, month - 1, day);
+                } else {
+                    // Стандартный формат
+                    start = new Date(startDate);
+                }
+                
+                start.setDate(start.getDate() + parseInt(duration) - 1);
+                var endDateStr = start.getFullYear() + '-' + 
+                    String(start.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(start.getDate()).padStart(2, '0');
+                
+                endDateField.val(endDateStr);
+            }
+        }
+        
+        // Отслеживание изменений через MutationObserver
+        if (window.MutationObserver) {
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                        var target = $(mutation.target);
+                        if (target.is('input[name*="date_start"]')) {
+                            var $row = target.closest('[data-name="tour_dates"] .acf-row');
+                            updateEndDate($row);
+                        }
+                    }
+                });
+            });
+            
+            // Наблюдаем за изменениями в repeater'е
+            $('[data-name="tour_dates"]').each(function() {
+                observer.observe(this, {
+                    attributes: true,
+                    subtree: true,
+                    attributeFilter: ['value']
+                });
+            });
+        }
+        
+    });
+    </script>
+    <?php
+}
+
+// Добавляем JavaScript для автоматического расчета времени в пути рейсов
+function atlas_flight_duration_calculator() {
+    ?>
+    <script type="text/javascript">
+    jQuery(document).ready(function($) {
+        // Функция для расчета времени в пути
+        function calculateFlightDuration() {
+            // Ищем все поля в рамках всего контейнера рейса, а не только в одном .acf-field
+            var $container = $(this).closest('.acf-fields, .postbox, .inside');
+            
+            var departureTime = $container.find('input[name*="departure_time"]').val();
+            var arrivalTime = $container.find('input[name*="arrival_time"]').val();
+            var durationField = $container.find('input[name*="duration"]');
+            
+            // Если не нашли поля в контейнере, ищем глобально
+            if (!departureTime || !arrivalTime) {
+                departureTime = $('input[name*="departure_time"]').val();
+                arrivalTime = $('input[name*="arrival_time"]').val();
+                durationField = $('input[name*="duration"]');
+            }
+            
+            if (departureTime && arrivalTime) {
+                var departure = new Date(departureTime);
+                var arrival = new Date(arrivalTime);
+                
+                if (arrival > departure) {
+                    var diffMs = arrival - departure;
+                    var diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    var diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    var duration = diffHours + ' ч ' + diffMinutes + ' м';
+                    durationField.val(duration);
+                }
+            }
+        }
+        
+        // Обработчики для полей времени - используем правильные селекторы для date_time_picker
+        $(document).on('change', 'input[name*="departure_time"], input[name*="arrival_time"]', function() {
+            // Добавляем небольшую задержку, чтобы дать время ACF полям обновиться
+            setTimeout(function() {
+                calculateFlightDuration.call(this);
+            }.bind(this), 100);
+        });
+        
+        // Дополнительный обработчик для скрытых полей date_time_picker
+        $(document).on('change', '.acf-date-time-picker input[type="hidden"]', function() {
+            calculateFlightDuration.call(this);
+        });
+        
+        // Обработчик для изменения значений в date picker
+        $(document).on('change', '.acf-date-time-picker input.input', function() {
+            calculateFlightDuration.call(this);
+        });
+        
+        // Обработчик для всех input полей в контейнере рейсов
+        $(document).on('input change', '.acf-field[data-name="departure_time"] input, .acf-field[data-name="arrival_time"] input', function() {
+            calculateFlightDuration.call(this);
+        });
+        
+        // Используем MutationObserver для отслеживания изменений в ACF полях
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                    var target = $(mutation.target);
+                    if (target.is('input[name*="departure_time"], input[name*="arrival_time"]')) {
+                        calculateFlightDuration.call(target[0]);
+                    }
+                }
+            });
+        });
+        
+        // Наблюдаем за изменениями в полях рейсов
+        $('.acf-field[data-name="departure_time"], .acf-field[data-name="arrival_time"]').each(function() {
+            observer.observe(this, {
+                attributes: true,
+                subtree: true,
+                attributeFilter: ['value']
+            });
+        });
+        
+        // Дополнительный обработчик для ACF событий
+        $(document).on('acf/setup_fields', function(e, postbox) {
+            $(postbox).find('input[name*="departure_time"], input[name*="arrival_time"]').on('change', function() {
+                calculateFlightDuration.call(this);
+            });
+        });
+        
+        // Глобальная функция для проверки и расчета времени
+        function checkAndCalculateDuration() {
+            var departureTime = $('input[name*="departure_time"]').val();
+            var arrivalTime = $('input[name*="arrival_time"]').val();
+            var durationField = $('input[name*="duration"]');
+            
+            if (departureTime && arrivalTime && durationField.length) {
+                var departure = new Date(departureTime);
+                var arrival = new Date(arrivalTime);
+                
+                if (arrival > departure) {
+                    var diffMs = arrival - departure;
+                    var diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    var diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    var duration = diffHours + ' ч ' + diffMinutes + ' м';
+                    durationField.val(duration);
+                }
+            }
+        }
+        
+        // Периодическая проверка (каждые 2 секунды)
+        setInterval(checkAndCalculateDuration, 2000);
+    });
+    </script>
+    <?php
+}
+add_action('admin_footer', 'atlas_flight_duration_calculator');
 

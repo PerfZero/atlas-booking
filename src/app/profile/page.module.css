@@ -622,3 +622,25 @@ color: #fff;
 .touristInfo div:last-child {
   margin-bottom: 0;
 }
+
+.hotelDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.hotelDates {
+  font: 500 12px / 133% var(--font-primary);
+  color: #253168;
+}
+
+.hotelRoom {
+  font: 400 12px / 133% var(--font-primary);
+  color: #414651;
+}
+
+.hotelMeal {
+  font: 400 12px / 133% var(--font-primary);
+  color: #535862;
+}

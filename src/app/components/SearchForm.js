@@ -61,10 +61,11 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
     return 'Не указано';
   };
 
-  const pilgrimageOptions = [
+  const [pilgrimageOptions, setPilgrimageOptions] = useState([
     { value: 'umrah', label: 'Умра' },
-    { value: 'hajj', label: 'Хадж' }
-  ];
+    { value: 'hajj', label: 'Хадж' },
+    { value: 'ramadan', label: 'Рамадан' }
+  ]);
 
   const getCityLabel = (value) => {
     const city = cityOptions.find(option => option.value === value);
@@ -72,6 +73,10 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   };
 
   const getPilgrimageLabel = (value) => {
+    if (Array.isArray(value)) {
+      // Если это массив (из таксономии), берем первый элемент
+      value = value[0];
+    }
     const pilgrimage = pilgrimageOptions.find(option => option.value === value);
     return pilgrimage ? pilgrimage.label : value;
   };
@@ -120,7 +125,25 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
       }
     };
 
+    const loadPilgrimageTypes = async () => {
+      try {
+        const response = await fetch('https://api.booking.atlas.kz/wp-json/atlas-hajj/v1/pilgrimage-types');
+        const data = await response.json();
+        if (data.success && data.pilgrimage_types) {
+          const options = data.pilgrimage_types.map(type => ({
+            value: type.slug,
+            label: type.name
+          }));
+          console.log('Loaded pilgrimage types:', options);
+          setPilgrimageOptions(options);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки типов паломничества:', error);
+      }
+    };
+
     loadTours();
+    loadPilgrimageTypes();
   }, []);
 
   useEffect(() => {
@@ -137,6 +160,7 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
       setFormData(prev => ({ ...prev, travelDate }));
     }
     if (pilgrimageType) {
+      console.log('Setting pilgrimage type from URL:', pilgrimageType);
       setFormData(prev => ({ ...prev, pilgrimageType }));
     }
     if (startDate && endDate) {
@@ -150,7 +174,7 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
 
     const hasSearchParams = departureCity && travelDate && pilgrimageType && startDate && endDate;
     setShowResults(hasSearchParams);
-  }, [searchParams]);
+  }, [searchParams, pilgrimageOptions]);
 
   useEffect(() => {
     if (selectedStartDate && selectedEndDate) {
