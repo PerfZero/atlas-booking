@@ -1,5 +1,5 @@
 "use client";
- import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
  
 import { useAuth } from "../../contexts/AuthContext";
@@ -17,7 +17,7 @@ if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
 }
 import styles from "./page.module.css";
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, loading } = useAuth();
@@ -1206,5 +1206,13 @@ export default function ProfilePage() {
       <Footer />
       <BottomNavigation />
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div>Загрузка...</div>}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }
