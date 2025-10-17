@@ -91,14 +91,12 @@ function get_flight_data($flight_id) {
     
     $flight_data['duration'] = get_field('duration', $flight_id);
     
-    // Для прямых рейсов добавляем авиакомпанию
-    if ($flight_type === 'direct') {
-        $airline_id = get_field('airline', $flight_id);
-        $airline = $airline_id ? get_term($airline_id, 'airline') : null;
-        
-        $flight_data['airline'] = $airline ? $airline->name : '';
-        $flight_data['airline_logo'] = $airline ? get_field('logo', $airline) : null;
-    }
+    // Добавляем авиакомпанию для всех рейсов
+    $airline_id = get_field('airline', $flight_id);
+    $airline = $airline_id ? get_term($airline_id, 'airline') : null;
+    
+    $flight_data['airline'] = $airline ? $airline->name : '';
+    $flight_data['airline_logo'] = $airline ? get_field('logo', $airline) : null;
     
     // Для рейсов с пересадкой добавляем поля пересадки
     if ($flight_type === 'connecting') {

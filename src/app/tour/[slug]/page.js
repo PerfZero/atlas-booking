@@ -170,9 +170,22 @@ export default function TourDetailPage({ params }) {
             ? tour.tour_dates[0].date_end
             : null,
         roomType: roomData.type || "double",
-        roomCapacity: roomData.capacity || 2,
-        roomDescription:
-          roomData.description || "В номере с Вами будут размещены +1 человек",
+        roomCapacity: roomData.type === "single" ? 1 : 
+                     roomData.type === "double" ? 2 : 
+                     roomData.type === "triple" ? 3 : 
+                     roomData.type === "quadruple" ? 4 : 2,
+        roomDescription: roomData.description || 
+          (roomData.type === "single" ? "Одноместное размещение" :
+           roomData.type === "double" ? "В номере с Вами будут размещены +1 человек" :
+           roomData.type === "triple" ? "В номере с Вами будут размещены +2 человека" :
+           roomData.type === "quadruple" ? "В номере с Вами будут размещены +3 человека" :
+           "В номере с Вами будут размещены +1 человек"),
+        hotelMekka: tour.hotel_mekka_short_name || tour.hotel_mekka?.title || "Отель в Мекке",
+        hotelMedina: tour.hotel_medina_short_name || tour.hotel_medina?.title || "Отель в Медине",
+        transferNames: tour.transfers?.map(transfer => transfer.name || transfer.title).join(', ') || "Комфортабельный автобус и высокоскоростной поезд",
+        flightName: tour.flight_outbound?.airline || "Air Astana",
+        hajjKitNames: tour.hajj_kits?.map(kit => kit.name || kit.short_name).join(', ') || "Полный хадж набор",
+        hajjKitTypes: tour.hajj_kits?.map(kit => kit.gender === 'male' ? 'Для мужчин' : kit.gender === 'female' ? 'Для женщин' : 'Унисекс').join(', ') || "Для мужчин и женщин",
       };
 
       const queryString = new URLSearchParams(tourData).toString();
@@ -212,9 +225,22 @@ export default function TourDetailPage({ params }) {
             ? tour.tour_dates[0].date_end
             : null,
         roomType: roomData.type || "double",
-        roomCapacity: roomData.capacity || 2,
-        roomDescription:
-          roomData.description || "В номере с Вами будут размещены +1 человек",
+        roomCapacity: roomData.type === "single" ? 1 : 
+                     roomData.type === "double" ? 2 : 
+                     roomData.type === "triple" ? 3 : 
+                     roomData.type === "quadruple" ? 4 : 2,
+        roomDescription: roomData.description || 
+          (roomData.type === "single" ? "Одноместное размещение" :
+           roomData.type === "double" ? "В номере с Вами будут размещены +1 человек" :
+           roomData.type === "triple" ? "В номере с Вами будут размещены +2 человека" :
+           roomData.type === "quadruple" ? "В номере с Вами будут размещены +3 человека" :
+           "В номере с Вами будут размещены +1 человек"),
+        hotelMekka: tour.hotel_mekka_short_name || tour.hotel_mekka?.title || "Отель в Мекке",
+        hotelMedina: tour.hotel_medina_short_name || tour.hotel_medina?.title || "Отель в Медине",
+        transferNames: tour.transfers?.map(transfer => transfer.name || transfer.title).join(', ') || "Комфортабельный автобус и высокоскоростной поезд",
+        flightName: tour.flight_outbound?.airline || "Air Astana",
+        hajjKitNames: tour.hajj_kits?.map(kit => kit.name || kit.short_name).join(', ') || "Полный хадж набор",
+        hajjKitTypes: tour.hajj_kits?.map(kit => kit.gender === 'male' ? 'Для мужчин' : kit.gender === 'female' ? 'Для женщин' : 'Унисекс').join(', ') || "Для мужчин и женщин",
       };
 
       const queryString = new URLSearchParams(tourData).toString();

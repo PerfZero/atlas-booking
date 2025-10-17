@@ -348,6 +348,10 @@ display: flex;
   height: 32px;
 }
 
+.airlineTag img{
+  width: 108px;
+}
+
 .connectingSection{
   box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.1) !important;
 background: rgba(255, 255, 255, 0.2) !important;

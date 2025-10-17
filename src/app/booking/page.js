@@ -34,6 +34,7 @@ function BookingPageContent() {
   ]);
   const [errors, setErrors] = useState({});
 
+
   useEffect(() => {
     if (searchParams) {
       const data = {
@@ -58,7 +59,13 @@ function BookingPageContent() {
         flightInboundDate: searchParams.get("flightInboundDate"),
         roomType: searchParams.get("roomType"),
         roomCapacity: searchParams.get("roomCapacity"),
-        roomDescription: searchParams.get("roomDescription")
+        roomDescription: searchParams.get("roomDescription"),
+        hotelMekka: searchParams.get("hotelMekka"),
+        hotelMedina: searchParams.get("hotelMedina"),
+        transferNames: searchParams.get("transferNames"),
+        flightName: searchParams.get("flightName"),
+        hajjKitNames: searchParams.get("hajjKitNames"),
+        hajjKitTypes: searchParams.get("hajjKitTypes")
       };
       setTourData(data);
     }
@@ -78,9 +85,12 @@ function BookingPageContent() {
   const calculateAge = (birthDate) => {
     if (!birthDate || birthDate.length !== 10) return null;
     
-    const [day, month, year] = birthDate.split('.');
-    const birth = new Date(year, month - 1, day);
+    // Парсим дату в формате YYYY-MM-DD
+    const birth = new Date(birthDate);
     const today = new Date();
+    
+    // Проверяем, что дата валидная
+    if (isNaN(birth.getTime())) return null;
     
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
@@ -109,6 +119,45 @@ function BookingPageContent() {
     return null;
   };
 
+  const validateDate = (dateString) => {
+    if (!dateString || dateString.trim() === '') {
+      return 'Дата обязательна';
+    }
+    
+    // Проверяем формат YYYY-MM-DD (HTML5 date input)
+    const dateRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const match = dateString.match(dateRegex);
+    
+    if (!match) {
+      return 'Неверный формат даты';
+    }
+    
+    const year = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const day = parseInt(match[3], 10);
+    
+    // Проверяем корректность даты
+    if (day < 1 || day > 31) {
+      return 'Неверный день';
+    }
+    
+    if (month < 1 || month > 12) {
+      return 'Неверный месяц';
+    }
+    
+    if (year < 1900 || year > new Date().getFullYear() + 5) {
+      return 'Неверный год';
+    }
+    
+    // Проверяем, что дата действительно существует
+    const date = new Date(year, month - 1, day);
+    if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+      return 'Неверная дата';
+    }
+    
+    return null;
+  };
+
   const validateTourist = (tourist) => {
     const errors = {};
     
@@ -120,8 +169,9 @@ function BookingPageContent() {
       errors.firstName = 'Имя обязательно';
     }
     
-    if (!tourist.birthDate || tourist.birthDate.trim() === '') {
-      errors.birthDate = 'Дата рождения обязательна';
+    const birthDateError = validateDate(tourist.birthDate);
+    if (birthDateError) {
+      errors.birthDate = birthDateError;
     }
     
     if (!tourist.gender || tourist.gender.trim() === '') {
@@ -138,12 +188,14 @@ function BookingPageContent() {
       errors.passportNumber = 'Номер паспорта обязателен';
     }
     
-    if (!tourist.passportIssueDate || tourist.passportIssueDate.trim() === '') {
-      errors.passportIssueDate = 'Дата выдачи паспорта обязательна';
+    const passportIssueDateError = validateDate(tourist.passportIssueDate);
+    if (passportIssueDateError) {
+      errors.passportIssueDate = passportIssueDateError;
     }
     
-    if (!tourist.passportExpiryDate || tourist.passportExpiryDate.trim() === '') {
-      errors.passportExpiryDate = 'Срок действия паспорта обязателен';
+    const passportExpiryDateError = validateDate(tourist.passportExpiryDate);
+    if (passportExpiryDateError) {
+      errors.passportExpiryDate = passportExpiryDateError;
     }
     
     if (tourist.id === 1 && (!tourist.phone || tourist.phone.trim() === '')) {
@@ -171,6 +223,7 @@ function BookingPageContent() {
     if (numbers.length <= 4) return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
     return `${numbers.slice(0, 2)}.${numbers.slice(2, 4)}.${numbers.slice(4, 8)}`;
   };
+
 
   const applyPhoneMask = (value) => {
     const numbers = value.replace(/\D/g, '');
@@ -226,7 +279,8 @@ function BookingPageContent() {
     let maskedValue = value;
     
     if (field === 'birthDate' || field === 'passportIssueDate' || field === 'passportExpiryDate') {
-      maskedValue = applyDateMask(value);
+      // Для HTML5 date input не нужна маска, значение уже в формате YYYY-MM-DD
+      maskedValue = value;
     } else if (field === 'phone') {
       maskedValue = applyPhoneMask(value);
     } else if (field === 'iin') {
@@ -463,24 +517,24 @@ function BookingPageContent() {
                     <div className={styles.packageType}>Турпакет</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Air Astana - Прямой рейс</div>
+                    <div className={styles.packageName}>{tourData.flightName || "Air Astana"} - Прямой рейс</div>
                     <div className={styles.packageType}>Перелет</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Отель в Мекке</div>
-                    <div className={styles.packageType}>Проживание</div>
+                    <div className={styles.packageName}>{tourData.hotelMekka || "Отель в Мекке"}</div>
+                    <div className={styles.packageType}>Отель в Мекке</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Отель в Медине</div>
-                    <div className={styles.packageType}>Проживание</div>
+                    <div className={styles.packageName}>{tourData.hotelMedina || "Отель в Медине"}</div>
+                    <div className={styles.packageType}>Отель в Медине</div>
                   </div>
                   <div className={styles.packageItem}>
-                    <div className={styles.packageName}>Комфортабельный автобус и высокоскоростной поезд</div>
+                    <div className={styles.packageName}>{tourData.transferNames || "Комфортабельный автобус и высокоскоростной поезд"}</div>
                     <div className={styles.packageType}>Трансфер</div>
                   </div>
                   <div className={styles.packageItem}>
                     <div className={styles.packageName}>Полный хадж набор</div>
-                    <div className={styles.packageType}>Для мужчин и женщин</div>
+                    <div className={styles.packageType}>{tourData.hajjKitTypes || "Для мужчин и женщин"}</div>
                   </div>
                 </div>
                 <button className={styles.allInclusive}>
@@ -633,11 +687,9 @@ function BookingPageContent() {
                           <div className={styles.formGroup}>
                             <label>Дата рождения</label>
                             <input
-                              type="text"
+                              type="date"
                               value={tourist.birthDate}
                               onChange={(e) => handleInputChange(tourist.id, "birthDate", e.target.value)}
-                              placeholder="дд.мм.гггг"
-                              maxLength={10}
                               required
                               className={errors[`${tourist.id}-birthDate`] || errors[`${tourist.id}-age`] ? styles.error : ''}
                             />
@@ -716,11 +768,9 @@ function BookingPageContent() {
                           <div className={styles.formGroup}>
                             <label>Дата выдачи паспорта</label>
                             <input
-                              type="text"
+                              type="date"
                               value={tourist.passportIssueDate}
                               onChange={(e) => handleInputChange(tourist.id, "passportIssueDate", e.target.value)}
-                              placeholder="дд.мм.гггг"
-                              maxLength={10}
                               required
                               className={errors[`${tourist.id}-passportIssueDate`] ? styles.error : ''}
                             />
@@ -732,11 +782,9 @@ function BookingPageContent() {
                           <div className={styles.formGroup}>
                             <label>Срок действия паспорта</label>
                             <input
-                              type="text"
+                              type="date"
                               value={tourist.passportExpiryDate}
                               onChange={(e) => handleInputChange(tourist.id, "passportExpiryDate", e.target.value)}
-                              placeholder="дд.мм.гггг"
-                              maxLength={10}
                               required
                               className={errors[`${tourist.id}-passportExpiryDate`] ? styles.error : ''}
                             />

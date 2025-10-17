@@ -349,7 +349,8 @@ color: #717680;
 }
 
 .formGroup input[type="text"],
-.formGroup input[type="tel"] {
+.formGroup input[type="tel"],
+.formGroup input[type="date"] {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid #e3e3e3;
@@ -358,6 +359,44 @@ color: #717680;
   color: #181d27;
   background: #f8f9fa;
   transition: all 0.2s;
+}
+
+/* Стилизация date input для единообразия */
+.formGroup input[type="date"] {
+  position: relative;
+}
+
+.formGroup input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+}
+
+.formGroup input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.formGroup input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+.formGroup input[type="date"]::-webkit-datetime-edit-text {
+  color: #181d27;
+  padding: 0 1px;
+}
+
+.formGroup input[type="date"]::-webkit-datetime-edit-month-field,
+.formGroup input[type="date"]::-webkit-datetime-edit-day-field,
+.formGroup input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #181d27;
+  padding: 0;
 }
 
 .formGroup input:focus {
@@ -931,7 +970,8 @@ transition: background-color 0.2s;
   }
   
   .formGroup input[type="text"],
-  .formGroup input[type="tel"] {
+  .formGroup input[type="tel"],
+  .formGroup input[type="date"] {
     padding: 10px 12px;
     font-size: 14px;
   }
@@ -1134,7 +1174,8 @@ transition: background-color 0.2s;
   }
   
   .formGroup input[type="text"],
-  .formGroup input[type="tel"] {
+  .formGroup input[type="tel"],
+  .formGroup input[type="date"] {
     padding: 8px 10px;
     font-size: 13px;
   }
