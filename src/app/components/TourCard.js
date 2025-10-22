@@ -120,21 +120,47 @@ export default function TourCard({ tour, searchParams = null }) {
             <span className={styles.featureIcon}><img src="/airplane.svg" alt="★" /></span>
             <span className={styles.featureText}>
               {tour.flight_type === 'direct' ? 'Прямой рейс' : 'С пересадкой'}
+              {tour.flight_outbound?.ticket_type && (
+                <span className={styles.ticketType}>
+                  {' • '}
+                  {tour.flight_outbound.ticket_type === 'economy' ? 'Эконом' : 
+                   tour.flight_outbound.ticket_type === 'business' ? 'Бизнес' : 
+                   tour.flight_outbound.ticket_type === 'first' ? 'Первый класс' : 
+                   tour.flight_outbound.ticket_type}
+                </span>
+              )}
             </span>
           </div>
-          {Array.isArray(tour.hotels_info) && tour.hotels_info.map((hotel, index) => (
-            <div key={index} className={styles.feature}>
+          {tour.hotel_mekka && (
+            <div className={styles.feature}>
               <span className={styles.featureIcon}>
-                <img src={hotel.city === 'mekka' ? "/mekka.svg" : "/medina.svg"} alt="★" />
+                <img src="/mekka.svg" alt="★" />
               </span>
               <div className={styles.featureTextContainer}>
-                <span className={styles.featureText}>{hotel.hotel_text || '5★ отель'}</span>
+                <span className={styles.featureText}>
+                  {tour.hotel_mekka.hotel_text || tour.hotel_mekka.short_name || '5★ отель в Мекке'}
+                </span>
                 <span className={styles.featureSubtext}>
-                  {hotel.distance_text || 'Расстояние до Каабы 50 м.'}
+                  {tour.hotel_mekka.distance_text || 'до Каабы'} {tour.hotel_mekka.distance_number ? `${tour.hotel_mekka.distance_number} м.` : ''}
                 </span>
               </div>
             </div>
-          ))}
+          )}
+          {tour.hotel_medina && (
+            <div className={styles.feature}>
+              <span className={styles.featureIcon}>
+                <img src="/medina.svg" alt="★" />
+              </span>
+              <div className={styles.featureTextContainer}>
+                <span className={styles.featureText}>
+                  {tour.hotel_medina.hotel_text || tour.hotel_medina.short_name || '5★ отель в Медине'}
+                </span>
+                <span className={styles.featureSubtext}>
+                  {tour.hotel_medina.distance_text || 'до мечети Пророка'} {tour.hotel_medina.distance_number ? `${tour.hotel_medina.distance_number} м.` : ''}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         <div className={styles.tourPrice}>
           <div className={styles.priceNote}>Без скрытых платежей</div>

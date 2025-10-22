@@ -138,6 +138,7 @@ function PopularToursContent() {
                     width={320} 
                     height={400} 
                     className={styles.image}
+                    style={{ width: 'auto', height: 'auto' }}
                     onError={(e) => {
                       e.target.src = '/tour_1.png';
                     }}

@@ -14,6 +14,39 @@
       "maxlength": ""
     },
     {
+      "key": "field_hotel_stars",
+      "label": "Количество звезд",
+      "name": "stars",
+      "type": "select",
+      "instructions": "Количество звезд отеля",
+      "required": 0,
+      "choices": {
+        "5": "5 звезд",
+        "4": "4 звезды",
+        "3": "3 звезды",
+        "2": "2 звезды",
+        "1": "1 звезда"
+      },
+      "default_value": "5",
+      "allow_null": 0,
+      "multiple": 0,
+      "ui": 1,
+      "return_format": "value",
+      "ajax": 0,
+      "placeholder": ""
+    },
+    {
+      "key": "field_hotel_text",
+      "label": "Текст отеля",
+      "name": "hotel_text",
+      "type": "text",
+      "instructions": "Текст для отображения отеля (например: 5★ отель в Мекке)",
+      "required": 0,
+      "default_value": "",
+      "placeholder": "5★ отель в Мекке",
+      "maxlength": ""
+    },
+    {
       "key": "field_hotel_short_name",
       "label": "Короткое название отеля",
       "name": "short_name",
@@ -204,24 +237,26 @@
     },
     {
       "key": "field_hotel_distance_number",
-      "label": "Расстояние (число)",
+      "label": "Расстояние (число в метрах)",
       "name": "distance_number",
-      "type": "text",
-      "instructions": "Числовое значение расстояния (например: 150 м.)",
+      "type": "number",
+      "instructions": "Числовое значение расстояния в метрах для фильтрации (например: 150)",
       "required": 0,
       "default_value": "",
-      "placeholder": "150 м.",
-      "maxlength": ""
+      "placeholder": "150",
+      "min": "0",
+      "max": "",
+      "step": "1"
     },
     {
       "key": "field_hotel_distance_text",
       "label": "Текст расстояния",
       "name": "distance_text",
       "type": "text",
-      "instructions": "Текст для отображения расстояния (например: до Каабы, до главной мечети)",
+      "instructions": "Полный текст с расстоянием для отображения (например: Расстояние до Каабы 50 м.)",
       "required": 0,
-      "default_value": "до Каабы",
-      "placeholder": "до Каабы",
+      "default_value": "",
+      "placeholder": "Расстояние до Каабы 50 м.",
       "maxlength": ""
     },
     {

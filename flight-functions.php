@@ -75,15 +75,16 @@ add_action('init', 'atlas_register_airline_taxonomy');
 
 // Импортируем ACF поля для рейсов
 function atlas_import_flight_acf_fields() {
-    if (!get_option('atlas_flight_acf_imported')) {
-        $acf_fields = json_decode(file_get_contents(get_template_directory() . '/acf-flight-fields.json'), true);
-        
-        if ($acf_fields) {
-            acf_add_local_field_group($acf_fields);
-        }
-        
-        update_option('atlas_flight_acf_imported', true);
+    // Сбрасываем импорт для обновления полей
+    delete_option('atlas_flight_acf_imported');
+    
+    $acf_fields = json_decode(file_get_contents(get_template_directory() . '/acf-flight-fields.json'), true);
+    
+    if ($acf_fields) {
+        acf_add_local_field_group($acf_fields);
     }
+    
+    update_option('atlas_flight_acf_imported', true);
 }
 add_action('acf/init', 'atlas_import_flight_acf_fields');
 

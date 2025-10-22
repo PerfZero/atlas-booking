@@ -46,6 +46,26 @@
       "return_format": "value"
     },
     {
+      "key": "field_flight_ticket_type",
+      "label": "Тип билета",
+      "name": "ticket_type",
+      "type": "select",
+      "instructions": "Выберите тип билета",
+      "required": 1,
+      "choices": {
+        "economy": "Эконом",
+        "business": "Бизнес",
+        "first": "Первый класс"
+      },
+      "default_value": "economy",
+      "allow_null": 0,
+      "multiple": 0,
+      "ui": 0,
+      "ajax": 0,
+      "placeholder": "",
+      "return_format": "value"
+    },
+    {
       "key": "field_flight_departure_airport",
       "label": "Аэропорт вылета",
       "name": "departure_airport",

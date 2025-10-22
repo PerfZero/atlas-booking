@@ -4,7 +4,9 @@ import styles from './MobileFilters.module.css';
 
 export default function MobileFilters({ 
   priceRange, 
-  setPriceRange, 
+  setPriceRange,
+  minPrice = 0,
+  maxPrice = 3000, 
   flightTypes, 
   setFlightTypes, 
   ticketTypes, 
@@ -14,13 +16,18 @@ export default function MobileFilters({
   medinaHotels, 
   setMedinaHotels, 
   mekkaDistance, 
-  setMekkaDistance, 
+  setMekkaDistance,
+  minMekkaDistance = 0,
+  maxMekkaDistance = 4000,
   medinaDistance, 
-  setMedinaDistance, 
+  setMedinaDistance,
+  minMedinaDistance = 0,
+  maxMedinaDistance = 4000, 
   foodTypes, 
   setFoodTypes, 
   transferTypes, 
   setTransferTypes,
+  availableTransfers = [],
   isOpen,
   onClose,
   onApply
@@ -167,16 +174,16 @@ export default function MobileFilters({
                 <div className={styles.sliderThumbs}>
                   <input 
                     type="range" 
-                    min="890" 
-                    max="4500" 
+                    min={minPrice} 
+                    max={maxPrice} 
                     value={localPriceRange.min}
                     onChange={handleMinPriceChange}
                     className={styles.rangeInput}
                   />
                   <input 
                     type="range" 
-                    min="890" 
-                    max="4500" 
+                    min={minPrice} 
+                    max={maxPrice} 
                     value={localPriceRange.max}
                     onChange={handleMaxPriceChange}
                     className={styles.rangeInput}
@@ -266,6 +273,22 @@ export default function MobileFilters({
                   />
                   <span>3 звезды</span>
                 </label>
+                <label className={styles.checkboxLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={localMekkaHotels.two}
+                    onChange={() => handleMekkaHotelChange('two')}
+                  />
+                  <span>2 звезды</span>
+                </label>
+                <label className={styles.checkboxLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={localMekkaHotels.one}
+                    onChange={() => handleMekkaHotelChange('one')}
+                  />
+                  <span>1 звезда</span>
+                </label>
               </div>
             </div>
             <div className={styles.filterGroup}>
@@ -278,16 +301,16 @@ export default function MobileFilters({
                   <div className={styles.sliderThumbs}>
                     <input 
                       type="range" 
-                      min="0" 
-                      max="4000" 
+                      min={minMekkaDistance} 
+                      max={maxMekkaDistance} 
                       value={localMekkaDistance.min}
                       onChange={(e) => handleMekkaDistanceChange('min', e.target.value)}
                       className={styles.rangeInput}
                     />
                     <input 
                       type="range" 
-                      min="0" 
-                      max="4000" 
+                      min={minMekkaDistance} 
+                      max={maxMekkaDistance} 
                       value={localMekkaDistance.max}
                       onChange={(e) => handleMekkaDistanceChange('max', e.target.value)}
                       className={styles.rangeInput}
@@ -332,6 +355,22 @@ export default function MobileFilters({
                   />
                   <span>3 звезды</span>
                 </label>
+                <label className={styles.checkboxLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={localMedinaHotels.two}
+                    onChange={() => handleMedinaHotelChange('two')}
+                  />
+                  <span>2 звезды</span>
+                </label>
+                <label className={styles.checkboxLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={localMedinaHotels.one}
+                    onChange={() => handleMedinaHotelChange('one')}
+                  />
+                  <span>1 звезда</span>
+                </label>
               </div>
             </div>
             <div className={styles.filterGroup}>
@@ -344,16 +383,16 @@ export default function MobileFilters({
                   <div className={styles.sliderThumbs}>
                     <input 
                       type="range" 
-                      min="0" 
-                      max="4000" 
+                      min={minMedinaDistance} 
+                      max={maxMedinaDistance} 
                       value={localMedinaDistance.min}
                       onChange={(e) => handleMedinaDistanceChange('min', e.target.value)}
                       className={styles.rangeInput}
                     />
                     <input 
                       type="range" 
-                      min="0" 
-                      max="4000" 
+                      min={minMedinaDistance} 
+                      max={maxMedinaDistance} 
                       value={localMedinaDistance.max}
                       onChange={(e) => handleMedinaDistanceChange('max', e.target.value)}
                       className={styles.rangeInput}
@@ -411,30 +450,16 @@ export default function MobileFilters({
             <div className={styles.filterGroup}>
               <label className={styles.filterLabel}>Трансфер:</label>
               <div className={styles.checkboxGroup}>
-                <label className={styles.checkboxLabel}>
-                  <input 
-                    type="checkbox" 
-                    checked={localTransferTypes.bus}
-                    onChange={() => handleTransferTypeChange('bus')}
-                  />
-                  <span>Автобус</span>
-                </label>
-                <label className={styles.checkboxLabel}>
-                  <input 
-                    type="checkbox" 
-                    checked={localTransferTypes.train}
-                    onChange={() => handleTransferTypeChange('train')}
-                  />
-                  <span>Поезд</span>
-                </label>
-                <label className={styles.checkboxLabel}>
-                  <input 
-                    type="checkbox" 
-                    checked={localTransferTypes.gmc}
-                    onChange={() => handleTransferTypeChange('gmc')}
-                  />
-                  <span>GMC</span>
-                </label>
+                {availableTransfers.map((transfer) => (
+                  <label key={transfer.id} className={styles.checkboxLabel}>
+                    <input 
+                      type="checkbox" 
+                      checked={localTransferTypes[transfer.id] || false}
+                      onChange={() => handleTransferTypeChange(transfer.id)}
+                    />
+                    <span>{transfer.name}</span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>

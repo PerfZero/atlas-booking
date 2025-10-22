@@ -34,6 +34,7 @@ function get_flight_data($flight_id) {
         'id' => $flight->ID,
         'number' => $flight->post_title, // Номер рейса
         'flight_type' => $flight_type,
+        'ticket_type' => get_field('ticket_type', $flight_id),
     );
     
     // Добавляем основные поля рейса (время, аэропорты) для всех типов рейсов
@@ -440,6 +441,8 @@ function get_hotel_data($post_id, $field_name) {
                 'id' => $hotel_id,
                 'title' => $hotel_post->post_title,
                 'accommodation_text' => get_field('accommodation_text', $hotel_id),
+                'stars' => get_field('stars', $hotel_id),
+                'hotel_text' => get_field('hotel_text', $hotel_id),
                 'short_name' => get_field('short_name', $hotel_id),
                 'full_name' => get_field('full_name', $hotel_id),
                 'description' => get_field('description', $hotel_id),
@@ -452,11 +455,11 @@ function get_hotel_data($post_id, $field_name) {
                 'rating_categories' => get_field('rating_categories', $hotel_id),
                 'logo_image' => get_field('logo_image', $hotel_id),
                 'distance_number' => get_field('distance_number', $hotel_id),
+                'distance_text' => get_field('distance_text', $hotel_id),
                 'check_in' => get_field('check_in', $hotel_id),
                 'check_out' => get_field('check_out', $hotel_id),
                 'room_type' => get_field('room_type', $hotel_id),
-                'meal_plan' => get_field('meal_plan', $hotel_id),
-                'distance_text' => get_field('distance_text', $hotel_id)
+                'meal_plan' => get_field('meal_plan', $hotel_id)
             );
         }
     }
@@ -523,6 +526,14 @@ function get_hotel_rating($post_id, $field_name) {
     $hotel_id = get_field($field_name, $post_id);
     if ($hotel_id) {
         return get_field('rating', $hotel_id);
+    }
+    return null;
+}
+
+function get_hotel_stars($post_id, $field_name) {
+    $hotel_id = get_field($field_name, $post_id);
+    if ($hotel_id) {
+        return get_field('stars', $hotel_id);
     }
     return null;
 }
@@ -2200,7 +2211,6 @@ function atlas_get_tours($request) {
                 'distance_mekka' => get_hotel_distance($post_id, 'hotel_mekka'),
                 'distance_medina' => get_hotel_distance($post_id, 'hotel_medina'),
                 'flight_type' => get_field('flight_type', $post_id),
-                'food_type' => get_field('food_type', $post_id),
                 
                 // Новые поля для детальной страницы
                 'tags' => get_field('tags', $post_id),
@@ -2209,6 +2219,7 @@ function atlas_get_tours($request) {
                 
                 // Детали отелей
                 'hotel_mekka_details' => array(
+                    'stars' => get_hotel_stars($post_id, 'hotel_mekka'),
                     'description' => get_hotel_description($post_id, 'hotel_mekka'),
                     'rating' => get_hotel_rating($post_id, 'hotel_mekka'),
                     'rating_text' => get_hotel_rating_text($post_id, 'hotel_mekka'),
@@ -2224,6 +2235,7 @@ function atlas_get_tours($request) {
                     'distance_text' => get_hotel_distance_text($post_id, 'hotel_mekka')
                 ),
                 'hotel_medina_details' => array(
+                    'stars' => get_hotel_stars($post_id, 'hotel_medina'),
                     'description' => get_hotel_description($post_id, 'hotel_medina'),
                     'rating' => get_hotel_rating($post_id, 'hotel_medina'),
                     'rating_text' => get_hotel_rating_text($post_id, 'hotel_medina'),
@@ -2306,7 +2318,6 @@ function atlas_get_tour_by_slug($request) {
             'distance_mekka' => get_field('distance_mekka', $post_id),
             'distance_medina' => get_field('distance_medina', $post_id),
             'flight_type' => get_field('flight_type', $post_id),
-            'food_type' => get_field('food_type', $post_id),
             'transfer_type' => get_field('transfer_type', $post_id),
             
             // Новые поля для детальной страницы
@@ -2316,6 +2327,7 @@ function atlas_get_tour_by_slug($request) {
             
             // Детали отелей
             'hotel_mekka_details' => array(
+                'stars' => get_hotel_stars($post_id, 'hotel_mekka'),
                 'description' => get_hotel_description($post_id, 'hotel_mekka'),
                 'rating' => get_hotel_rating($post_id, 'hotel_mekka'),
                 'rating_text' => get_hotel_rating_text($post_id, 'hotel_mekka'),
@@ -2328,6 +2340,7 @@ function atlas_get_tour_by_slug($request) {
                 'gallery' => get_hotel_gallery($post_id, 'hotel_mekka')
             ),
             'hotel_medina_details' => array(
+                'stars' => get_hotel_stars($post_id, 'hotel_medina'),
                 'description' => get_hotel_description($post_id, 'hotel_medina'),
                 'rating' => get_hotel_rating($post_id, 'hotel_medina'),
                 'rating_text' => get_hotel_rating_text($post_id, 'hotel_medina'),
@@ -2561,7 +2574,6 @@ function atlas_search_tours($request) {
             'distance_mekka' => get_field('distance_mekka', $post_id),
             'distance_medina' => get_field('distance_medina', $post_id),
             'flight_type' => get_field('flight_type', $post_id),
-            'food_type' => get_field('food_type', $post_id),
             'transfer_type' => get_field('transfer_type', $post_id),
             
             // Новые поля для детальной страницы
@@ -2571,6 +2583,7 @@ function atlas_search_tours($request) {
             
             // Детали отелей
             'hotel_mekka_details' => array(
+                'stars' => get_hotel_stars($post_id, 'hotel_mekka'),
                 'description' => get_hotel_description($post_id, 'hotel_mekka'),
                 'rating' => get_hotel_rating($post_id, 'hotel_mekka'),
                 'rating_text' => get_hotel_rating_text($post_id, 'hotel_mekka'),
@@ -2583,6 +2596,7 @@ function atlas_search_tours($request) {
                 'gallery' => get_hotel_gallery($post_id, 'hotel_mekka')
             ),
             'hotel_medina_details' => array(
+                'stars' => get_hotel_stars($post_id, 'hotel_medina'),
                 'description' => get_hotel_description($post_id, 'hotel_medina'),
                 'rating' => get_hotel_rating($post_id, 'hotel_medina'),
                 'rating_text' => get_hotel_rating_text($post_id, 'hotel_medina'),
@@ -2602,7 +2616,14 @@ function atlas_search_tours($request) {
             'package_includes' => get_package_includes_data($post_id),
             
             // Хадж набор
-            'hajj_kits' => get_hajj_kits_data($post_id)
+            'hajj_kits' => get_hajj_kits_data($post_id),
+            
+            // Рейсы
+            'flight_outbound' => get_field('flight_outbound', $post_id) ? get_flight_data(get_field('flight_outbound', $post_id)) : null,
+            'flight_inbound' => get_field('flight_inbound', $post_id) ? get_flight_data(get_field('flight_inbound', $post_id)) : null,
+            'flight_outbound_connecting' => get_field('flight_outbound_connecting', $post_id) ? get_flight_data(get_field('flight_outbound_connecting', $post_id)) : null,
+            'flight_connecting' => get_field('flight_connecting', $post_id) ? get_flight_data(get_field('flight_connecting', $post_id)) : null,
+            'flight_inbound_connecting' => get_field('flight_inbound_connecting', $post_id) ? get_flight_data(get_field('flight_inbound_connecting', $post_id)) : null
         );
             
             $tours[] = $tour;
@@ -3903,6 +3924,7 @@ function atlas_flight_duration_calculator() {
         setInterval(checkAndCalculateDuration, 2000);
     });
     </script>
+    
     <?php
 }
 add_action('admin_footer', 'atlas_flight_duration_calculator');

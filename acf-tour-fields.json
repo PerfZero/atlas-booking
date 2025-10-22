@@ -172,62 +172,6 @@
       "placeholder": ""
     },
     {
-      "key": "field_tour_hotels_info",
-      "label": "Информация об отелях",
-      "name": "hotels_info",
-      "type": "repeater",
-      "instructions": "Добавьте информацию об отелях",
-      "required": 0,
-      "collapsed": "field_tour_hotel_city",
-      "min": 0,
-      "max": 2,
-      "layout": "block",
-      "button_label": "Добавить отель",
-      "sub_fields": [
-        {
-          "key": "field_tour_hotel_city",
-          "label": "Город",
-          "name": "city",
-          "type": "select",
-          "instructions": "Выберите город",
-          "required": 1,
-          "choices": {
-            "mekka": "Мекка",
-            "medina": "Медина"
-          },
-          "default_value": "mekka",
-          "allow_null": 0,
-          "multiple": 0,
-          "ui": 1,
-          "return_format": "value",
-          "ajax": 0,
-          "placeholder": ""
-        },
-        {
-          "key": "field_tour_hotel_text",
-          "label": "Текст отеля",
-          "name": "hotel_text",
-          "type": "text",
-          "instructions": "Текст для отображения отеля",
-          "required": 1,
-          "default_value": "5★ отель в Мекке",
-          "placeholder": "5★ отель в Мекке",
-          "maxlength": ""
-        },
-        {
-          "key": "field_tour_hotel_distance_text",
-          "label": "Текст расстояния",
-          "name": "distance_text",
-          "type": "text",
-          "instructions": "Текст с расстоянием",
-          "required": 0,
-          "default_value": "Расстояние до Каабы 50 м.",
-          "placeholder": "Расстояние до Каабы 50 м.",
-          "maxlength": ""
-        }
-      ]
-    },
-    {
       "key": "field_tour_tab_dates",
       "label": "Даты туров",
       "name": "",
@@ -418,27 +362,6 @@
         "transfer": "С пересадкой"
       },
       "default_value": "direct",
-      "allow_null": 0,
-      "multiple": 0,
-      "ui": 1,
-      "return_format": "value",
-      "ajax": 0,
-      "placeholder": ""
-    },
-    {
-      "key": "field_tour_food_type",
-      "label": "Тип питания",
-      "name": "food_type",
-      "type": "select",
-      "instructions": "Выберите тип питания",
-      "required": 0,
-      "choices": {
-        "no_food": "Без питания",
-        "breakfast": "Завтрак",
-        "half_board": "Полупансион",
-        "all_inclusive": "Всё включено"
-      },
-      "default_value": "all_inclusive",
       "allow_null": 0,
       "multiple": 0,
       "ui": 1,

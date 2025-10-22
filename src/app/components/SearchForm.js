@@ -19,9 +19,9 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [formData, setFormData] = useState({
-    departureCity: 'almaty',
+    departureCity: 'all',
     travelDate: 'not-specified',
-    pilgrimageType: 'umrah'
+    pilgrimageType: 'all'
   });
   const [dateError, setDateError] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '' });
@@ -29,6 +29,7 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   const [availableTours, setAvailableTours] = useState([]);
 
   const cityOptions = [
+    { value: 'all', label: 'Все города' },
     { value: 'almaty', label: 'Алматы' },
     { value: 'astana', label: 'Астана' },
     { value: 'aktau', label: 'Актау' },
@@ -61,11 +62,7 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
     return 'Не указано';
   };
 
-  const [pilgrimageOptions, setPilgrimageOptions] = useState([
-    { value: 'umrah', label: 'Умра' },
-    { value: 'hajj', label: 'Хадж' },
-    { value: 'ramadan', label: 'Рамадан' }
-  ]);
+  const [pilgrimageOptions, setPilgrimageOptions] = useState([]);
 
   const getCityLabel = (value) => {
     const city = cityOptions.find(option => option.value === value);
@@ -130,10 +127,13 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
         const response = await fetch('https://api.booking.atlas.kz/wp-json/atlas-hajj/v1/pilgrimage-types');
         const data = await response.json();
         if (data.success && data.pilgrimage_types) {
-          const options = data.pilgrimage_types.map(type => ({
-            value: type.slug,
-            label: type.name
-          }));
+          const options = [
+            { value: 'all', label: 'Все' },
+            ...data.pilgrimage_types.map(type => ({
+              value: type.slug,
+              label: type.name
+            }))
+          ];
           console.log('Loaded pilgrimage types:', options);
           setPilgrimageOptions(options);
         }

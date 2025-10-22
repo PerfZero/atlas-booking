@@ -17,13 +17,12 @@ export async function searchToursWithFilters(filters = {}) {
   try {
     const params = new URLSearchParams();
     
-    if (filters.departureCity) params.append('departure_city', filters.departureCity);
-    if (filters.pilgrimageType) params.append('pilgrimage_type', filters.pilgrimageType);
+    if (filters.departureCity && filters.departureCity !== 'all') params.append('departure_city', filters.departureCity);
+    if (filters.pilgrimageType && filters.pilgrimageType !== 'all') params.append('pilgrimage_type', filters.pilgrimageType);
     if (filters.startDate) params.append('start_date', filters.startDate);
     if (filters.endDate) params.append('end_date', filters.endDate);
-    if (filters.minPrice) params.append('min_price', filters.minPrice);
-    if (filters.maxPrice) params.append('max_price', filters.maxPrice);
     if (filters.sortBy) params.append('sort_by', filters.sortBy);
+    
     
     const response = await fetch(`${API_BASE}/search-tours?${params.toString()}`);
     if (!response.ok) throw new Error('Ошибка поиска туров');
@@ -315,3 +314,17 @@ export async function createKaspiPayment(paymentData) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getTransfers() {
+  try {
+    const response = await fetch(`${API_URL}/atlas-hajj/v1/transfers`);
+    if (!response.ok) {
+      throw new Error(`Ошибка при получении трансферов: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Ошибка получения трансферов:', error);
+    return [];
+  }
+}
+

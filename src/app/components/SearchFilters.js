@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../search/page.module.css';
 
 export default function SearchFilters({ 
   priceRange, 
-  setPriceRange, 
+  setPriceRange,
+  minPrice = 0,
+  maxPrice = 3000,
   flightTypes, 
   setFlightTypes, 
   ticketTypes, 
@@ -13,13 +15,18 @@ export default function SearchFilters({
   medinaHotels, 
   setMedinaHotels, 
   mekkaDistance, 
-  setMekkaDistance, 
+  setMekkaDistance,
+  minMekkaDistance = 0,
+  maxMekkaDistance = 4000,
   medinaDistance, 
-  setMedinaDistance, 
+  setMedinaDistance,
+  minMedinaDistance = 0,
+  maxMedinaDistance = 4000, 
   foodTypes, 
   setFoodTypes, 
   transferTypes, 
-  setTransferTypes 
+  setTransferTypes,
+  availableTransfers = []
 }) {
   const handleMinPriceChange = (e) => {
     const value = parseInt(e.target.value);
@@ -81,6 +88,56 @@ export default function SearchFilters({
     }));
   };
 
+  // Обновляем синюю полосу для расстояния в Мекке
+  useEffect(() => {
+    const updateMekkaRange = () => {
+      const minSlider = document.getElementById('mekkaMinDistance');
+      const maxSlider = document.getElementById('mekkaMaxDistance');
+      const sliderRanges = document.querySelectorAll(`.${styles.distanceSlider} .${styles.sliderRange}`);
+      const sliderRange = sliderRanges[0]; // Первый - для Мекки
+      
+      if (minSlider && maxSlider && sliderRange) {
+        const min = parseInt(minSlider.min);
+        const max = parseInt(minSlider.max);
+        const minVal = parseInt(minSlider.value);
+        const maxVal = parseInt(maxSlider.value);
+        
+        const minPercent = ((minVal - min) / (max - min)) * 100;
+        const maxPercent = ((maxVal - min) / (max - min)) * 100;
+        
+        sliderRange.style.left = `${minPercent}%`;
+        sliderRange.style.width = `${maxPercent - minPercent}%`;
+      }
+    };
+    
+    updateMekkaRange();
+  }, [mekkaDistance]);
+
+  // Обновляем синюю полосу для расстояния в Медине
+  useEffect(() => {
+    const updateMedinaRange = () => {
+      const minSlider = document.getElementById('medinaMinDistance');
+      const maxSlider = document.getElementById('medinaMaxDistance');
+      const sliderRanges = document.querySelectorAll(`.${styles.distanceSlider} .${styles.sliderRange}`);
+      const sliderRange = sliderRanges[1]; // Второй - для Медины
+      
+      if (minSlider && maxSlider && sliderRange) {
+        const min = parseInt(minSlider.min);
+        const max = parseInt(minSlider.max);
+        const minVal = parseInt(minSlider.value);
+        const maxVal = parseInt(maxSlider.value);
+        
+        const minPercent = ((minVal - min) / (max - min)) * 100;
+        const maxPercent = ((maxVal - min) / (max - min)) * 100;
+        
+        sliderRange.style.left = `${minPercent}%`;
+        sliderRange.style.width = `${maxPercent - minPercent}%`;
+      }
+    };
+    
+    updateMedinaRange();
+  }, [medinaDistance]);
+
   const handleFoodTypeChange = (type) => {
     setFoodTypes(prev => ({
       ...prev,
@@ -94,6 +151,69 @@ export default function SearchFilters({
       [type]: !prev[type]
     }));
   };
+
+  // Инициализация линии при загрузке компонента
+  useEffect(() => {
+    const updateSliderRange = () => {
+      const minSlider = document.getElementById('minPrice');
+      const maxSlider = document.getElementById('maxPrice');
+      const sliderRange = document.querySelector(`.${styles.sliderRange}`);
+      
+      if (minSlider && maxSlider && sliderRange) {
+        const min = parseInt(minSlider.min);
+        const max = parseInt(minSlider.max);
+        const minVal = parseInt(minSlider.value);
+        const maxVal = parseInt(maxSlider.value);
+        
+        const minPercent = ((minVal - min) / (max - min)) * 100;
+        const maxPercent = ((maxVal - min) / (max - min)) * 100;
+        
+        sliderRange.style.left = `${minPercent}%`;
+        sliderRange.style.width = `${maxPercent - minPercent}%`;
+      }
+    };
+
+    // Инициализация при загрузке
+    const timeoutId = setTimeout(updateSliderRange, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Обновляем позицию линии при изменении priceRange
+  useEffect(() => {
+    const updateSliderRange = () => {
+      const minSlider = document.getElementById('minPrice');
+      const maxSlider = document.getElementById('maxPrice');
+      const sliderRange = document.querySelector(`.${styles.sliderRange}`);
+      
+      if (minSlider && maxSlider && sliderRange) {
+        const min = parseInt(minSlider.min);
+        const max = parseInt(minSlider.max);
+        const minVal = parseInt(minSlider.value);
+        const maxVal = parseInt(maxSlider.value);
+        
+        const minPercent = ((minVal - min) / (max - min)) * 100;
+        const maxPercent = ((maxVal - min) / (max - min)) * 100;
+        
+        sliderRange.style.left = `${minPercent}%`;
+        sliderRange.style.width = `${maxPercent - minPercent}%`;
+      }
+    };
+
+    updateSliderRange();
+    
+    // Также обновляем при изменении ползунков
+    const minSlider = document.getElementById('minPrice');
+    const maxSlider = document.getElementById('maxPrice');
+    
+    if (minSlider) minSlider.addEventListener('input', updateSliderRange);
+    if (maxSlider) maxSlider.addEventListener('input', updateSliderRange);
+    
+    return () => {
+      if (minSlider) minSlider.removeEventListener('input', updateSliderRange);
+      if (maxSlider) maxSlider.removeEventListener('input', updateSliderRange);
+    };
+  }, [priceRange]);
 
   return (
     <aside className={styles.filters}>
@@ -109,8 +229,8 @@ export default function SearchFilters({
             <div className={styles.sliderThumbs}>
               <input 
                 type="range" 
-                min="890" 
-                max="4500" 
+                min={minPrice} 
+                max={maxPrice} 
                 value={priceRange.min}
                 onChange={handleMinPriceChange}
                 className={styles.rangeInput}
@@ -118,8 +238,8 @@ export default function SearchFilters({
               />
               <input 
                 type="range" 
-                min="890" 
-                max="4500" 
+                min={minPrice} 
+                max={maxPrice} 
                 value={priceRange.max}
                 onChange={handleMaxPriceChange}
                 className={styles.rangeInput}
@@ -177,6 +297,14 @@ export default function SearchFilters({
               />
               <span>Бизнес-класс</span>
             </label>
+            <label className={styles.checkboxLabel}>
+              <input 
+                type="checkbox" 
+                checked={ticketTypes.first}
+                onChange={() => handleTicketTypeChange('first')}
+              />
+              <span>Первый класс</span>
+            </label>
           </div>
         </div>
       </div>
@@ -228,6 +356,34 @@ export default function SearchFilters({
                 <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
               </span>
             </label>
+            <label className={styles.checkboxLabel}>
+              <input 
+                type="checkbox" 
+                checked={mekkaHotels.two}
+                onChange={() => handleMekkaHotelChange('two')}
+              />
+              <span>
+                <img src="/start.svg" alt="★" className={styles.starIcon} />
+                <img src="/start.svg" alt="★" className={styles.starIcon} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+              </span>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input 
+                type="checkbox" 
+                checked={mekkaHotels.one}
+                onChange={() => handleMekkaHotelChange('one')}
+              />
+              <span>
+                <img src="/start.svg" alt="★" className={styles.starIcon} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+              </span>
+            </label>
           </div>
         </div>
         <div className={styles.filterGroup}>
@@ -240,8 +396,8 @@ export default function SearchFilters({
               <div className={styles.sliderThumbs}>
                 <input 
                   type="range" 
-                  min="0" 
-                  max="4000" 
+                  min={minMekkaDistance} 
+                  max={maxMekkaDistance} 
                   value={mekkaDistance.min}
                   onChange={(e) => handleMekkaDistanceChange('min', e.target.value)}
                   className={styles.rangeInput}
@@ -249,8 +405,8 @@ export default function SearchFilters({
                 />
                 <input 
                   type="range" 
-                  min="0" 
-                  max="4000" 
+                  min={minMekkaDistance} 
+                  max={maxMekkaDistance} 
                   value={mekkaDistance.max}
                   onChange={(e) => handleMekkaDistanceChange('max', e.target.value)}
                   className={styles.rangeInput}
@@ -263,15 +419,6 @@ export default function SearchFilters({
               <span>-</span>
               <span className={styles.distanceValue}>{mekkaDistance.max}м</span>
             </div>
-          </div>
-        </div>
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>Тип номера:</label>
-          <div className={styles.checkboxGroup}>
-            <label className={styles.checkboxLabel}>
-              <input type="checkbox" />
-              <span>С видом на Каабу</span>
-            </label>
           </div>
         </div>
       </div>
@@ -323,6 +470,34 @@ export default function SearchFilters({
                 <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
               </span>
             </label>
+            <label className={styles.checkboxLabel}>
+              <input 
+                type="checkbox" 
+                checked={medinaHotels.two}
+                onChange={() => handleMedinaHotelChange('two')}
+              />
+              <span>
+                <img src="/start.svg" alt="★" className={styles.starIcon} />
+                <img src="/start.svg" alt="★" className={styles.starIcon} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+              </span>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input 
+                type="checkbox" 
+                checked={medinaHotels.one}
+                onChange={() => handleMedinaHotelChange('one')}
+              />
+              <span>
+                <img src="/start.svg" alt="★" className={styles.starIcon} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+                <img src="/start.svg" alt="☆" className={styles.starIconEmpty} />
+              </span>
+            </label>
           </div>
         </div>
         <div className={styles.filterGroup}>
@@ -335,8 +510,8 @@ export default function SearchFilters({
               <div className={styles.sliderThumbs}>
                 <input 
                   type="range" 
-                  min="0" 
-                  max="4000" 
+                  min={minMedinaDistance} 
+                  max={maxMedinaDistance} 
                   value={medinaDistance.min}
                   onChange={(e) => handleMedinaDistanceChange('min', e.target.value)}
                   className={styles.rangeInput}
@@ -344,8 +519,8 @@ export default function SearchFilters({
                 />
                 <input 
                   type="range" 
-                  min="0" 
-                  max="4000" 
+                  min={minMedinaDistance} 
+                  max={maxMedinaDistance} 
                   value={medinaDistance.max}
                   onChange={(e) => handleMedinaDistanceChange('max', e.target.value)}
                   className={styles.rangeInput}
@@ -360,15 +535,6 @@ export default function SearchFilters({
             </div>
           </div>
         </div>
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>Тип номера:</label>
-          <div className={styles.checkboxGroup}>
-            <label className={styles.checkboxLabel}>
-              <input type="checkbox" />
-              <span>С видом на мечеть</span>
-            </label>
-          </div>
-        </div>
       </div>
 
       <div className={styles.filterSection}>
@@ -379,64 +545,50 @@ export default function SearchFilters({
             <label className={styles.checkboxLabel}>
               <input 
                 type="checkbox" 
-                checked={foodTypes.noFood}
-                onChange={() => handleFoodTypeChange('noFood')}
+                checked={foodTypes.BB}
+                onChange={() => handleFoodTypeChange('BB')}
               />
-              <span>Без питания</span>
+              <span>BB (Завтрак)</span>
             </label>
             <label className={styles.checkboxLabel}>
               <input 
                 type="checkbox" 
-                checked={foodTypes.breakfast}
-                onChange={() => handleFoodTypeChange('breakfast')}
+                checked={foodTypes.HB}
+                onChange={() => handleFoodTypeChange('HB')}
               />
-              <span>Только завтрак</span>
+              <span>HB (Полупансион)</span>
             </label>
             <label className={styles.checkboxLabel}>
               <input 
                 type="checkbox" 
-                checked={foodTypes.halfBoard}
-                onChange={() => handleFoodTypeChange('halfBoard')}
+                checked={foodTypes.FB}
+                onChange={() => handleFoodTypeChange('FB')}
               />
-              <span>Завтрак и ужин</span>
+              <span>FB (Полный пансион)</span>
             </label>
             <label className={styles.checkboxLabel}>
               <input 
                 type="checkbox" 
-                checked={foodTypes.allInclusive}
-                onChange={() => handleFoodTypeChange('allInclusive')}
+                checked={foodTypes.AI}
+                onChange={() => handleFoodTypeChange('AI')}
               />
-              <span>Всё включено</span>
+              <span>AI (Всё включено)</span>
             </label>
           </div>
         </div>
         <div className={styles.filterGroup}>
           <label className={styles.filterLabel}>Трансфер:</label>
           <div className={styles.checkboxGroup}>
-            <label className={styles.checkboxLabel}>
-              <input 
-                type="checkbox" 
-                checked={transferTypes.bus}
-                onChange={() => handleTransferTypeChange('bus')}
-              />
-              <span>Комфортабельный автобус</span>
-            </label>
-            <label className={styles.checkboxLabel}>
-              <input 
-                type="checkbox" 
-                checked={transferTypes.train}
-                onChange={() => handleTransferTypeChange('train')}
-              />
-              <span>Высокоскоростной поезд</span>
-            </label>
-            <label className={styles.checkboxLabel}>
-              <input 
-                type="checkbox" 
-                checked={transferTypes.gmc}
-                onChange={() => handleTransferTypeChange('gmc')}
-              />
-              <span>Личный транспорт GMC</span>
-            </label>
+            {availableTransfers.map((transfer) => (
+              <label key={transfer.id} className={styles.checkboxLabel}>
+                <input 
+                  type="checkbox" 
+                  checked={transferTypes[transfer.id] || false}
+                  onChange={() => handleTransferTypeChange(transfer.id)}
+                />
+                <span>{transfer.name}</span>
+              </label>
+            ))}
           </div>
         </div>
       </div>

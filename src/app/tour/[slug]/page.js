@@ -507,6 +507,7 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.flightNumber}>
                             <span>{tour.flight_outbound.number}</span>
+                           
                           </div>
                         </div>
 
@@ -573,13 +574,14 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.flightNumber}>
                             <span>{tour.flight_inbound.number}</span>
+                           
                           </div>
                         </div>
 
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              Медина
+                              {tour.flight_inbound.departure_city}
                             </span>
                             <span className={styles.code}>
                               {tour.flight_inbound.departure_airport}
@@ -590,10 +592,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound.departure_city}
+                              {tour.flight_outbound.departure_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound.arrival_airport}
+                              {tour.flight_outbound.departure_airport}
                             </span>
                           </div>
                         </div>
@@ -959,10 +961,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.departure_city}
+                              {tour.flight_outbound.departure_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.arrival_airport}
+                              {tour.flight_outbound.departure_airport}
                             </span>
                           </div>
                         </div>
@@ -1549,10 +1551,11 @@ export default function TourDetailPage({ params }) {
                     >
                       Перейти к бронированию
                     </button>
-                    <p className={styles.roomDescription}>
-                      Оформите бронирование на себя и до 3-х спутников в одном
-                      номере.
-                    </p>
+                    {room.description && (
+                      <p className={styles.roomDescription}>
+                        {room.description}
+                      </p>
+                    )}
                   </div>
                 ));
               })()}

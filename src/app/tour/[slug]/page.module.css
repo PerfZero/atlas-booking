@@ -502,6 +502,14 @@ background: #f2f2f7;
   justify-content: center;
   height: 40px;
   background: #f2f2f7;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ticketType {
+  font: 400 12px / 150% var(--font-primary);
+  color: #535862;
+  font-style: italic;
 }
 
 .routeInfo {
