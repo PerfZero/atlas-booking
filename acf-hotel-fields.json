@@ -104,17 +104,6 @@
       "maxlength": ""
     },
     {
-      "key": "field_hotel_distance",
-      "label": "Расстояние до мечети",
-      "name": "distance",
-      "type": "text",
-      "instructions": "Расстояние от отеля до мечети",
-      "required": 0,
-      "default_value": "50 м.",
-      "placeholder": "50 м.",
-      "maxlength": ""
-    },
-    {
       "key": "field_hotel_city",
       "label": "Город",
       "name": "city",

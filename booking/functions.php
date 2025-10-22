@@ -40,7 +40,6 @@ function get_flight_data($flight_id) {
     // Добавляем основные поля рейса (время, аэропорты) для всех типов рейсов
     $flight_data['departure_airport'] = get_field('departure_airport', $flight_id);
     $flight_data['departure_city'] = get_field('departure_city', $flight_id);
-    $flight_data['arrival_airport'] = get_field('arrival_airport', $flight_id);
     
     // Форматируем время вылета и прилета
     $departure_time_raw = get_field('departure_time', $flight_id);
@@ -448,7 +447,6 @@ function get_hotel_data($post_id, $field_name) {
                 'description' => get_field('description', $hotel_id),
                 'rating' => get_field('rating', $hotel_id),
                 'rating_text' => get_field('rating_text', $hotel_id),
-                'distance' => get_field('distance', $hotel_id),
                 'city' => get_field('city', $hotel_id),
                 'amenities' => get_field('amenities', $hotel_id),
                 'gallery' => get_field('gallery', $hotel_id),
@@ -504,14 +502,6 @@ function get_hotel_full_name($post_id, $field_name) {
         }
     }
     return null;
-}
-
-function get_hotel_distance($post_id, $field_name) {
-    $hotel_id = get_field($field_name, $post_id);
-    if ($hotel_id) {
-        return get_field('distance', $hotel_id);
-    }
-    return get_field('distance_' . str_replace('hotel_', '', $field_name), $post_id); // Fallback для старых данных
 }
 
 function get_hotel_description($post_id, $field_name) {
@@ -2198,7 +2188,6 @@ function atlas_get_tours($request) {
                 'pilgrims_choice' => get_field('pilgrims_choice', $post_id),
                 'all_inclusive' => get_field('all_inclusive', $post_id),
                 'flight_type' => get_field('flight_type', $post_id),
-                'hotels_info' => get_field('hotels_info', $post_id),
                 'features' => get_field('features', $post_id),
                 'hotel_mekka' => get_hotel_short_name($post_id, 'hotel_mekka'),
                 'hotel_medina' => get_hotel_short_name($post_id, 'hotel_medina'),
@@ -2208,8 +2197,6 @@ function atlas_get_tours($request) {
                 'hotel_medina_short_name' => get_hotel_short_name($post_id, 'hotel_medina'),
                 'hotel_mekka_full_name' => get_hotel_full_name($post_id, 'hotel_mekka'),
                 'hotel_medina_full_name' => get_hotel_full_name($post_id, 'hotel_medina'),
-                'distance_mekka' => get_hotel_distance($post_id, 'hotel_mekka'),
-                'distance_medina' => get_hotel_distance($post_id, 'hotel_medina'),
                 'flight_type' => get_field('flight_type', $post_id),
                 
                 // Новые поля для детальной страницы
@@ -2310,14 +2297,10 @@ function atlas_get_tour_by_slug($request) {
             'pilgrims_choice' => get_field('pilgrims_choice', $post_id),
             'all_inclusive' => get_field('all_inclusive', $post_id),
             'flight_type' => get_field('flight_type', $post_id),
-            'hotels_info' => get_field('hotels_info', $post_id),
             'features' => get_field('features', $post_id),
                 'hotel_mekka' => get_hotel_data($post_id, 'hotel_mekka'),
                 'hotel_medina' => get_hotel_data($post_id, 'hotel_medina'),
                 'transfers' => get_transfers_data($post_id),
-            'distance_mekka' => get_field('distance_mekka', $post_id),
-            'distance_medina' => get_field('distance_medina', $post_id),
-            'flight_type' => get_field('flight_type', $post_id),
             'transfer_type' => get_field('transfer_type', $post_id),
             
             // Новые поля для детальной страницы
@@ -2383,12 +2366,10 @@ function atlas_get_tour_by_slug($request) {
         'hotel_mekka_accommodation_text' => get_hotel_accommodation_text($post_id, 'hotel_mekka'),
             'hotel_mekka_short_name' => get_hotel_short_name($post_id, 'hotel_mekka'),
             'hotel_mekka_full_name' => get_hotel_full_name($post_id, 'hotel_mekka'),
-            'hotel_mekka_distance' => get_hotel_distance($post_id, 'hotel_mekka'),
             
             'hotel_medina_accommodation_text' => get_hotel_accommodation_text($post_id, 'hotel_medina'),
             'hotel_medina_short_name' => get_hotel_short_name($post_id, 'hotel_medina'),
-            'hotel_medina_full_name' => get_hotel_full_name($post_id, 'hotel_medina'),
-            'hotel_medina_distance' => get_hotel_distance($post_id, 'hotel_medina')
+            'hotel_medina_full_name' => get_hotel_full_name($post_id, 'hotel_medina')
         );
         
         wp_reset_postdata();
@@ -2566,14 +2547,10 @@ function atlas_search_tours($request) {
             'pilgrims_choice' => get_field('pilgrims_choice', $post_id),
             'all_inclusive' => get_field('all_inclusive', $post_id),
             'flight_type' => get_field('flight_type', $post_id),
-            'hotels_info' => get_field('hotels_info', $post_id),
             'features' => get_field('features', $post_id),
                 'hotel_mekka' => get_hotel_data($post_id, 'hotel_mekka'),
                 'hotel_medina' => get_hotel_data($post_id, 'hotel_medina'),
                 'transfers' => get_transfers_data($post_id),
-            'distance_mekka' => get_field('distance_mekka', $post_id),
-            'distance_medina' => get_field('distance_medina', $post_id),
-            'flight_type' => get_field('flight_type', $post_id),
             'transfer_type' => get_field('transfer_type', $post_id),
             
             // Новые поля для детальной страницы
@@ -2826,9 +2803,6 @@ function atlas_get_my_bookings($request) {
                 $booking['tour_data']['services'] = get_field('services', $booking['tour_id']) ?: [];
                 $booking['tour_data']['transfers'] = get_field('transfers', $booking['tour_id']);
                 $booking['tour_data']['transfer_type'] = get_field('transfer_type', $booking['tour_id']);
-                
-                // Добавляем hotels_info
-                $booking['tour_data']['hotels_info'] = get_field('hotels_info', $booking['tour_id']) ?: [];
                 
                 // Проверяем истечение времени бронирования (20 минут)
                 if ($booking['status'] === 'pending') {

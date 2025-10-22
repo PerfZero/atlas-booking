@@ -528,7 +528,7 @@ export default function TourDetailPage({ params }) {
                               Медина
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_outbound.arrival_airport}
+                              MED
                             </span>
                           </div>
                         </div>

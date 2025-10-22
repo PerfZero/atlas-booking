@@ -106,26 +106,6 @@
       ]
     },
     {
-      "key": "field_flight_arrival_airport",
-      "label": "Аэропорт прилета",
-      "name": "arrival_airport",
-      "type": "text",
-      "instructions": "Код аэропорта прилета",
-      "required": 1,
-      "default_value": "MED",
-      "placeholder": "MED",
-      "maxlength": "",
-      "conditional_logic": [
-        [
-          {
-            "field": "field_flight_type",
-            "operator": "==",
-            "value": "direct"
-          }
-        ]
-      ]
-    },
-    {
       "key": "field_flight_departure_time",
       "label": "Время вылета",
       "name": "departure_time",

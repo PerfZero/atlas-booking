@@ -897,7 +897,7 @@ function ProfilePageContent() {
                                   {booking.tour_data?.hotels?.mekka?.short_name || booking.tour_data?.hotel_mekka || "Отель в Мекке"}
                                 </span>
                                 <span className={styles.distance}>
-                                  {booking.tour_data?.hotels?.mekka?.distance || booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
+                                  {booking.tour_data?.hotels?.mekka?.distance_text || booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
                                 </span>
                               </div>
                             </div>
@@ -1052,7 +1052,7 @@ function ProfilePageContent() {
                                   {booking.tour_data?.hotels?.mekka?.short_name || booking.tour_data?.hotel_mekka || "Отель в Мекке"}
                                 </span>
                                 <span className={styles.distance}>
-                                  {booking.tour_data?.hotels?.mekka?.distance || booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
+                                  {booking.tour_data?.hotels?.mekka?.distance_text || booking.tour_data?.distance_mekka || "Расстояние до Каабы"}
                                 </span>
                               </div>
                             </div>
