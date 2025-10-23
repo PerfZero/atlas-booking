@@ -128,3 +128,114 @@ function atlas_register_flight_api_routes() {
     ));
 }
 add_action('rest_api_init', 'atlas_register_flight_api_routes');
+
+function atlas_flight_admin_columns($columns) {
+    $new_columns = array();
+    
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        
+        if ($key === 'title') {
+            $new_columns['flight_type'] = 'Тип рейса';
+            $new_columns['departure_city'] = 'Город вылета';
+            $new_columns['arrival_city'] = 'Город прилёта';
+            $new_columns['departure_time'] = 'Время вылета';
+            $new_columns['airline'] = 'Авиакомпания';
+        }
+    }
+    
+    return $new_columns;
+}
+add_filter('manage_flight_posts_columns', 'atlas_flight_admin_columns');
+
+function atlas_flight_admin_column_content($column, $post_id) {
+    switch ($column) {
+        case 'flight_type':
+            $flight_type = get_field('flight_type', $post_id);
+            echo $flight_type === 'direct' ? 'Прямой' : 'С пересадкой';
+            break;
+            
+        case 'departure_city':
+            $departure_city = get_field('departure_city', $post_id);
+            echo $departure_city ? $departure_city : '—';
+            break;
+            
+        case 'arrival_city':
+            $arrival_city = get_field('arrival_city', $post_id);
+            echo $arrival_city ? $arrival_city : '—';
+            break;
+            
+        case 'departure_time':
+            $departure_time = get_field('departure_time', $post_id);
+            if ($departure_time) {
+                $date = new DateTime($departure_time);
+                echo $date->format('d.m.Y H:i');
+            } else {
+                echo '—';
+            }
+            break;
+            
+        case 'airline':
+            $airline_id = get_field('airline', $post_id);
+            if ($airline_id) {
+                $airline = get_term($airline_id, 'airline');
+                echo $airline ? $airline->name : '—';
+            } else {
+                echo '—';
+            }
+            break;
+    }
+}
+add_action('manage_flight_posts_custom_column', 'atlas_flight_admin_column_content', 10, 2);
+
+function atlas_flight_sortable_columns($columns) {
+    $columns['departure_time'] = 'departure_time';
+    $columns['departure_city'] = 'departure_city';
+    $columns['arrival_city'] = 'arrival_city';
+    $columns['flight_type'] = 'flight_type';
+    return $columns;
+}
+add_filter('manage_edit-flight_sortable_columns', 'atlas_flight_sortable_columns');
+
+function atlas_flight_orderby($query) {
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+    
+    $orderby = $query->get('orderby');
+    
+    if ('departure_time' === $orderby) {
+        $query->set('meta_key', 'departure_time');
+        $query->set('orderby', 'meta_value');
+    } elseif ('departure_city' === $orderby) {
+        $query->set('meta_key', 'departure_city');
+        $query->set('orderby', 'meta_value');
+    } elseif ('arrival_city' === $orderby) {
+        $query->set('meta_key', 'arrival_city');
+        $query->set('orderby', 'meta_value');
+    } elseif ('flight_type' === $orderby) {
+        $query->set('meta_key', 'flight_type');
+        $query->set('orderby', 'meta_value');
+    }
+}
+add_action('pre_get_posts', 'atlas_flight_orderby');
+
+function atlas_flight_post_object_result($title, $post, $field, $post_id) {
+    if ($post->post_type === 'flight') {
+        $departure_time = get_field('departure_time', $post->ID);
+        if ($departure_time) {
+            $date = new DateTime($departure_time);
+            $formatted_date = $date->format('d.m.Y H:i');
+            $departure_city = get_field('departure_city', $post->ID);
+            $arrival_city = get_field('arrival_city', $post->ID);
+            
+            if ($departure_city && $arrival_city) {
+                $title .= ' (' . $departure_city . ' → ' . $arrival_city . ' | ' . $formatted_date . ')';
+            } else {
+                $title .= ' (' . $formatted_date . ')';
+            }
+        }
+    }
+    return $title;
+}
+add_filter('acf/fields/post_object/result', 'atlas_flight_post_object_result', 10, 4);

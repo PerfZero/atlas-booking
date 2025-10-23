@@ -170,7 +170,7 @@ export default function TourCard({ tour, searchParams = null }) {
               <span className={styles.oldPrice}>{tourOldPrice}</span>
             )}
           </div>
-          <div className={styles.priceEquivalent}>~1 312 500T</div>
+          <div className={styles.priceEquivalent}>~{Math.round(parseFloat(tourPrice.toString().replace(' $', '')) * 547).toLocaleString()}₸</div>
         </div>
         <Link href={getTourUrl()} className={styles.viewOptionsBtn}>
           <button>Посмотреть варианты</button>
