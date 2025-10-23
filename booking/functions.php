@@ -40,6 +40,8 @@ function get_flight_data($flight_id) {
     // Добавляем основные поля рейса (время, аэропорты) для всех типов рейсов
     $flight_data['departure_airport'] = get_field('departure_airport', $flight_id);
     $flight_data['departure_city'] = get_field('departure_city', $flight_id);
+    $flight_data['arrival_airport'] = get_field('arrival_airport', $flight_id);
+    $flight_data['arrival_city'] = get_field('arrival_city', $flight_id);
     
     // Форматируем время вылета и прилета
     $departure_time_raw = get_field('departure_time', $flight_id);
@@ -2873,7 +2875,16 @@ function atlas_kaspi_payment_app($request) {
     if ($command === 'check') {
         return atlas_kaspi_check_payment($params);
     } elseif ($command === 'pay') {
-        return atlas_kaspi_process_payment($params);
+        $result = atlas_kaspi_process_payment($params);
+        
+        if (!is_wp_error($result) && $result['result'] == 0) {
+            $order_id = sanitize_text_field($params['account'] ?? '');
+            $txn_id = sanitize_text_field($params['txn_id'] ?? '');
+            wp_redirect('https://booking.atlas.kz/kaspi-payment-success?txn_id=' . $txn_id . '&order_id=' . $order_id);
+            exit;
+        }
+        
+        return $result;
     } else {
         return new WP_Error('invalid_command', 'Invalid command', array('status' => 400));
     }
@@ -3013,11 +3024,9 @@ function atlas_kaspi_process_payment($params) {
         $status = $payment['status'] ?? 'pending';
         
         if ($status === 'completed') {
-            return array(
-                'txn_id' => $txn_id,
-                'result' => 3,
-                'comment' => 'Заказ уже оплачен'
-            );
+            $order_id = sanitize_text_field($params['account'] ?? '');
+            wp_redirect('https://booking.atlas.kz/kaspi-payment-success?txn_id=' . $txn_id . '&order_id=' . $order_id);
+            exit;
         } elseif ($status === 'cancelled') {
             return array(
                 'txn_id' => $txn_id,
@@ -3378,7 +3387,7 @@ function atlas_create_kaspi_payment($request) {
     $kaspi_data = array(
         'TranId' => $tran_id,
         'OrderId' => $order_id,
-        'Amount' => $amount,
+        'Amount' => $amount * 100,
         'Service' => 'AtlasBooking',
         'returnUrl' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount,
         'refererHost' => 'api.booking.atlas.kz',

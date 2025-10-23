@@ -525,10 +525,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              Медина
+                              {tour.flight_outbound.arrival_city}
                             </span>
                             <span className={styles.code}>
-                              MED
+                              {tour.flight_outbound.arrival_airport}
                             </span>
                           </div>
                         </div>
@@ -592,10 +592,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_outbound.departure_city}
+                              {tour.flight_inbound.arrival_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_outbound.departure_airport}
+                              {tour.flight_inbound.arrival_airport}
                             </span>
                           </div>
                         </div>
@@ -766,10 +766,10 @@ export default function TourDetailPage({ params }) {
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_connecting.connecting_airport || 'Kuwait'}
+                              {tour.flight_connecting.departure_city || tour.flight_connecting.connecting_airport || 'Kuwait'}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_connecting.connecting_airport_code || 'KUW'}
+                              {tour.flight_connecting.departure_airport || tour.flight_connecting.connecting_airport_code || 'KUW'}
                             </span>
                           </div>
                           <div className={styles.flightPath}>
@@ -777,10 +777,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              Медина
+                              {tour.flight_connecting.arrival_city || 'Медина'}
                             </span>
                             <span className={styles.code}>
-                              MED
+                              {tour.flight_connecting.arrival_airport || 'MED'}
                             </span>
                           </div>
                         </div>
@@ -832,10 +832,10 @@ export default function TourDetailPage({ params }) {
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              Медина
+                              {tour.flight_inbound_connecting.departure_city || 'Медина'}
                             </span>
                             <span className={styles.code}>
-                              MED
+                              {tour.flight_inbound_connecting.departure_airport || 'MED'}
                             </span>
                           </div>
                           <div className={styles.flightPath}>
@@ -843,10 +843,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.connecting_airport || 'Kuwait'}
+                              {tour.flight_inbound_connecting.arrival_city || tour.flight_inbound_connecting.connecting_airport || 'Kuwait'}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.connecting_airport_code || 'KUW'}
+                              {tour.flight_inbound_connecting.arrival_airport || tour.flight_inbound_connecting.connecting_airport_code || 'KUW'}
                             </span>
                           </div>
                         </div>
@@ -961,10 +961,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_outbound.departure_city}
+                              {tour.flight_outbound_connecting?.departure_city || tour.flight_outbound?.departure_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_outbound.departure_airport}
+                              {tour.flight_outbound_connecting?.departure_airport || tour.flight_outbound?.departure_airport}
                             </span>
                           </div>
                         </div>

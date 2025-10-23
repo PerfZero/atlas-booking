@@ -126,6 +126,46 @@
       ]
     },
     {
+      "key": "field_flight_arrival_airport",
+      "label": "Аэропорт прилета",
+      "name": "arrival_airport",
+      "type": "text",
+      "instructions": "Код аэропорта прилета",
+      "required": 1,
+      "default_value": "JED",
+      "placeholder": "JED",
+      "maxlength": "",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_flight_type",
+            "operator": "==",
+            "value": "direct"
+          }
+        ]
+      ]
+    },
+    {
+      "key": "field_flight_arrival_city",
+      "label": "Город прилета",
+      "name": "arrival_city",
+      "type": "text",
+      "instructions": "Название города прилета",
+      "required": 1,
+      "default_value": "Джидда",
+      "placeholder": "Джидда",
+      "maxlength": "",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_flight_type",
+            "operator": "==",
+            "value": "direct"
+          }
+        ]
+      ]
+    },
+    {
       "key": "field_flight_arrival_time",
       "label": "Время прилета",
       "name": "arrival_time",
