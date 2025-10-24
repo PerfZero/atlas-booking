@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BottomNavigation from '../components/BottomNavigation';
@@ -10,18 +11,26 @@ import styles from './page.module.css';
 function KaspiPaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [paymentStatus, setPaymentStatus] = useState('loading');
   const [paymentData, setPaymentData] = useState(null);
 
   useEffect(() => {
-    const orderId = searchParams.get('order_id');
-    
-    if (orderId) {
-      checkPaymentStatus(orderId);
-    } else {
-      setPaymentStatus('error');
+    if (!authLoading && !isAuthenticated) {
+      router.push('/not-found');
+      return;
     }
-  }, [searchParams]);
+    
+    if (isAuthenticated) {
+      const orderId = searchParams.get('order_id');
+      
+      if (orderId) {
+        checkPaymentStatus(orderId);
+      } else {
+        setPaymentStatus('error');
+      }
+    }
+  }, [searchParams, isAuthenticated, authLoading, router]);
 
   const checkPaymentStatus = async (orderId) => {
     try {
@@ -31,6 +40,12 @@ function KaspiPaymentSuccessContent() {
       if (response.ok && data.success) {
         setPaymentData(data.payment);
         setPaymentStatus(data.payment.status === 'completed' ? 'success' : 'pending');
+        
+        if (data.payment.status === 'completed') {
+          setTimeout(() => {
+            handleGoToProfile();
+          }, 3000);
+        }
       } else {
         setPaymentStatus('error');
       }
@@ -41,12 +56,39 @@ function KaspiPaymentSuccessContent() {
   };
 
   const handleGoToProfile = () => {
-    router.push('/profile');
+    const orderId = searchParams.get('order_id');
+    if (orderId) {
+      router.push(`/profile?tab=bookings#booking-${orderId}`);
+    } else {
+      router.push('/profile?tab=bookings');
+    }
   };
 
   const handleGoHome = () => {
     router.push('/');
   };
+
+  if (authLoading) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.container}>
+            <div className={styles.loading}>
+              <div className={styles.spinner}></div>
+              <p>Загрузка...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (paymentStatus === 'loading') {
     return (
@@ -82,6 +124,9 @@ function KaspiPaymentSuccessContent() {
                 </div>
                 <h1>Оплата прошла успешно!</h1>
                 <p>Ваш тур забронирован и оплачен</p>
+                <p style={{ fontSize: '14px', color: '#6c757d', marginTop: '8px' }}>
+                  Через несколько секунд вы будете перенаправлены в профиль
+                </p>
                 
                 {paymentData && (
                   <div className={styles.paymentDetails}>

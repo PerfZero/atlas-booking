@@ -204,8 +204,8 @@ function AuthPageContent() {
       {step === "phone" ? (
         <div className={styles.card}>
           <img src="/login.svg" alt="login" className={styles.loginImage} />
-          <h1 className={styles.title}>{isLogin ? "Вход в аккаунт Atlas" : "Регистрация аккаунта Atlas"}</h1>
-          <p className={styles.subtitle}>Чтобы продолжить бронирование, {isLogin ? "войдите в аккаунт" : "зарегистрируйтесь или авторизуйтесь"}</p>
+          <h1 className={styles.title}>Авторизация аккаунта Atlas</h1>
+          <p className={styles.subtitle}>Чтобы продолжить бронирование, пожалуйста, авторизуйтесь</p>
 
           <input
             className={styles.input}
@@ -215,16 +215,9 @@ function AuthPageContent() {
             inputMode="tel"
           />
 
-          <div className={styles.login}>
-            {isLogin ? (
-              <>Нет аккаунта? <button onClick={() => setIsLogin(false)} className={styles.linkButton}>Зарегистрироваться</button></>
-            ) : (
-              <>Уже есть аккаунт? <button onClick={handleLogin} className={styles.linkButton}>Войти</button></>
-            )}
-          </div>
 
           <button onClick={handleSendCode} disabled={!canSendCode} className={styles.primaryButton}>
-            {isLogin ? "Войти" : "Регистрация"}
+            Авторизоваться
           </button>
         </div>
       ) : (

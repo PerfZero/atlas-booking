@@ -1142,7 +1142,14 @@ height: 123px;
 
 .availabilityInfo span {
   font: 500 12px / 117% var(--font-primary);
+}
+
+.availabilityWarning span {
   color: #e81142;
+}
+
+.availabilityNormal span {
+  color: #4CAF50;
 }
 
 .bookButton {

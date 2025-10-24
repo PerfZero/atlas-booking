@@ -569,15 +569,27 @@ background: #253168;
 
 .spotsLeft {
   font: 500 16px / 150% var(--font-family);
-  color: #e81142;
   border-radius: 8px;
-padding: 8px 16px;
+  padding: 8px 16px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-height: 40px;
-display: flex;
-align-items: center;
-gap: 8px;
-background: rgba(232, 17, 66, 0.1);
+.spotsLeftWarning {
+  color: #e81142;
+  background: rgba(232, 17, 66, 0.1);
+}
+
+.spotsLeftNormal {
+  color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.spotsLeftSoldOut {
+  color: #666;
+  background: rgba(102, 102, 102, 0.1);
 }
 
 .spotsIcon {

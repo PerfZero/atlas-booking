@@ -398,7 +398,7 @@ function BookingPageContent() {
       
       if (result.success) {
         const orderId = result.booking_id;
-        const amount = Math.round(tourData.priceValue * 547);
+        const amount = Math.round(tourData.priceValue * 547 * tourists.length);
         const tourId = tourData.id;
         
         const paymentRequestData = {
@@ -494,12 +494,12 @@ function BookingPageContent() {
                 <p className={styles.noHiddenFees}>Без скрытых платежей</p>
                 <div className={styles.priceInfo}>
                   <div className={styles.mainPrice}>
-                    <span className={styles.currentPrice}>${tourData.price}</span>
+                    <span className={styles.currentPrice}>${tourData.price * tourists.length}</span>
                     {tourData.oldPrice && (
-                      <span className={styles.oldPrice}>От ${tourData.oldPrice}</span>
+                      <span className={styles.oldPrice}>От ${tourData.oldPrice * tourists.length}</span>
                     )}
                   </div>
-                  <span className={styles.usdPrice}>~{Math.round(tourData.priceValue * 547)}₸</span>
+                  <span className={styles.usdPrice}>~{Math.round(tourData.priceValue * 547 * tourists.length)}₸</span>
                 </div>
               </div>
 
@@ -804,9 +804,7 @@ function BookingPageContent() {
                                 required
                                 className={errors[`${tourist.id}-phone`] ? styles.error : ''}
                               />
-                              <p className={styles.phoneNote}>
-                                По этому номеру телефона Вы подпишите договор и получите ваучер.
-                              </p>
+                            
                               {errors[`${tourist.id}-phone`] && (
                                 <div className={styles.errorMessage}>{errors[`${tourist.id}-phone`]}</div>
                               )}

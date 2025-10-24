@@ -1,7 +1,7 @@
 "use client";
 import { notFound } from "next/navigation";
 import { useState, use, useEffect } from "react";
-import { getTourBySlug } from "../../../lib/wordpress-api";
+import { getTourBySlug, getTourSpots } from "../../../lib/wordpress-api";
 import { useAuth } from "../../../contexts/AuthContext";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -20,6 +20,7 @@ export default function TourDetailPage({ params }) {
   const [error, setError] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [roomSpots, setRoomSpots] = useState({});
 
   const resolvedParams = use(params);
   const { isAuthenticated } = useAuth();
@@ -30,6 +31,24 @@ export default function TourDetailPage({ params }) {
         setLoading(true);
         const tourData = await getTourBySlug(resolvedParams.slug);
         setTour(tourData);
+        
+        // Получаем актуальное количество мест
+        if (tourData.id) {
+          const spotsData = await getTourSpots(tourData.id);
+          if (spotsData.success) {
+            // Сохраняем общее количество мест
+            setRoomSpots({ total: spotsData.spots_left });
+            
+            // Также сохраняем по типам для отображения в вариантах размещения
+            if (spotsData.room_options) {
+              const spotsMap = {};
+              spotsData.room_options.forEach(room => {
+                spotsMap[room.type] = room.spots_left;
+              });
+              setRoomSpots(prev => ({ ...prev, ...spotsMap }));
+            }
+          }
+        }
       } catch (err) {
         console.error("Ошибка загрузки тура:", err);
         setError("Тур не найден");
@@ -1036,7 +1055,7 @@ export default function TourDetailPage({ params }) {
                         </div>
                         <div className={styles.hotelDistance}>
                           <span className={styles.distanceNumber}>
-                            {tour.hotel_mekka?.distance_number}
+                            {tour.hotel_mekka?.distance_number} м.
                           </span>
                           <span className={styles.distanceText}>
                             {tour.hotel_mekka?.distance_text}
@@ -1183,7 +1202,7 @@ export default function TourDetailPage({ params }) {
                         </div>
                         <div className={styles.hotelDistance}>
                           <span className={styles.distanceNumber}>
-                            {tour.hotel_medina?.distance_number}
+                            {tour.hotel_medina?.distance_number} м.
                           </span>
                           <span className={styles.distanceText}>
                             {tour.hotel_medina?.distance_text}
@@ -1459,7 +1478,12 @@ export default function TourDetailPage({ params }) {
                         },
                       ];
 
-                return roomOptions.map((room, index) => (
+                return roomOptions
+                  .filter(room => {
+                    const spots = roomSpots[room.type] !== undefined ? roomSpots[room.type] : (room.spots_left || 4);
+                    return spots > 0;
+                  })
+                  .map((room, index) => (
                   <div key={index} className={styles.roomCard}>
                     <div className={styles.roomHeader}>
                       <div className={styles.roomIcons}>
@@ -1523,9 +1547,11 @@ export default function TourDetailPage({ params }) {
                       </div>
                     </div>
 
-                    <div className={styles.availabilityInfo}>
-                      <img src="/alert.svg" alt="alert" />
-                      <span>Осталось {room.spots_left || 4} мест</span>
+                    <div className={`${styles.availabilityInfo} ${(roomSpots[room.type] !== undefined ? roomSpots[room.type] : (room.spots_left || 4)) <= 10 ? styles.availabilityWarning : styles.availabilityNormal}`}>
+                      {(roomSpots[room.type] !== undefined ? roomSpots[room.type] : (room.spots_left || 4)) <= 10 && (
+                        <img src="/alert.svg" alt="alert" />
+                      )}
+                      <span>Осталось {roomSpots[room.type] !== undefined ? roomSpots[room.type] : (room.spots_left || 4)} мест</span>
                     </div>
 
                     <div className={styles.roomPrice}>

@@ -1569,6 +1569,68 @@ function atlas_change_booking_status_ajax() {
     $user_bookings[$booking_id]['status_changed_at'] = current_time('mysql');
     $user_bookings[$booking_id]['status_changed_by'] = get_current_user_id();
     
+    // Если статус изменен на "paid" или "confirmed", обновляем количество мест
+    if (in_array($new_status, ['paid', 'confirmed'])) {
+        error_log("=== АДМИНКА: Статус изменен на $new_status ===");
+        $booking = $user_bookings[$booking_id];
+        error_log("Данные бронирования: " . print_r($booking, true));
+        
+        // Проверяем разные варианты расположения данных
+        $tour_id = null;
+        $room_type = null;
+        
+        // Вариант 1: в tour_data
+        if (isset($booking['tour_data']['tour_id']) && isset($booking['tour_data']['roomType'])) {
+            $tour_id = $booking['tour_data']['tour_id'];
+            $room_type = $booking['tour_data']['roomType'];
+            error_log("Найдены данные в tour_data: tour_id=$tour_id, room_type=$room_type");
+        }
+        // Вариант 2: в корне booking
+        elseif (isset($booking['tour_id']) && isset($booking['tour_data']['roomType'])) {
+            $tour_id = $booking['tour_id'];
+            $room_type = $booking['tour_data']['roomType'];
+            error_log("Найдены данные в корне: tour_id=$tour_id, room_type=$room_type");
+        }
+        
+        if ($tour_id && $room_type) {
+            $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
+            
+            error_log("Вызываем atlas_update_tour_spots: tour_id=$tour_id, room_type=$room_type, tourists_count=$tourists_count");
+            
+            // Обновляем количество мест (уменьшаем)
+            $result = atlas_update_tour_spots($tour_id, $tourists_count, $room_type);
+            error_log("Результат atlas_update_tour_spots: " . ($result ? 'SUCCESS' : 'FAILED'));
+            
+            // Добавляем время оплаты, если его нет
+            if (!isset($user_bookings[$booking_id]['paid_at'])) {
+                $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
+            }
+            
+            error_log("Места обновлены через админку: tour_id=$tour_id, room_type=$room_type, tourists_count=$tourists_count");
+        } else {
+            error_log("ОШИБКА: Не найдены tour_id или roomType в данных бронирования");
+            error_log("Доступные ключи в booking: " . implode(', ', array_keys($booking)));
+            if (isset($booking['tour_data'])) {
+                error_log("Доступные ключи в tour_data: " . implode(', ', array_keys($booking['tour_data'])));
+            }
+        }
+    }
+    
+    // Если статус изменен на "cancelled" или "pending", возвращаем места
+    if (in_array($new_status, ['cancelled', 'pending'])) {
+        $booking = $user_bookings[$booking_id];
+        if (isset($booking['tour_data']['tour_id']) && isset($booking['tour_data']['roomType'])) {
+            $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
+            $room_type = $booking['tour_data']['roomType'];
+            $tour_id = $booking['tour_data']['tour_id'];
+            
+            // Возвращаем места (увеличиваем количество)
+            atlas_return_tour_spots($tour_id, $tourists_count, $room_type);
+            
+            error_log("Места возвращены через админку: tour_id=$tour_id, room_type=$room_type, tourists_count=$tourists_count");
+        }
+    }
+    
     update_user_meta($user_id, 'atlas_bookings', $user_bookings);
     
     // Логируем изменение статуса
@@ -3062,6 +3124,12 @@ function atlas_kaspi_process_payment($params) {
                         $user_bookings[$booking_id]['payment_id'] = $txn_id;
                         $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
                         error_log('User booking updated: ' . print_r($user_bookings[$booking_id], true));
+                        
+                        // Обновляем количество мест в туре
+                        $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
+                        $room_type = isset($booking['tour_data']['roomType']) ? $booking['tour_data']['roomType'] : null;
+                        atlas_update_tour_spots($payment['tour_id'], $tourists_count, $room_type);
+                        
                         break;
                     }
                 }
@@ -3210,6 +3278,122 @@ function atlas_kaspi_test_page($request) {
     $html .= '</body></html>';
     
     return new WP_REST_Response($html, 200, array('Content-Type' => 'text/html'));
+}
+
+// Функция для обновления количества мест в туре
+function atlas_update_tour_spots($tour_id, $spots_to_reduce = 1, $room_type = null) {
+    error_log("=== atlas_update_tour_spots ВЫЗВАНА ===");
+    error_log("Параметры: tour_id=$tour_id, spots_to_reduce=$spots_to_reduce, room_type=$room_type");
+    
+    $room_options = get_field('room_options', $tour_id);
+    error_log("room_options получены: " . print_r($room_options, true));
+    $updated = false;
+    
+    if (is_array($room_options)) {
+        error_log("room_options - массив, начинаем обработку");
+        foreach ($room_options as $index => $room) {
+            error_log("Обрабатываем комнату $index: " . print_r($room, true));
+            
+            // Если указан тип комнаты, обновляем только его
+            if ($room_type && isset($room['type']) && $room['type'] === $room_type) {
+                error_log("Найдена комната нужного типа: {$room['type']}");
+                if (isset($room['spots_left'])) {
+                    $current_spots = intval($room['spots_left']);
+                    $new_spots = max(0, $current_spots - $spots_to_reduce);
+                    $room_options[$index]['spots_left'] = $new_spots;
+                    $updated = true;
+                    error_log("Updated spots for tour {$tour_id}, room type {$room_type}: {$current_spots} -> {$new_spots}");
+                } else {
+                    error_log("spots_left не найден для комнаты типа {$room_type}");
+                }
+            } elseif (!$room_type) {
+                error_log("Тип комнаты не указан, обновляем все");
+                // Если тип не указан, обновляем все варианты
+                if (isset($room['spots_left'])) {
+                    $current_spots = intval($room['spots_left']);
+                    $new_spots = max(0, $current_spots - $spots_to_reduce);
+                    $room_options[$index]['spots_left'] = $new_spots;
+                    $updated = true;
+                    error_log("Updated all spots for tour {$tour_id}: {$current_spots} -> {$new_spots}");
+                }
+            } else {
+                error_log("Комната типа {$room['type']} не соответствует искомому {$room_type}");
+            }
+        }
+        
+        if ($updated) {
+            error_log("Обновляем room_options в базе данных");
+            $update_result = update_field('room_options', $room_options, $tour_id);
+            error_log("Результат update_field: " . ($update_result ? 'SUCCESS' : 'FAILED'));
+        } else {
+            error_log("Ничего не обновлено в room_options");
+        }
+    } else {
+        error_log("room_options не является массивом");
+    }
+    
+    // Если нет вариантов размещения, обновляем общее поле
+    if (!$updated) {
+        error_log("Обновляем общее поле spots_left");
+        $current_spots = get_field('spots_left', $tour_id);
+        if ($current_spots === false || $current_spots === null) {
+            $current_spots = 10; // Значение по умолчанию
+        }
+        
+        $new_spots = max(0, $current_spots - $spots_to_reduce);
+        $update_result = update_field('spots_left', $new_spots, $tour_id);
+        error_log("Updated general spots for tour {$tour_id}: {$current_spots} -> {$new_spots}, update_result: " . ($update_result ? 'SUCCESS' : 'FAILED'));
+    }
+    
+    error_log("=== atlas_update_tour_spots ЗАВЕРШЕНА ===");
+    return true;
+}
+
+// Функция для возврата мест в тур (при отмене бронирования)
+function atlas_return_tour_spots($tour_id, $spots_to_return = 1, $room_type = null) {
+    $room_options = get_field('room_options', $tour_id);
+    $updated = false;
+    
+    if (is_array($room_options)) {
+        foreach ($room_options as $index => $room) {
+            // Если указан тип комнаты, обновляем только его
+            if ($room_type && isset($room['type']) && $room['type'] === $room_type) {
+                if (isset($room['spots_left'])) {
+                    $current_spots = intval($room['spots_left']);
+                    $new_spots = $current_spots + $spots_to_return;
+                    $room_options[$index]['spots_left'] = $new_spots;
+                    $updated = true;
+                    error_log("Returned spots for tour {$tour_id}, room type {$room_type}: {$current_spots} -> {$new_spots}");
+                }
+            } elseif (!$room_type) {
+                // Если тип не указан, обновляем все варианты
+                if (isset($room['spots_left'])) {
+                    $current_spots = intval($room['spots_left']);
+                    $new_spots = $current_spots + $spots_to_return;
+                    $room_options[$index]['spots_left'] = $new_spots;
+                    $updated = true;
+                }
+            }
+        }
+        
+        if ($updated) {
+            update_field('room_options', $room_options, $tour_id);
+        }
+    }
+    
+    // Если нет вариантов размещения, обновляем общее поле
+    if (!$updated) {
+        $current_spots = get_field('spots_left', $tour_id);
+        if ($current_spots === false || $current_spots === null) {
+            $current_spots = 10; // Значение по умолчанию
+        }
+        
+        $new_spots = $current_spots + $spots_to_return;
+        update_field('spots_left', $new_spots, $tour_id);
+        error_log("Returned general spots for tour {$tour_id}: {$current_spots} -> {$new_spots}");
+    }
+    
+    return true;
 }
 
 // Добавляем пункт меню в админку
@@ -3581,6 +3765,12 @@ function atlas_process_kaspi_webhook($request) {
                     $user_bookings[$booking_id]['status'] = 'paid';
                     $user_bookings[$booking_id]['payment_id'] = $tran_id;
                     $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
+                    
+                    // Обновляем количество мест в туре
+                    $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
+                    $room_type = isset($booking['tour_data']['roomType']) ? $booking['tour_data']['roomType'] : null;
+                    atlas_update_tour_spots($payment['tour_id'], $tourists_count, $room_type);
+                    
                     break;
                 }
             }
@@ -3618,7 +3808,65 @@ add_action('rest_api_init', function() {
         'callback' => 'atlas_get_pilgrimage_types',
         'permission_callback' => '__return_true'
     ));
+    
+    register_rest_route('atlas-hajj/v1', '/tour-spots/(?P<tour_id>\d+)', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_tour_spots',
+        'permission_callback' => '__return_true'
+    ));
 });
+
+// Функция для получения актуального количества мест в туре
+function atlas_get_tour_spots($request) {
+    $tour_id = intval($request['tour_id']);
+    
+    if (!$tour_id) {
+        return new WP_Error('invalid_tour_id', 'Invalid tour ID', array('status' => 400));
+    }
+    
+    $tour = get_post($tour_id);
+    if (!$tour) {
+        return new WP_Error('tour_not_found', 'Tour not found', array('status' => 404));
+    }
+    
+    $room_options = get_field('room_options', $tour_id);
+    $room_spots = array();
+    $total_spots = 0;
+    
+    if (is_array($room_options)) {
+        foreach ($room_options as $room) {
+            $spots = intval($room['spots_left'] ?? 4);
+            $total_spots += $spots;
+            
+            $room_spots[] = array(
+                'type' => $room['type'] ?? 'double',
+                'spots_left' => $spots,
+                'description' => $room['description'] ?? '',
+                'price' => $room['price'] ?? 0,
+                'old_price' => $room['old_price'] ?? null
+            );
+        }
+    }
+    
+    // Если нет вариантов размещения, используем общее поле
+    if ($total_spots === 0) {
+        $spots_left = get_field('spots_left', $tour_id);
+        if ($spots_left === false || $spots_left === null) {
+            $spots_left = 10; // Значение по умолчанию
+        }
+    } else {
+        $spots_left = $total_spots;
+    }
+    
+    error_log("Tour spots API called for tour {$tour_id}: " . print_r($room_spots, true));
+    
+    return array(
+        'success' => true,
+        'tour_id' => $tour_id,
+        'spots_left' => $spots_left,
+        'room_options' => $room_spots
+    );
+}
 
 // Функция для получения списка отелей
 function atlas_get_hotels($request) {
