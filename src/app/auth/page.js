@@ -46,19 +46,26 @@ function AuthPageContent() {
     return () => clearInterval(timer);
   }, [step]);
 
-  const maskedPhone = useMemo(() => {
-    if (!phone) return "";
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length === 0) return "";
-    const cc = `+${digits.slice(0, 1)}`;
-    const p1 = digits.slice(1, 4);
-    const p2 = digits.slice(4, 7);
-    const p3 = digits.slice(7, 9);
-    const p4 = digits.slice(9, 11);
-    return [cc, p1 && ` ${p1}`, p2 && ` ${p2}`, p3 && ` ${p3}`, p4 && ` ${p4}`]
-      .filter(Boolean)
-      .join("");
-  }, [phone]);
+  const handlePhoneChange = (value) => {
+    let numbers = value.replace(/\D/g, '');
+    
+    if (numbers.length === 0) {
+      setPhone('+7 ');
+      return;
+    }
+    
+    if (numbers.charAt(0) !== '7') {
+      numbers = '7' + numbers;
+    }
+    
+    let formatted = '+7 ';
+    if (numbers.length > 1) formatted += numbers.slice(1, 4);
+    if (numbers.length >= 5) formatted += ' ' + numbers.slice(4, 7);
+    if (numbers.length >= 8) formatted += ' ' + numbers.slice(7, 9);
+    if (numbers.length >= 10) formatted += ' ' + numbers.slice(9, 11);
+    
+    setPhone(formatted.trim());
+  };
 
   const canSendCode = phone.replace(/\D/g, "").length >= 11;
   const canConfirm = code.every((c) => c.length === 1);
@@ -209,10 +216,11 @@ function AuthPageContent() {
 
           <input
             className={styles.input}
-            placeholder="Введите свой номер телефона"
-            value={maskedPhone}
-            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+7 777 777 77 77"
+            value={phone || '+7 '}
+            onChange={(e) => handlePhoneChange(e.target.value)}
             inputMode="tel"
+            maxLength={18}
           />
 
 

@@ -1,25 +1,49 @@
+'use client';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from './Partners.module.css';
 
 export default function Partners() {
-  const partners = [
-    { id: 1, logo: "/part_1.svg", name: "Air Astana" },
-    { id: 2, logo: "/part_2.svg", name: "Turkish Airlines" },
-    { id: 3, logo: "/part_3.svg", name: "Air Arabia" },
-    { id: 4, logo: "/part_4.svg", name: "ADDRESS JABAL OMAR MAKKAH" },
-    { id: 5, logo: "/part_1.svg", name: "Partner 5" },
-    { id: 6, logo: "/part_2.svg", name: "Partner 6" },
-    { id: 7, logo: "/part_3.svg", name: "Partner 7" },
-    { id: 8, logo: "/part_4.svg", name: "Partner 8" },
-    { id: 9, logo: "/part_1.svg", name: "Partner 9" },
-    { id: 10, logo: "/part_2.svg", name: "Partner 10" },
-    { id: 11, logo: "/part_3.svg", name: "Partner 11" },
-    { id: 12, logo: "/part_4.svg", name: "Partner 12" },
-    { id: 13, logo: "/part_1.svg", name: "Partner 13" },
-    { id: 14, logo: "/part_2.svg", name: "Partner 14" },
-    { id: 15, logo: "/part_3.svg", name: "Partner 15" },
-    { id: 16, logo: "/part_4.svg", name: "Partner 16" }
-  ];
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const response = await fetch('https://booking.atlas.kz/wp-json/atlas-hajj/v1/home-partners');
+        if (!response.ok) throw new Error('Ошибка загрузки партнеров');
+        const data = await response.json();
+        setPartners(data);
+      } catch (error) {
+        console.error('Ошибка получения партнеров:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPartners();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className={styles.partners}>
+        <div className={styles.container}>
+          <h2 className={styles.title}>Наши партнеры</h2>
+          <div className={styles.logoGrid}>
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className={styles.logoCard}>
+                <div className={styles.logoPlaceholder}>Загрузка...</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!partners || partners.length === 0) {
+    return null;
+  }
 
   return (
     <section className={styles.partners}>

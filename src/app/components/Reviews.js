@@ -63,48 +63,49 @@ function LazyVideo({ review }) {
 }
 
 export default function Reviews() {
-  const reviews = [
-    { 
-      id: 1, 
-      videoId: "jfKfPfyJRdk",
-      title: "Отзыв паломника 1"
-    },
-    { 
-      id: 2, 
-      videoId: "dQw4w9WgXcQ",
-      title: "Отзыв паломника 2"
-    },
-    { 
-      id: 3, 
-      videoId: "kJQP7kiw5Fk",
-      title: "Отзыв паломника 3"
-    },
-    { 
-      id: 4, 
-      videoId: "9bZkp7q19f0",
-      title: "Отзыв паломника 4"
-    },
-    { 
-      id: 5, 
-      videoId: "ZZ5LpwO-An4",
-      title: "Отзыв паломника 5"
-    },
-    { 
-      id: 6, 
-      videoId: "y6120QOlsfU",
-      title: "Отзыв паломника 6"
-    },
-    { 
-      id: 7, 
-      videoId: "jfKfPfyJRdk",
-      title: "Отзыв паломника 7"
-    },
-    { 
-      id: 8, 
-      videoId: "dQw4w9WgXcQ",
-      title: "Отзыв паломника 8"
-    }
-  ];
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch('https://booking.atlas.kz/wp-json/atlas-hajj/v1/pilgrim-reviews');
+        if (!response.ok) throw new Error('Ошибка загрузки отзывов');
+        const data = await response.json();
+        setReviews(data);
+      } catch (error) {
+        console.error('Ошибка получения отзывов:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className={styles.reviews}>
+        <div className={styles.container}>
+          <h2 className={styles.title}>Отзывы наших паломников</h2>
+          <div className={styles.videoGrid}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className={styles.videoCard}>
+                <div className={styles.videoPlaceholder}>
+                  <div className={styles.playButton}>▶</div>
+                  <span className={styles.placeholderText}>Загрузка...</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!reviews || reviews.length === 0) {
+    return null;
+  }
 
   return (
     <section className={styles.reviews}>

@@ -85,11 +85,16 @@ function BookingPageContent() {
   const calculateAge = (birthDate) => {
     if (!birthDate || birthDate.length !== 10) return null;
     
-    // Парсим дату в формате YYYY-MM-DD
-    const birth = new Date(birthDate);
+    const parts = birthDate.split('.');
+    if (parts.length !== 3) return null;
+    
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    
+    const birth = new Date(year, month, day);
     const today = new Date();
     
-    // Проверяем, что дата валидная
     if (isNaN(birth.getTime())) return null;
     
     let age = today.getFullYear() - birth.getFullYear();
@@ -124,19 +129,17 @@ function BookingPageContent() {
       return 'Дата обязательна';
     }
     
-    // Проверяем формат YYYY-MM-DD (HTML5 date input)
-    const dateRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
     const match = dateString.match(dateRegex);
     
     if (!match) {
-      return 'Неверный формат даты';
+      return 'Неверный формат даты (дд.мм.гггг)';
     }
     
-    const year = parseInt(match[1], 10);
+    const day = parseInt(match[1], 10);
     const month = parseInt(match[2], 10);
-    const day = parseInt(match[3], 10);
+    const year = parseInt(match[3], 10);
     
-    // Проверяем корректность даты
     if (day < 1 || day > 31) {
       return 'Неверный день';
     }
@@ -149,7 +152,6 @@ function BookingPageContent() {
       return 'Неверный год';
     }
     
-    // Проверяем, что дата действительно существует
     const date = new Date(year, month - 1, day);
     if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
       return 'Неверная дата';
@@ -198,8 +200,15 @@ function BookingPageContent() {
       errors.passportExpiryDate = passportExpiryDateError;
     }
     
-    if (tourist.id === 1 && (!tourist.phone || tourist.phone.trim() === '')) {
-      errors.phone = 'Номер телефона обязателен';
+    if (tourist.id === 1) {
+      if (!tourist.phone || tourist.phone.trim() === '' || tourist.phone.trim() === '+7') {
+        errors.phone = 'Номер телефона обязателен';
+      } else {
+        const phoneDigits = tourist.phone.replace(/\D/g, '');
+        if (phoneDigits.length !== 11) {
+          errors.phone = 'Введите полный номер телефона (11 цифр)';
+        }
+      }
     }
     
     const ageError = validateAge(tourist.id, tourist.type, tourist.birthDate);
@@ -226,13 +235,21 @@ function BookingPageContent() {
 
 
   const applyPhoneMask = (value) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length === 0) return '';
-    if (numbers.length <= 1) return `+${numbers}`;
-    if (numbers.length <= 4) return `+${numbers.slice(0, 1)} ${numbers.slice(1)}`;
-    if (numbers.length <= 7) return `+${numbers.slice(0, 1)} ${numbers.slice(1, 4)} ${numbers.slice(4)}`;
-    if (numbers.length <= 9) return `+${numbers.slice(0, 1)} ${numbers.slice(1, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7)}`;
-    return `+${numbers.slice(0, 1)} ${numbers.slice(1, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7, 9)} ${numbers.slice(9, 11)}`;
+    let numbers = value.replace(/\D/g, '');
+    
+    if (numbers.length === 0) return '+7 ';
+    
+    if (numbers.charAt(0) !== '7') {
+      numbers = '7' + numbers;
+    }
+    
+    if (numbers.length === 1) return '+7 ';
+    if (numbers.length <= 4) return `+7 ${numbers.slice(1)}`;
+    if (numbers.length <= 7) return `+7 ${numbers.slice(1, 4)} ${numbers.slice(4)}`;
+    if (numbers.length <= 9) return `+7 ${numbers.slice(1, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7)}`;
+    if (numbers.length <= 11) return `+7 ${numbers.slice(1, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7, 9)} ${numbers.slice(9, 11)}`;
+    
+    return `+7 ${numbers.slice(1, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7, 9)} ${numbers.slice(9, 11)}`;
   };
 
   const applyIinMask = (value) => {
@@ -352,20 +369,32 @@ function BookingPageContent() {
     
     const newErrors = {};
     let hasErrors = false;
+    let firstErrorField = null;
     
     tourists.forEach(tourist => {
       const touristErrors = validateTourist(tourist);
       if (Object.keys(touristErrors).length > 0) {
         hasErrors = true;
         Object.keys(touristErrors).forEach(field => {
-          newErrors[`${tourist.id}-${field}`] = touristErrors[field];
+          const errorKey = `${tourist.id}-${field}`;
+          newErrors[errorKey] = touristErrors[field];
+          if (!firstErrorField) {
+            firstErrorField = errorKey;
+          }
         });
       }
     });
 
     setErrors(newErrors);
 
-    if (!hasErrors) {
+    if (hasErrors) {
+      if (firstErrorField) {
+        const errorElement = document.querySelector(`[data-error-key="${firstErrorField}"]`);
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    } else {
       setIsReviewMode(true);
     }
   };
@@ -648,7 +677,7 @@ function BookingPageContent() {
                         )}
                         
                         <div className={styles.formGrid}>
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-lastName`}>
                             <label>Фамилия</label>
                             <input
                               type="text"
@@ -666,7 +695,7 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-firstName`}>
                             <label>Имя</label>
                             <input
                               type="text"
@@ -684,12 +713,33 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-birthDate`}>
                             <label>Дата рождения</label>
                             <input
-                              type="date"
+                              type="text"
                               value={tourist.birthDate}
-                              onChange={(e) => handleInputChange(tourist.id, "birthDate", e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                let formatted = '';
+                                
+                                if (value.length > 0) {
+                                  const day = parseInt(value.slice(0, 2));
+                                  formatted = day > 31 ? '31' : value.slice(0, 2);
+                                }
+                                
+                                if (value.length >= 3) {
+                                  const month = parseInt(value.slice(2, 4));
+                                  formatted += '.' + (month > 12 ? '12' : value.slice(2, 4));
+                                }
+                                
+                                if (value.length >= 5) {
+                                  formatted += '.' + value.slice(4, 8);
+                                }
+                                
+                                handleInputChange(tourist.id, "birthDate", formatted);
+                              }}
+                              placeholder="дд.мм.гггг"
+                              maxLength={10}
                               required
                               className={errors[`${tourist.id}-birthDate`] || errors[`${tourist.id}-age`] ? styles.error : ''}
                             />
@@ -701,7 +751,7 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-gender`}>
                             <label>Пол</label>
                             <div className={styles.radioGroup}>
                               <label>
@@ -730,7 +780,7 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-iin`}>
                             <label>ИИН</label>
                             <input
                               type="text"
@@ -746,7 +796,7 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-passportNumber`}>
                             <label>Номер паспорта (без №)</label>
                             <div className={styles.passportInput}>
                               <span className={styles.passportPrefix}>N</span>
@@ -765,12 +815,33 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-passportIssueDate`}>
                             <label>Дата выдачи паспорта</label>
                             <input
-                              type="date"
+                              type="text"
                               value={tourist.passportIssueDate}
-                              onChange={(e) => handleInputChange(tourist.id, "passportIssueDate", e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                let formatted = '';
+                                
+                                if (value.length > 0) {
+                                  const day = parseInt(value.slice(0, 2));
+                                  formatted = day > 31 ? '31' : value.slice(0, 2);
+                                }
+                                
+                                if (value.length >= 3) {
+                                  const month = parseInt(value.slice(2, 4));
+                                  formatted += '.' + (month > 12 ? '12' : value.slice(2, 4));
+                                }
+                                
+                                if (value.length >= 5) {
+                                  formatted += '.' + value.slice(4, 8);
+                                }
+                                
+                                handleInputChange(tourist.id, "passportIssueDate", formatted);
+                              }}
+                              placeholder="дд.мм.гггг"
+                              maxLength={10}
                               required
                               className={errors[`${tourist.id}-passportIssueDate`] ? styles.error : ''}
                             />
@@ -779,12 +850,33 @@ function BookingPageContent() {
                             )}
                           </div>
 
-                          <div className={styles.formGroup}>
+                          <div className={styles.formGroup} data-error-key={`${tourist.id}-passportExpiryDate`}>
                             <label>Срок действия паспорта</label>
                             <input
-                              type="date"
+                              type="text"
                               value={tourist.passportExpiryDate}
-                              onChange={(e) => handleInputChange(tourist.id, "passportExpiryDate", e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                let formatted = '';
+                                
+                                if (value.length > 0) {
+                                  const day = parseInt(value.slice(0, 2));
+                                  formatted = day > 31 ? '31' : value.slice(0, 2);
+                                }
+                                
+                                if (value.length >= 3) {
+                                  const month = parseInt(value.slice(2, 4));
+                                  formatted += '.' + (month > 12 ? '12' : value.slice(2, 4));
+                                }
+                                
+                                if (value.length >= 5) {
+                                  formatted += '.' + value.slice(4, 8);
+                                }
+                                
+                                handleInputChange(tourist.id, "passportExpiryDate", formatted);
+                              }}
+                              placeholder="дд.мм.гггг"
+                              maxLength={10}
                               required
                               className={errors[`${tourist.id}-passportExpiryDate`] ? styles.error : ''}
                             />
@@ -794,13 +886,14 @@ function BookingPageContent() {
                           </div>
 
                           {index === 0 && (
-                            <div className={styles.formGroup}>
+                            <div className={styles.formGroup} data-error-key={`${tourist.id}-phone`}>
                               <label>Введите номер телефона</label>
                               <input
                                 type="tel"
-                                value={tourist.phone}
+                                value={tourist.phone || '+7 '}
                                 onChange={(e) => handleInputChange(tourist.id, "phone", e.target.value)}
-                                placeholder="+7 --- ---- ----"
+                                placeholder="+7 777 777 77 77"
+                                maxLength={18}
                                 required
                                 className={errors[`${tourist.id}-phone`] ? styles.error : ''}
                               />
@@ -914,7 +1007,6 @@ function BookingPageContent() {
                 <button 
                   className={styles.paymentButton} 
                   onClick={handleSubmit}
-                  disabled={!isFormReady()}
                 >
                   Перейти к оплате
                 </button>

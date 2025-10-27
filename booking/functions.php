@@ -204,6 +204,28 @@ function booking_setup() {
 }
 add_action( 'after_setup_theme', 'booking_setup' );
 
+if( function_exists('acf_add_options_page') ) {
+    acf_add_options_page(array(
+        'page_title'    => 'Настройки отзывов',
+        'menu_title'    => 'Отзывы',
+        'menu_slug'     => 'theme-reviews-settings',
+        'capability'    => 'edit_posts',
+        'icon_url'      => 'dashicons-video-alt3',
+        'position'      => 30,
+        'redirect'      => false
+    ));
+    
+    acf_add_options_page(array(
+        'page_title'    => 'Настройки партнеров',
+        'menu_title'    => 'Партнеры',
+        'menu_slug'     => 'theme-partners-settings',
+        'capability'    => 'edit_posts',
+        'icon_url'      => 'dashicons-businessman',
+        'position'      => 31,
+        'redirect'      => false
+    ));
+}
+
 // Регистрируем таксономию для типов паломничества
 function atlas_register_pilgrimage_taxonomy() {
     register_taxonomy(
@@ -1730,9 +1752,21 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true'
     ));
     
+    register_rest_route('atlas-hajj/v1', '/pilgrim-reviews', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_pilgrim_reviews',
+        'permission_callback' => '__return_true'
+    ));
+    
     register_rest_route('atlas-hajj/v1', '/partners', array(
         'methods' => 'GET',
         'callback' => 'atlas_get_partners',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('atlas-hajj/v1', '/home-partners', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_home_partners',
         'permission_callback' => '__return_true'
     ));
     
@@ -2473,6 +2507,23 @@ function atlas_get_reviews($request) {
     return $reviews;
 }
 
+function atlas_get_pilgrim_reviews($request) {
+    $reviews_list = get_field('reviews_list', 'option');
+    $reviews = array();
+    
+    if ($reviews_list && is_array($reviews_list)) {
+        foreach ($reviews_list as $index => $review) {
+            $reviews[] = array(
+                'id' => $index + 1,
+                'videoId' => $review['video_id'] ?? '',
+                'title' => $review['title'] ?? ''
+            );
+        }
+    }
+    
+    return $reviews;
+}
+
 function atlas_get_partners($request) {
     $args = array(
         'post_type' => 'post',
@@ -2497,6 +2548,23 @@ function atlas_get_partners($request) {
     }
     
     wp_reset_postdata();
+    
+    return $partners;
+}
+
+function atlas_get_home_partners($request) {
+    $partners_list = get_field('partners_list', 'option');
+    $partners = array();
+    
+    if ($partners_list && is_array($partners_list)) {
+        foreach ($partners_list as $index => $partner) {
+            $partners[] = array(
+                'id' => $index + 1,
+                'logo' => $partner['logo'] ?? '',
+                'name' => $partner['name'] ?? ''
+            );
+        }
+    }
     
     return $partners;
 }

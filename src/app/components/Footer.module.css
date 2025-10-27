@@ -7,6 +7,10 @@
   margin: 80px auto 20px;
 }
 
+.copyright{
+  text-align: center;
+}
+
 .container {
   max-width: 1360px;
   margin: 0 auto;
@@ -42,7 +46,7 @@
 
 .bottomSection {
   display: flex;
-  justify-content: space-between;
+  justify-content:center;
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;

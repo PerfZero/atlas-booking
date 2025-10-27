@@ -19,10 +19,7 @@ export default function Footer() {
           <div className={styles.copyright}>
             © Atlas Tourism 2025
           </div>
-          <div className={styles.links}>
-            <a href="/terms" className={styles.link}>Условия пользования</a>
-            <a href="/privacy" className={styles.link}>Политика конфиденциальности</a>
-          </div>
+         
         </div>
       </div>
     </footer>

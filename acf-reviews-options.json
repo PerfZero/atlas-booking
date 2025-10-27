@@ -1,0 +1,69 @@
+{
+  "key": "group_reviews_options",
+  "title": "Настройки отзывов",
+  "fields": [
+    {
+      "key": "field_reviews_list",
+      "label": "Отзывы паломников",
+      "name": "reviews_list",
+      "type": "repeater",
+      "instructions": "Добавьте видео-отзывы паломников с YouTube",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "collapsed": "field_review_title",
+      "min": 0,
+      "max": 0,
+      "layout": "block",
+      "button_label": "Добавить отзыв",
+      "sub_fields": [
+        {
+          "key": "field_review_title",
+          "label": "Название",
+          "name": "title",
+          "type": "text",
+          "instructions": "Название отзыва (например: Отзыв Айгуль о поездке в Хадж)",
+          "required": 1,
+          "default_value": "",
+          "placeholder": "Отзыв паломника",
+          "maxlength": "",
+          "parent": "field_reviews_list"
+        },
+        {
+          "key": "field_review_video_id",
+          "label": "YouTube Video ID",
+          "name": "video_id",
+          "type": "text",
+          "instructions": "ID видео с YouTube (например: jfKfPfyJRdk из ссылки https://www.youtube.com/watch?v=jfKfPfyJRdk)",
+          "required": 1,
+          "default_value": "",
+          "placeholder": "jfKfPfyJRdk",
+          "maxlength": "",
+          "parent": "field_reviews_list"
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "options_page",
+        "operator": "==",
+        "value": "theme-reviews-settings"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": ""
+}
+
