@@ -67,6 +67,7 @@ function AuthPageContent() {
     setPhone(formatted.trim());
   };
 
+  const maskedPhone = phone ? phone.replace(/(\+7 )(\d{3})( \d{3})( \d{2})( \d{2})/, '$1$2 *** **$5') : '';
   const canSendCode = phone.replace(/\D/g, "").length >= 11;
   const canConfirm = code.every((c) => c.length === 1);
 
