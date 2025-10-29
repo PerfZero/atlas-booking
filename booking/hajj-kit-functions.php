@@ -31,7 +31,7 @@ function atlas_register_hajj_kit_post_type() {
         'capability_type' => 'post',
         'hierarchical' => false,
         'menu_position' => 7,
-        'menu_icon' => 'dashicons-bag',
+        'menu_icon' => 'dashicons-archive',
         'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
         'show_in_admin_bar' => true,
     ));

@@ -1986,9 +1986,13 @@ function atlas_send_sms($request) {
         $phone = '+7' . $phone;
     }
     
-    // Конфигурация SMSC
-    $login = 'SattilyBro';
-    $password = 'pswForSmsc1!';
+    $login = get_option('atlas_smsc_login', '');
+    $password = get_option('atlas_smsc_password', '');
+    
+    if (empty($login) || empty($password)) {
+        return new WP_Error('sms_error', 'SMSC credentials not configured', array('status' => 500));
+    }
+    
     $message = "Ваш код подтверждения: {$code}. Atlas Hajj";
     
     // Формируем URL для отправки SMS
@@ -3613,10 +3617,87 @@ function atlas_kaspi_admin_menu() {
     );
 }
 
+function atlas_api_settings_menu() {
+    add_menu_page(
+        'Настройки API', 
+        'Настройки API', 
+        'manage_options', 
+        'atlas-api-settings', 
+        'atlas_api_settings_page',
+        'dashicons-admin-network',
+        31
+    );
+}
+add_action('admin_menu', 'atlas_api_settings_menu');
+
+function atlas_api_settings_page() {
+    if (isset($_POST['save_api_settings'])) {
+        check_admin_referer('atlas_api_settings');
+        
+        update_option('atlas_smsc_login', sanitize_text_field($_POST['smsc_login']));
+        update_option('atlas_smsc_password', sanitize_text_field($_POST['smsc_password']));
+        
+        echo '<div class="notice notice-success"><p>Настройки сохранены</p></div>';
+    }
+    
+    $smsc_login = get_option('atlas_smsc_login', '');
+    $smsc_password = get_option('atlas_smsc_password', '');
+    
+    ?>
+    <div class="wrap">
+        <h1>⚙️ Настройки API</h1>
+        
+        <form method="post">
+            <?php wp_nonce_field('atlas_api_settings'); ?>
+            
+            <table class="form-table">
+                <tr>
+                    <th scope="row">
+                        <label for="smsc_login">SMSC Логин</label>
+                    </th>
+                    <td>
+                        <input type="text" 
+                               id="smsc_login" 
+                               name="smsc_login" 
+                               value="<?php echo esc_attr($smsc_login); ?>" 
+                               class="regular-text">
+                        <p class="description">Логин для SMSC.kz API</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="smsc_password">SMSC Пароль</label>
+                    </th>
+                    <td>
+                        <input type="password" 
+                               id="smsc_password" 
+                               name="smsc_password" 
+                               value="<?php echo esc_attr($smsc_password); ?>" 
+                               class="regular-text">
+                        <p class="description">Пароль для SMSC.kz API</p>
+                    </td>
+                </tr>
+            </table>
+            
+            <p class="submit">
+                <input type="submit" 
+                       name="save_api_settings" 
+                       class="button button-primary" 
+                       value="Сохранить настройки">
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
 // Страница в админке
 function atlas_kaspi_admin_page() {
+    if (isset($_POST['clear_payments'])) {
+        update_option('atlas_kaspi_payments', array());
+        echo '<div class="notice notice-success"><p>Все платежи очищены</p></div>';
+    }
+    
     if (isset($_POST['test_kaspi'])) {
-        // Создаем тестовый платеж
         $tran_id = 'KSP' . uniqid();
         $order_id = 'test_' . time();
         $amount = 100000;
@@ -3690,6 +3771,10 @@ function atlas_kaspi_admin_page() {
             <h2>Все платежи</h2>
             <?php
             if (!empty($payments)) {
+                echo '<p><strong>Всего платежей: ' . count($payments) . '</strong></p>';
+                echo '<form method="post" style="margin-bottom: 15px;">';
+                echo '<input type="submit" name="clear_payments" class="button button-secondary" value="🗑️ Очистить все платежи" onclick="return confirm(\'Вы уверены? Это удалит все платежи!\');">';
+                echo '</form>';
                 echo '<table class="wp-list-table widefat fixed striped">';
                 echo '<thead><tr><th>TranId</th><th>OrderId</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>';
                 echo '<tbody>';
@@ -3754,8 +3839,8 @@ function atlas_create_kaspi_payment($request) {
         'OrderId' => $order_id,
         'Amount' => $amount * 100,
         'Service' => 'AtlasBooking',
-        'returnUrl' => 'https://booking.atlas.kz/kaspi-payment-success?txn_id=' . $tran_id . '&order_id=' . $order_id,
-        'refererHost' => 'booking.atlas.kz',
+        'returnUrl' => 'https://api.booking.atlas.kz/kaspi-payment-success?txn_id=' . $tran_id . '&order_id=' . $order_id,
+        'refererHost' => 'api.booking.atlas.kz',
         'GenerateQrCode' => false
     );
     
@@ -3776,6 +3861,10 @@ function atlas_create_kaspi_payment($request) {
     $response_code = wp_remote_retrieve_response_code($response);
     $response_body = wp_remote_retrieve_body($response);
     
+    error_log('KASPI Response Code: ' . $response_code);
+    error_log('KASPI Response Body: ' . $response_body);
+    error_log('KASPI Request Data: ' . json_encode($kaspi_data));
+    
     if ($response_code === 200) {
         $kaspi_result = json_decode($response_body, true);
         
@@ -3794,7 +3883,7 @@ function atlas_create_kaspi_payment($request) {
             } elseif (isset($kaspi_result['comment'])) {
                 $error_message = $kaspi_result['comment'];
             }
-            error_log('KASPI ERROR: ' . $error_message);
+            error_log('KASPI ERROR: ' . $error_message . ' | Full response: ' . print_r($kaspi_result, true));
             return new WP_Error('kaspi_error', 'Kaspi returned error: ' . $error_message, array('status' => 400));
         }
     } else {
@@ -4319,4 +4408,29 @@ function atlas_flight_duration_calculator() {
     <?php
 }
 add_action('admin_footer', 'atlas_flight_duration_calculator');
+
+function atlas_kaspi_payment_success_redirect() {
+    if (strpos($_SERVER['REQUEST_URI'], '/kaspi-payment-success') !== false) {
+        $txn_id = isset($_GET['txn_id']) ? sanitize_text_field($_GET['txn_id']) : '';
+        $order_id = isset($_GET['order_id']) ? sanitize_text_field($_GET['order_id']) : '';
+        
+        $redirect_url = 'https://booking.atlas.kz/kaspi-payment-success';
+        $params = array();
+        
+        if (!empty($txn_id)) {
+            $params['txn_id'] = $txn_id;
+        }
+        if (!empty($order_id)) {
+            $params['order_id'] = $order_id;
+        }
+        
+        if (!empty($params)) {
+            $redirect_url .= '?' . http_build_query($params);
+        }
+        
+        wp_redirect($redirect_url);
+        exit;
+    }
+}
+add_action('template_redirect', 'atlas_kaspi_payment_success_redirect');
 
