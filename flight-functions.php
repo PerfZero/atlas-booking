@@ -78,7 +78,14 @@ function atlas_import_flight_acf_fields() {
     // Сбрасываем импорт для обновления полей
     delete_option('atlas_flight_acf_imported');
     
-    $acf_fields = json_decode(file_get_contents(get_template_directory() . '/acf-flight-fields.json'), true);
+    $file_path = get_template_directory() . '/acf-flight-fields.json';
+    if (!file_exists($file_path)) {
+        $file_path = dirname(get_template_directory()) . '/acf-flight-fields.json';
+    }
+    if (!file_exists($file_path)) {
+        return;
+    }
+    $acf_fields = @json_decode(@file_get_contents($file_path), true);
     
     if ($acf_fields) {
         acf_add_local_field_group($acf_fields);

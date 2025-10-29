@@ -8,9 +8,10 @@
  */
 
 if ( ! defined( '_S_VERSION' ) ) {
-	// Replace the version number of the theme on each release.
 	define( '_S_VERSION', '1.0.0' );
 }
+
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 // Подключаем функции для хадж наборов
 require_once get_template_directory() . '/hajj-kit-functions.php';
@@ -296,6 +297,148 @@ function atlas_register_hotel_post_type() {
     ));
 }
 add_action('init', 'atlas_register_hotel_post_type');
+
+function atlas_hotel_post_object_result($title, $post, $field, $post_id) {
+    if ($post->post_type === 'hotel') {
+        $check_in = get_field('check_in', $post->ID);
+        $check_out = get_field('check_out', $post->ID);
+        $city = get_field('city', $post->ID);
+        
+        $info_parts = array();
+        
+        if ($city) {
+            $city_name = $city === 'mekka' ? 'Мекка' : 'Медина';
+            $info_parts[] = $city_name;
+        }
+        
+        if ($check_in && $check_out) {
+            $check_in_date = new DateTime($check_in);
+            $check_out_date = new DateTime($check_out);
+            $formatted_check_in = $check_in_date->format('d.m.Y');
+            $formatted_check_out = $check_out_date->format('d.m.Y');
+            $info_parts[] = $formatted_check_in . ' - ' . $formatted_check_out;
+        } elseif ($check_in) {
+            $check_in_date = new DateTime($check_in);
+            $formatted_check_in = $check_in_date->format('d.m.Y');
+            $info_parts[] = 'с ' . $formatted_check_in;
+        } elseif ($check_out) {
+            $check_out_date = new DateTime($check_out);
+            $formatted_check_out = $check_out_date->format('d.m.Y');
+            $info_parts[] = 'до ' . $formatted_check_out;
+        }
+        
+        if (!empty($info_parts)) {
+            $title .= ' (' . implode(' | ', $info_parts) . ')';
+        }
+    }
+    return $title;
+}
+add_filter('acf/fields/post_object/result', 'atlas_hotel_post_object_result', 10, 4);
+
+function atlas_hotel_admin_columns($columns) {
+    $new_columns = array();
+    
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        
+        if ($key === 'title') {
+            $new_columns['hotel_city'] = 'Город';
+            $new_columns['hotel_stars'] = 'Звезды';
+            $new_columns['hotel_check_in'] = 'Дата заезда';
+            $new_columns['hotel_check_out'] = 'Дата выезда';
+            $new_columns['hotel_rating'] = 'Рейтинг';
+        }
+    }
+    
+    return $new_columns;
+}
+add_filter('manage_hotel_posts_columns', 'atlas_hotel_admin_columns');
+
+function atlas_hotel_admin_column_content($column, $post_id) {
+    switch ($column) {
+        case 'hotel_city':
+            $city = get_field('city', $post_id);
+            if ($city === 'mekka') {
+                echo 'Мекка';
+            } elseif ($city === 'medina') {
+                echo 'Медина';
+            } else {
+                echo '—';
+            }
+            break;
+            
+        case 'hotel_stars':
+            $stars = get_field('stars', $post_id);
+            echo $stars ? $stars . ' ★' : '—';
+            break;
+            
+        case 'hotel_check_in':
+            $check_in = get_field('check_in', $post_id);
+            if ($check_in) {
+                $date = new DateTime($check_in);
+                echo $date->format('d.m.Y');
+            } else {
+                echo '—';
+            }
+            break;
+            
+        case 'hotel_check_out':
+            $check_out = get_field('check_out', $post_id);
+            if ($check_out) {
+                $date = new DateTime($check_out);
+                echo $date->format('d.m.Y');
+            } else {
+                echo '—';
+            }
+            break;
+            
+        case 'hotel_rating':
+            $rating = get_field('rating', $post_id);
+            echo $rating ? $rating : '—';
+            break;
+    }
+}
+add_action('manage_hotel_posts_custom_column', 'atlas_hotel_admin_column_content', 10, 2);
+
+function atlas_hotel_sortable_columns($columns) {
+    $columns['hotel_city'] = 'city';
+    $columns['hotel_stars'] = 'stars';
+    $columns['hotel_check_in'] = 'check_in';
+    $columns['hotel_check_out'] = 'check_out';
+    $columns['hotel_rating'] = 'rating';
+    return $columns;
+}
+add_filter('manage_edit-hotel_sortable_columns', 'atlas_hotel_sortable_columns');
+
+function atlas_hotel_orderby($query) {
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+    
+    if ($query->get('post_type') !== 'hotel') {
+        return;
+    }
+    
+    $orderby = $query->get('orderby');
+    
+    if ('city' === $orderby) {
+        $query->set('meta_key', 'city');
+        $query->set('orderby', 'meta_value');
+    } elseif ('stars' === $orderby) {
+        $query->set('meta_key', 'stars');
+        $query->set('orderby', 'meta_value_num');
+    } elseif ('check_in' === $orderby) {
+        $query->set('meta_key', 'check_in');
+        $query->set('orderby', 'meta_value');
+    } elseif ('check_out' === $orderby) {
+        $query->set('meta_key', 'check_out');
+        $query->set('orderby', 'meta_value');
+    } elseif ('rating' === $orderby) {
+        $query->set('meta_key', 'rating');
+        $query->set('orderby', 'meta_value_num');
+    }
+}
+add_action('pre_get_posts', 'atlas_hotel_orderby');
 
 function atlas_register_transfer_post_type() {
     register_post_type('transfer', array(
@@ -650,8 +793,6 @@ function debug_hotel_fields_save($post_id) {
     $hotel_mekka = get_field('hotel_mekka', $post_id);
     $hotel_medina = get_field('hotel_medina', $post_id);
     
-    error_log('Hotel Mekka saved: ' . print_r($hotel_mekka, true));
-    error_log('Hotel Medina saved: ' . print_r($hotel_medina, true));
 }
 
 /**
@@ -2943,16 +3084,9 @@ function atlas_get_my_bookings($request) {
                     $current_time = time();
                     
                     if ($current_time > $expiration_time) {
-                        // Обновляем статус на "expired" в базе данных
-                        global $wpdb;
-                        $wpdb->update(
-                            $wpdb->prefix . 'atlas_bookings',
-                            array('status' => 'expired'),
-                            array('booking_id' => $booking['booking_id']),
-                            array('%s'),
-                            array('%s')
-                        );
                         $booking['status'] = 'expired';
+                        $user_bookings[$booking_id]['status'] = 'expired';
+                        update_user_meta($user_id, 'atlas_bookings', $user_bookings);
                     }
                 }
         }
@@ -3025,8 +3159,6 @@ function atlas_kaspi_check_payment($params) {
     $account = sanitize_text_field($params['account'] ?? '');
     $sum = floatval($params['sum'] ?? 0);
     
-    error_log('=== atlas_kaspi_check_payment called ===');
-    error_log('Check params: txn_id=' . $txn_id . ', account=' . $account . ', sum=' . $sum);
     
     // Проверяем тестовые заказы
     if (strpos($account, 'ATLAS-TEST-') === 0) {
@@ -3043,7 +3175,6 @@ function atlas_kaspi_check_payment($params) {
     }
     
     $payments = get_option('atlas_kaspi_payments', array());
-    error_log('All payments: ' . print_r($payments, true));
     
     // Ищем платеж по txn_id или account
     $payment = null;
@@ -3098,7 +3229,7 @@ function atlas_kaspi_check_payment($params) {
                 );
         }
     } else {
-        error_log('Payment not found for txn_id: ' . $txn_id . ' or account: ' . $account);
+        error_log('KASPI Payment ERROR: Payment not found for txn_id=' . $txn_id . ', account=' . $account);
         return array(
             'txn_id' => $txn_id,
             'result' => 1,
@@ -3113,8 +3244,6 @@ function atlas_kaspi_process_payment($params) {
     $sum = floatval($params['sum'] ?? 0);
     $txn_date = sanitize_text_field($params['txn_date'] ?? '');
     
-    error_log('=== atlas_kaspi_process_payment called ===');
-    error_log('Process params: txn_id=' . $txn_id . ', account=' . $account . ', sum=' . $sum . ', txn_date=' . $txn_date);
     
     // Проверяем тестовые заказы
     if (strpos($account, 'ATLAS-TEST-') === 0) {
@@ -3131,32 +3260,34 @@ function atlas_kaspi_process_payment($params) {
     }
     
     $payments = get_option('atlas_kaspi_payments', array());
-    error_log('All payments in process: ' . print_r($payments, true));
     
-    // Ищем платеж по txn_id или account
     $payment = null;
+    $payment_key = null;
+    
     if (isset($payments[$txn_id])) {
         $payment = $payments[$txn_id];
+        $payment_key = $txn_id;
     } else {
-        // Ищем по account
-        foreach ($payments as $payment_data) {
+        foreach ($payments as $key => $payment_data) {
             if ($payment_data['order_id'] === $account) {
                 $payment = $payment_data;
+                $payment_key = $key;
                 break;
             }
         }
     }
     
     if ($payment) {
-        error_log('Found payment in process: ' . print_r($payment, true));
-        
-        // Проверяем статус платежа
         $status = $payment['status'] ?? 'pending';
         
         if ($status === 'completed') {
-            $order_id = sanitize_text_field($params['account'] ?? '');
-            wp_redirect('https://booking.atlas.kz/kaspi-payment-success?txn_id=' . $txn_id . '&order_id=' . $order_id);
-            exit;
+            return array(
+                'txn_id' => $txn_id,
+                'prv_txn_id' => 'ATLAS-PAYMENT-' . $payment_key,
+                'result' => 3,
+                'sum' => $payment['processed_amount'] ?? $sum,
+                'comment' => 'Заказ уже оплачен'
+            );
         } elseif ($status === 'cancelled') {
             return array(
                 'txn_id' => $txn_id,
@@ -3171,41 +3302,47 @@ function atlas_kaspi_process_payment($params) {
             );
         }
         
-        // Обрабатываем платеж
         $payment['status'] = 'completed';
         $payment['completed_at'] = current_time('mysql');
         $payment['kaspi_txn_date'] = $txn_date;
         $payment['processed_amount'] = $sum;
+        $payment['kaspi_txn_id'] = $txn_id;
         
-        $payments[$txn_id] = $payment;
+        $payments[$payment_key] = $payment;
         update_option('atlas_kaspi_payments', $payments);
         
-        error_log('Payment marked as completed');
-        
-        // Обновляем бронирование пользователя
         if (isset($payment['user_id']) && isset($payment['tour_id'])) {
             $user_bookings = get_user_meta($payment['user_id'], 'atlas_bookings', true);
+            
             if (is_array($user_bookings)) {
+                $booking_found = false;
+                $order_id = $payment['order_id'];
+                
                 foreach ($user_bookings as $booking_id => $booking) {
-                    if ($booking['tour_id'] == $payment['tour_id']) {
+                    if ($booking_id === $order_id) {
                         $user_bookings[$booking_id]['status'] = 'paid';
-                        $user_bookings[$booking_id]['payment_id'] = $txn_id;
+                        $user_bookings[$booking_id]['payment_id'] = $payment_key;
                         $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
-                        error_log('User booking updated: ' . print_r($user_bookings[$booking_id], true));
                         
-                        // Обновляем количество мест в туре
                         $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
                         $room_type = isset($booking['tour_data']['roomType']) ? $booking['tour_data']['roomType'] : null;
                         atlas_update_tour_spots($payment['tour_id'], $tourists_count, $room_type);
                         
+                        $booking_found = true;
                         break;
                     }
                 }
-                update_user_meta($payment['user_id'], 'atlas_bookings', $user_bookings);
+                
+                if ($booking_found) {
+                    update_user_meta($payment['user_id'], 'atlas_bookings', $user_bookings);
+                } else {
+                    error_log('KASPI Payment ERROR: Booking not found for order_id=' . $order_id);
+                }
             }
+        } else {
+            error_log('KASPI Payment ERROR: Payment missing user_id or tour_id');
         }
         
-        error_log('Payment processed successfully');
         return array(
             'txn_id' => $txn_id,
             'prv_txn_id' => 'ATLAS-PAYMENT-' . $txn_id,
@@ -3214,7 +3351,7 @@ function atlas_kaspi_process_payment($params) {
             'comment' => 'Платеж успешно обработан'
         );
     } else {
-        error_log('Payment not found for txn_id: ' . $txn_id . ' or account: ' . $account);
+        error_log('KASPI Payment ERROR: Payment not found for txn_id=' . $txn_id . ', account=' . $account);
         return array(
             'txn_id' => $txn_id,
             'result' => 1,
@@ -3225,7 +3362,6 @@ function atlas_kaspi_process_payment($params) {
 
 // Функция для обработки тестовых заказов
 function atlas_kaspi_handle_test_order($account, $txn_id, $command, $sum = 0, $txn_date = '') {
-    error_log('=== Handling test order: ' . $account . ' ===');
     
     $test_orders = array(
         'ATLAS-TEST-00001' => array('status' => 'pending', 'result' => 0, 'comment' => 'Заказ найден и доступен для оплаты'),
@@ -3577,39 +3713,25 @@ function atlas_kaspi_admin_page() {
 }
 
 function atlas_create_kaspi_payment($request) {
-    error_log('=== atlas_create_kaspi_payment called ===');
     $params = $request->get_params();
-    
-    // Отладочная информация
-    error_log('Kaspi payment params: ' . print_r($params, true));
     
     $order_id = sanitize_text_field($params['order_id'] ?? '');
     $amount = intval($params['amount'] ?? 0);
     $tour_id = intval($params['tour_id'] ?? 0);
     $token = sanitize_text_field($params['token'] ?? '');
     
-    error_log("Parsed params: order_id=$order_id, amount=$amount, tour_id=$tour_id, token=$token");
-    
     if (empty($order_id) || $amount <= 0 || $tour_id <= 0 || empty($token)) {
-        error_log("Validation failed: order_id=" . (empty($order_id) ? 'empty' : $order_id) . 
-                 ", amount=" . $amount . 
-                 ", tour_id=" . $tour_id . 
-                 ", token=" . (empty($token) ? 'empty' : 'present'));
         return new WP_Error('invalid_params', 'Invalid parameters', array('status' => 400));
     }
     
-    // Получаем токены из WordPress опций
     $tokens = get_option('atlas_auth_tokens', array());
     
     if (!isset($tokens[$token])) {
-        error_log("Token not found: $token");
         return new WP_Error('invalid_token', 'Invalid token', array('status' => 401));
     }
     
     $token_data = $tokens[$token];
     $user_id = $token_data['user_id'];
-    
-    error_log("User ID from token: $user_id");
     
     $tran_id = 'KSP' . uniqid();
     
@@ -3627,29 +3749,15 @@ function atlas_create_kaspi_payment($request) {
     $payments[$tran_id] = $payment_data;
     update_option('atlas_kaspi_payments', $payments);
     
-    error_log('Payment saved to database: ' . print_r($payment_data, true));
-    error_log('All payments after save: ' . print_r($payments, true));
-    
-    // Делаем POST запрос к Kaspi для получения URL оплаты (JSON формат)
-    error_log('Making POST request to Kaspi for payment URL');
-    
-    // Делаем POST запрос к Kaspi для получения URL оплаты (JSON формат)
-    error_log('Making POST request to Kaspi for payment URL');
-    
     $kaspi_data = array(
         'TranId' => $tran_id,
         'OrderId' => $order_id,
         'Amount' => $amount * 100,
         'Service' => 'AtlasBooking',
-        'returnUrl' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount,
-        'refererHost' => 'api.booking.atlas.kz',
+        'returnUrl' => 'https://booking.atlas.kz/kaspi-payment-success?txn_id=' . $tran_id . '&order_id=' . $order_id,
+        'refererHost' => 'booking.atlas.kz',
         'GenerateQrCode' => false
     );
-    
-    error_log('Kaspi request data: ' . print_r($kaspi_data, true));
-    
-    // Отправляем POST запрос к Kaspi (JSON формат согласно документации)
-    error_log('Sending POST request to Kaspi with data: ' . print_r($kaspi_data, true));
     
     $response = wp_remote_post('https://kaspi.kz/online', array(
         'body' => json_encode($kaspi_data),
@@ -3661,25 +3769,17 @@ function atlas_create_kaspi_payment($request) {
     ));
     
     if (is_wp_error($response)) {
-        error_log('Kaspi request failed: ' . $response->get_error_message());
+        error_log('KASPI ERROR: Request failed - ' . $response->get_error_message());
         return new WP_Error('kaspi_error', 'Failed to get payment URL from Kaspi', array('status' => 500));
     }
     
     $response_code = wp_remote_retrieve_response_code($response);
     $response_body = wp_remote_retrieve_body($response);
     
-    error_log('Kaspi response code: ' . $response_code);
-    error_log('Kaspi response body: ' . $response_body);
-    
     if ($response_code === 200) {
-        // Парсим JSON ответ от Kaspi
         $kaspi_result = json_decode($response_body, true);
-        error_log('Parsed Kaspi response: ' . print_r($kaspi_result, true));
         
         if ($kaspi_result && isset($kaspi_result['code']) && $kaspi_result['code'] === 0) {
-            // Успешный ответ от Kaspi
-            error_log('Kaspi payment URL received: ' . $kaspi_result['redirectUrl']);
-            
             return array(
                 'success' => true,
                 'payment_url' => $kaspi_result['redirectUrl'],
@@ -3688,30 +3788,25 @@ function atlas_create_kaspi_payment($request) {
                 'amount' => $amount
             );
         } else {
-            error_log('Kaspi returned error: ' . print_r($kaspi_result, true));
             $error_message = 'Unknown error';
             if (isset($kaspi_result['message'])) {
                 $error_message = $kaspi_result['message'];
             } elseif (isset($kaspi_result['comment'])) {
                 $error_message = $kaspi_result['comment'];
             }
+            error_log('KASPI ERROR: ' . $error_message);
             return new WP_Error('kaspi_error', 'Kaspi returned error: ' . $error_message, array('status' => 400));
         }
     } else {
-        error_log('Kaspi request failed with code: ' . $response_code);
-        error_log('Kaspi response headers: ' . print_r(wp_remote_retrieve_headers($response), true));
+        error_log('KASPI ERROR: Request failed with HTTP ' . $response_code);
         return new WP_Error('kaspi_error', 'Failed to get payment URL from Kaspi (HTTP ' . $response_code . ')', array('status' => 500));
     }
 }
 
 function atlas_test_kaspi_payment($request) {
-    error_log('=== atlas_test_kaspi_payment called ===');
-    
     $tran_id = 'KSP' . uniqid();
     $order_id = 'test_' . time();
     $amount = 1000;
-    
-    error_log('Creating test payment: txn_id=' . $tran_id . ', order_id=' . $order_id . ', amount=' . $amount);
     
     $payment_data = array(
         'tran_id' => $tran_id,
@@ -3726,8 +3821,6 @@ function atlas_test_kaspi_payment($request) {
     $payments = get_option('atlas_kaspi_payments', array());
     $payments[$tran_id] = $payment_data;
     update_option('atlas_kaspi_payments', $payments);
-    
-    error_log('Test payment saved: ' . print_r($payment_data, true));
     
     $check_url = 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=check&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount;
     
@@ -3828,13 +3921,13 @@ function atlas_process_kaspi_webhook($request) {
         
         $user_bookings = get_user_meta($payment['user_id'], 'atlas_bookings', true);
         if (is_array($user_bookings)) {
+            $order_id_to_find = $payment['order_id'];
             foreach ($user_bookings as $booking_id => $booking) {
-                if ($booking['tour_id'] == $payment['tour_id']) {
+                if ($booking_id === $order_id_to_find) {
                     $user_bookings[$booking_id]['status'] = 'paid';
                     $user_bookings[$booking_id]['payment_id'] = $tran_id;
                     $user_bookings[$booking_id]['paid_at'] = current_time('mysql');
                     
-                    // Обновляем количество мест в туре
                     $tourists_count = isset($booking['tour_data']['tourists']) ? count($booking['tour_data']['tourists']) : 1;
                     $room_type = isset($booking['tour_data']['roomType']) ? $booking['tour_data']['roomType'] : null;
                     atlas_update_tour_spots($payment['tour_id'], $tourists_count, $room_type);
@@ -3926,7 +4019,6 @@ function atlas_get_tour_spots($request) {
         $spots_left = $total_spots;
     }
     
-    error_log("Tour spots API called for tour {$tour_id}: " . print_r($room_spots, true));
     
     return array(
         'success' => true,
@@ -4073,7 +4165,7 @@ function atlas_tour_dates_validation_script() {
                     start = new Date(startDate);
                 }
                 
-                start.setDate(start.getDate() + parseInt(duration) - 1);
+                start.setDate(start.getDate() + parseInt(duration));
                 var endDateStr = start.getFullYear() + '-' + 
                     String(start.getMonth() + 1).padStart(2, '0') + '-' + 
                     String(start.getDate()).padStart(2, '0');

@@ -52,7 +52,7 @@ export default function DatePicker({
 
   const calculateDaysDiff = (start, end) => {
     if (!start || !end) return 0;
-    return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
   };
 
   const isDateInRange = (date) => {
@@ -112,7 +112,7 @@ export default function DatePicker({
     if (!date || isDateDisabled(date)) return;
     
     // Автоматически выбираем дату начала и конца на основе выбранной длительности
-    const duration = selectedTab === '7' ? 6 : 9; // -1 день, так как считаем включительно
+    const duration = selectedTab === '7' ? 7 : 10;
     const endDate = new Date(date);
     endDate.setDate(endDate.getDate() + duration);
     
