@@ -178,11 +178,9 @@ export async function checkAuth(token) {
     const response = await fetch(`${API_BASE}/check-auth`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: token
-      })
+      }
     });
     
     if (!response.ok) throw new Error('Ошибка проверки авторизации');
@@ -199,11 +197,9 @@ export async function logout(token) {
     const response = await fetch(`${API_BASE}/logout`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: token
-      })
+      }
     });
     
     if (!response.ok) throw new Error('Ошибка выхода');
@@ -270,9 +266,11 @@ export async function bookTour(token, tourId, tourData) {
   try {
     const response = await fetch(`${API_BASE}/book-tour`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify({ 
-        token: token, 
         tour_id: tourId, 
         tour_data: tourData 
       })
@@ -287,7 +285,12 @@ export async function bookTour(token, tourId, tourData) {
 
 export async function getMyBookings(token) {
   try {
-    const response = await fetch(`${API_BASE}/my-bookings?token=${token}`);
+    const response = await fetch(`${API_BASE}/my-bookings`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
     if (!response.ok) throw new Error('Ошибка загрузки бронирований');
     return await response.json();
   } catch (error) {
@@ -309,12 +312,20 @@ export async function getTourSpots(tourId) {
 
 export async function createKaspiPayment(paymentData) {
   try {
-    const response = await fetch(`${API_BASE}/kaspi-payment`, {
+    const { token, ...dataWithoutToken } = paymentData;
+    
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(`https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/create-payment`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(paymentData)
+      headers: headers,
+      body: JSON.stringify(dataWithoutToken)
     });
     
     if (!response.ok) throw new Error('Ошибка создания платежа Kaspi');

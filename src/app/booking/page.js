@@ -433,14 +433,14 @@ function BookingPageContent() {
         const paymentRequestData = {
           order_id: orderId,
           amount: amount,
-          tour_id: parseInt(tourId),
-          token: token
+          tour_id: parseInt(tourId)
         };
         
         console.log('Отправляем запрос на создание платежа:', paymentRequestData);
         const paymentResponse = await fetch('https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/create-payment', {
           method: 'POST',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(paymentRequestData)
