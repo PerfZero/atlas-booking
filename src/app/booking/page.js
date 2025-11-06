@@ -12,7 +12,7 @@ import styles from "./page.module.css";
 function BookingPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [tourData, setTourData] = useState(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [managerId, setManagerId] = useState("");
@@ -70,6 +70,14 @@ function BookingPageContent() {
       setTourData(data);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated && tourData) {
+      const queryString = new URLSearchParams(tourData).toString();
+      const encoded = encodeURIComponent(queryString);
+      router.push(`/auth?booking=${encoded}`);
+    }
+  }, [loading, isAuthenticated, tourData, router]);
 
   // Автоматическое скрытие блока поздравления через 5 секунд
   useEffect(() => {
@@ -478,7 +486,11 @@ function BookingPageContent() {
     }
   };
 
-  if (!tourData) {
+  if (loading || !tourData) {
+    return <div>Загрузка...</div>;
+  }
+
+  if (!isAuthenticated) {
     return <div>Загрузка...</div>;
   }
 
