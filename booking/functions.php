@@ -980,6 +980,12 @@ add_action('rest_api_init', function() {
         'callback' => 'atlas_get_transfers',
         'permission_callback' => '__return_true'
     ));
+    
+    register_rest_route('atlas-hajj/v1', '/pilgrimage-types', array(
+        'methods' => 'GET',
+        'callback' => 'atlas_get_pilgrimage_types',
+        'permission_callback' => '__return_true'
+    ));
 });
 
 function atlas_get_profile($request) {
@@ -1317,6 +1323,38 @@ function atlas_get_tour_by_slug($request) {
     }
     
     return new WP_Error('not_found', 'Tour not found', array('status' => 404));
+}
+
+function atlas_get_pilgrimage_types($request) {
+    $terms = get_terms(array(
+        'taxonomy' => 'pilgrimage_type',
+        'hide_empty' => false,
+    ));
+    
+    if (is_wp_error($terms)) {
+        return array(
+            'success' => false,
+            'message' => $terms->get_error_message(),
+            'pilgrimage_types' => array()
+        );
+    }
+    
+    $pilgrimage_types = array();
+    
+    foreach ($terms as $term) {
+        $pilgrimage_types[] = array(
+            'id' => $term->term_id,
+            'name' => $term->name,
+            'slug' => $term->slug,
+            'description' => $term->description,
+            'count' => $term->count
+        );
+    }
+    
+    return array(
+        'success' => true,
+        'pilgrimage_types' => $pilgrimage_types
+    );
 }
 
 function atlas_search_tours($request) {

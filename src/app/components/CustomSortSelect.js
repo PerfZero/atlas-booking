@@ -26,7 +26,7 @@ export default function CustomSortSelect({ value, onChange, options }) {
   const selectedOption = options.find(option => option.value === value);
 
   return (
-    <div className={`${styles.customSelect} ${isOpen ? styles.open : ''}`} ref={selectRef}>
+    <div className={`${styles.customSelect}${isOpen ? ` ${styles.open}` : ''}`} ref={selectRef}>
       <button 
         className={styles.selectButton}
         onClick={() => setIsOpen(!isOpen)}
@@ -46,7 +46,7 @@ export default function CustomSortSelect({ value, onChange, options }) {
           {options.map((option) => (
             <button
               key={option.value}
-              className={`${styles.dropdownOption} ${value === option.value ? styles.selected : ''}`}
+              className={`${styles.dropdownOption}${value === option.value ? ` ${styles.selected}` : ''}`}
               onClick={() => handleSelect(option.value)}
               type="button"
             >

@@ -43,7 +43,7 @@ export default function BottomNavigation() {
       {navigationItems.map((item) => (
         <button
           key={item.id}
-          className={`${styles.navItem} ${item.active ? styles.active : ''}`}
+          className={`${styles.navItem}${item.active ? ` ${styles.active}` : ''}`}
           onClick={() => handleNavigation(item)}
         >
           <div className={styles.navIcon}>

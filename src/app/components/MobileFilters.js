@@ -450,7 +450,7 @@ export default function MobileFilters({
             <div className={styles.filterGroup}>
               <label className={styles.filterLabel}>Трансфер:</label>
               <div className={styles.checkboxGroup}>
-                {availableTransfers.map((transfer) => (
+                {Array.isArray(availableTransfers) && availableTransfers.map((transfer) => (
                   <label key={transfer.id} className={styles.checkboxLabel}>
                     <input 
                       type="checkbox" 

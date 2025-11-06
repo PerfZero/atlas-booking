@@ -114,7 +114,7 @@ function SearchPageContent({ searchParams }) {
         const API_URL = 'https://api.booking.atlas.kz/wp-json';
         const response = await fetch(`${API_URL}/atlas-hajj/v1/transfers`);
         const transfers = await response.json();
-        setAvailableTransfers(transfers || []);
+        setAvailableTransfers(Array.isArray(transfers) ? transfers : []);
       } catch (error) {
         console.error('Ошибка загрузки трансферов:', error);
         setAvailableTransfers([]);

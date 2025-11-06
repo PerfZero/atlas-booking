@@ -182,3 +182,5 @@ add_action('pre_get_posts', 'atlas_hotel_orderby');
 
 
 
+
+
