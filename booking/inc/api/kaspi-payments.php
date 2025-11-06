@@ -58,9 +58,10 @@ function atlas_kaspi_payment_app($request) {
     } elseif ($command === 'pay') {
         $result = atlas_kaspi_process_payment($params);
         
-        if (!is_wp_error($result) && $result['result'] == 0) {
-            $order_id = sanitize_text_field($params['account'] ?? '');
-            $txn_id = sanitize_text_field($params['txn_id'] ?? '');
+        $order_id = sanitize_text_field($params['account'] ?? '');
+        $txn_id = sanitize_text_field($params['txn_id'] ?? '');
+        
+        if (!empty($order_id) && !empty($txn_id)) {
             wp_redirect('https://booking.atlas.kz/kaspi-payment-success?txn_id=' . $txn_id . '&order_id=' . $order_id);
             exit;
         }
@@ -532,7 +533,7 @@ function atlas_create_kaspi_payment($request) {
         'OrderId' => $order_id,
         'Amount' => $amount * 100,
         'Service' => 'AtlasBooking',
-        'returnUrl' => 'https://api.booking.atlas.kz/kaspi-payment-success?txn_id=' . $tran_id . '&order_id=' . $order_id,
+        'returnUrl' => 'https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment_app.cgi?command=pay&txn_id=' . $tran_id . '&account=' . $order_id . '&sum=' . $amount,
         'refererHost' => 'api.booking.atlas.kz',
         'GenerateQrCode' => false
     );

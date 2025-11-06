@@ -11,7 +11,7 @@ import styles from './page.module.css';
 function KaspiPaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [paymentStatus, setPaymentStatus] = useState('loading');
   const [paymentData, setPaymentData] = useState(null);
 
@@ -21,7 +21,7 @@ function KaspiPaymentSuccessContent() {
       return;
     }
     
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       const orderId = searchParams.get('order_id');
       
       if (orderId) {
@@ -30,11 +30,23 @@ function KaspiPaymentSuccessContent() {
         setPaymentStatus('error');
       }
     }
-  }, [searchParams, isAuthenticated, authLoading, router]);
+  }, [searchParams, isAuthenticated, user, authLoading, router]);
 
   const checkPaymentStatus = async (orderId) => {
     try {
-      const response = await fetch(`https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment-status?order_id=${orderId}`);
+      const token = user?.token || (typeof window !== 'undefined' ? localStorage.getItem('atlas_token') : null);
+      
+      if (!token) {
+        setPaymentStatus('error');
+        return;
+      }
+      
+      const response = await fetch(`https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/payment-status?order_id=${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
 
       if (response.ok && data.success) {
