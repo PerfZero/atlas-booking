@@ -436,15 +436,6 @@ function BookingPageContent() {
       return;
     }
 
-    const paymentWindow = window.open('', '_blank');
-    
-    if (!paymentWindow) {
-      alert('Пожалуйста, разрешите открытие всплывающих окон в настройках браузера');
-      return;
-    }
-    
-    console.log('Окно оплаты открыто:', paymentWindow);
-
     try {
       const token = localStorage.getItem('atlas_token');
       const tourDataForBooking = {
@@ -453,10 +444,6 @@ function BookingPageContent() {
         totalPrice: tourData.price,
         bookingDate: new Date().toISOString()
       };
-
-      if (paymentWindow) {
-        paymentWindow.document.write('<html><head><title>Загрузка...</title></head><body><div style="text-align:center;padding:50px;font-family:Arial;">Подготовка платежа...</div></body></html>');
-      }
 
       const result = await bookTour(token, tourData.id, tourDataForBooking);
       
@@ -488,9 +475,6 @@ function BookingPageContent() {
         });
 
         if (!paymentResponse.ok) {
-          if (paymentWindow) {
-            paymentWindow.close();
-          }
           const errorData = await paymentResponse.json();
           throw new Error(errorData.message || 'Ошибка создания платежа');
         }
@@ -504,36 +488,16 @@ function BookingPageContent() {
           localStorage.setItem('payment_started', 'true');
           localStorage.setItem('payment_order_id', orderId);
           
-          if (paymentWindow && !paymentWindow.closed) {
-            console.log('Перенаправляем окно на Kaspi...');
-            try {
-              paymentWindow.location.href = paymentResult.payment_url;
-            } catch (e) {
-              console.error('Ошибка при перенаправлении окна:', e);
-              paymentWindow.location.replace(paymentResult.payment_url);
-            }
-          } else {
-            console.log('Окно закрыто или недоступно, открываем новое...');
-            window.open(paymentResult.payment_url, '_blank');
-          }
+          window.open(paymentResult.payment_url, '_blank');
           
           router.push(`/profile?tab=bookings#booking-${orderId}`);
         } else {
-          if (paymentWindow) {
-            paymentWindow.close();
-          }
           throw new Error('Неверный ответ от сервера');
         }
       } else {
-        if (paymentWindow) {
-          paymentWindow.close();
-        }
         alert('Ошибка при бронировании тура: ' + (result.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
-      if (paymentWindow) {
-        paymentWindow.close();
-      }
       console.error('Ошибка при бронировании:', error);
       alert('Ошибка при бронировании тура: ' + error.message);
     }
