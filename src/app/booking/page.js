@@ -489,7 +489,7 @@ function BookingPageContent() {
                       localStorage.setItem('payment_started', 'true');
                       localStorage.setItem('payment_order_id', orderId);
                       
-                      window.location.href = paymentResult.payment_url;
+                      window.open(paymentResult.payment_url, '_blank');
                     } else {
                       throw new Error('Неверный ответ от сервера');
                     }
@@ -1020,9 +1020,16 @@ function BookingPageContent() {
                     </div>
 
                     <div className={styles.reviewActions}>
-                      <button className={styles.kaspiButton} onClick={handlePayment}>
+                      <a 
+                        href="#" 
+                        className={styles.kaspiButton} 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePayment();
+                        }}
+                      >
                         Оплатить через Kaspi
-                      </button>
+                      </a>
                       <button className={styles.editLink} onClick={handleEdit}>
                         Изменить данные
                       </button>

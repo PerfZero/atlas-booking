@@ -1313,7 +1313,7 @@ function ProfilePageContent() {
                                 if (paymentResult.success && paymentResult.payment_url) {
                                   console.log('Получен URL для оплаты:', paymentResult.payment_url);
                                   
-                                  window.location.replace(paymentResult.payment_url);
+                                  window.open(paymentResult.payment_url, '_blank');
                                 } else {
                                   throw new Error('Неверный ответ от сервера');
                                 }
