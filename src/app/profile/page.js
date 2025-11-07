@@ -67,12 +67,14 @@ function ProfilePageContent() {
   useEffect(() => {
     const interval = setInterval(() => {
       const newTimers = {};
-      bookings.forEach((booking) => {
-        if (booking.status === 'pending') {
-          const timeRemaining = calculateTimeRemaining(booking.booking_date || booking.bookingDate);
-          newTimers[booking.booking_id] = timeRemaining;
-        }
-      });
+      if (Array.isArray(bookings)) {
+        bookings.forEach((booking) => {
+          if (booking && booking.status === 'pending') {
+            const timeRemaining = calculateTimeRemaining(booking.booking_date || booking.bookingDate);
+            newTimers[booking.booking_id] = timeRemaining;
+          }
+        });
+      }
       setBookingTimers(newTimers);
     }, 1000);
 
@@ -117,6 +119,17 @@ function ProfilePageContent() {
 
   // Универсальная функция для получения информации об отелях
   const getHotelInfo = (booking, city) => {
+    if (!booking || !booking.tour_data) {
+      const defaultName = city === 'mekka' ? '5★ отель в Мекке' : '5★ отель в Медине';
+      const defaultDistance = city === 'mekka' ? 'до Каабы' : 'до мечети Пророка';
+      return {
+        name: defaultName,
+        distanceText: defaultDistance,
+        distanceNumber: '',
+        hasData: false
+      };
+    }
+    
     const tourData = booking.tour_data;
     
     console.log(`=== ПОИСК ДАННЫХ ОТЕЛЯ ${city.toUpperCase()} ===`);
@@ -224,6 +237,11 @@ function ProfilePageContent() {
   };
 
   const handleDownloadVoucher = async (booking) => {
+    if (!booking || !booking.tour_data) {
+      console.error('Нет данных бронирования для создания ваучера');
+      return;
+    }
+    
     console.log('=== ДАННЫЕ БРОНИРОВАНИЯ ===');
     console.log('Полные данные бронирования:', booking);
     console.log('=== ДАННЫЕ ТУРА ===');
@@ -717,23 +735,27 @@ function ProfilePageContent() {
     try {
       const result = await getMyBookings(user.token);
       if (result.success && result.bookings) {
-        console.log('Загруженные бронирования:', result.bookings);
+        const bookingsArray = Array.isArray(result.bookings) ? result.bookings : [];
+        console.log('Загруженные бронирования:', bookingsArray);
         // Логируем структуру данных первого бронирования для отладки
-        if (result.bookings.length > 0) {
+        if (bookingsArray.length > 0) {
           console.log('=== СТРУКТУРА ДАННЫХ БРОНИРОВАНИЯ ===');
-          console.log('Первое бронирование:', result.bookings[0]);
-          console.log('Данные тура:', result.bookings[0].tour_data);
+          console.log('Первое бронирование:', bookingsArray[0]);
+          console.log('Данные тура:', bookingsArray[0]?.tour_data);
           console.log('Отели в tour_data:', {
-            hotel_mekka: result.bookings[0].tour_data?.hotel_mekka,
-            hotel_medina: result.bookings[0].tour_data?.hotel_medina,
-            hotels: result.bookings[0].tour_data?.hotels,
-            hotels_info: result.bookings[0].tour_data?.hotels_info
+            hotel_mekka: bookingsArray[0]?.tour_data?.hotel_mekka,
+            hotel_medina: bookingsArray[0]?.tour_data?.hotel_medina,
+            hotels: bookingsArray[0]?.tour_data?.hotels,
+            hotels_info: bookingsArray[0]?.tour_data?.hotels_info
           });
         }
-        setBookings(result.bookings);
+        setBookings(bookingsArray);
+      } else {
+        setBookings([]);
       }
     } catch (error) {
       console.error('Ошибка загрузки бронирований:', error);
+      setBookings([]);
     } finally {
       setBookingsLoading(false);
     }
