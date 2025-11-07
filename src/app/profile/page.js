@@ -134,7 +134,7 @@ function ProfilePageContent() {
       // Пробуем объект hotels.mekka (приоритет)
       if (tourData?.hotels?.mekka && typeof tourData.hotels.mekka === 'object') {
         const hotelData = tourData.hotels.mekka;
-        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.name || '5★ отель в Мекке';
+        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.title || hotelData.name || '5★ отель в Мекке';
         distanceText = hotelData.distance_text || 'до Каабы';
         distanceNumber = hotelData.distance_number || '';
         hasData = true;
@@ -148,7 +148,7 @@ function ProfilePageContent() {
       // Пробуем объект hotel_mekka
       else if (tourData?.hotel_mekka && typeof tourData.hotel_mekka === 'object') {
         const hotelData = tourData.hotel_mekka;
-        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.name || '5★ отель в Мекке';
+        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.title || hotelData.name || '5★ отель в Мекке';
         distanceText = hotelData.distance_text || 'до Каабы';
         distanceNumber = hotelData.distance_number || '';
         hasData = true;
@@ -157,7 +157,7 @@ function ProfilePageContent() {
       else if (Array.isArray(tourData?.hotels_info)) {
         const mekkaHotel = tourData.hotels_info.find(h => h.city === 'mekka');
         if (mekkaHotel) {
-          hotelName = mekkaHotel.hotel_text || mekkaHotel.name || '5★ отель в Мекке';
+          hotelName = mekkaHotel.hotel_text || mekkaHotel.short_name || mekkaHotel.title || mekkaHotel.name || '5★ отель в Мекке';
           distanceText = mekkaHotel.distance_text || 'до Каабы';
           distanceNumber = mekkaHotel.distance_number || '';
           hasData = true;
@@ -173,7 +173,7 @@ function ProfilePageContent() {
       // Пробуем объект hotels.medina (приоритет)
       if (tourData?.hotels?.medina && typeof tourData.hotels.medina === 'object') {
         const hotelData = tourData.hotels.medina;
-        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.name || '5★ отель в Медине';
+        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.title || hotelData.name || '5★ отель в Медине';
         distanceText = hotelData.distance_text || 'до мечети Пророка';
         distanceNumber = hotelData.distance_number || '';
         hasData = true;
@@ -187,7 +187,7 @@ function ProfilePageContent() {
       // Пробуем объект hotel_medina
       else if (tourData?.hotel_medina && typeof tourData.hotel_medina === 'object') {
         const hotelData = tourData.hotel_medina;
-        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.name || '5★ отель в Медине';
+        hotelName = hotelData.hotel_text || hotelData.short_name || hotelData.title || hotelData.name || '5★ отель в Медине';
         distanceText = hotelData.distance_text || 'до мечети Пророка';
         distanceNumber = hotelData.distance_number || '';
         hasData = true;
@@ -196,7 +196,7 @@ function ProfilePageContent() {
       else if (Array.isArray(tourData?.hotels_info)) {
         const medinaHotel = tourData.hotels_info.find(h => h.city === 'medina');
         if (medinaHotel) {
-          hotelName = medinaHotel.hotel_text || medinaHotel.name || '5★ отель в Медине';
+          hotelName = medinaHotel.hotel_text || medinaHotel.short_name || medinaHotel.title || medinaHotel.name || '5★ отель в Медине';
           distanceText = medinaHotel.distance_text || 'до мечети Пророка';
           distanceNumber = medinaHotel.distance_number || '';
           hasData = true;
@@ -501,10 +501,24 @@ function ProfilePageContent() {
                 { text: '', fillColor: '#f5f5f5' }
               ],
               [
-                { text: norm(booking.tour_data?.hotels?.medina?.hotel_text) || norm(booking.tour_data?.hotels?.medina?.short_name) || norm(booking.tour_data?.hotel_medina) || 'НД' },
+                { text: (() => {
+                    const hotelData = booking.tour_data?.hotels?.medina;
+                    if (hotelData && typeof hotelData === 'object') {
+                      return hotelData.title || hotelData.hotel_text || hotelData.short_name || hotelData.name || 'НД';
+                    }
+                    const hotelInfo = getHotelInfo(booking, 'medina');
+                    return hotelInfo.name || 'НД';
+                  })() },
                 { text: '' },
                 { text: '' },
-                { text: norm(booking.tour_data?.hotels?.mekka?.hotel_text) || norm(booking.tour_data?.hotels?.mekka?.short_name) || norm(booking.tour_data?.hotel_mekka) || 'НД' },
+                { text: (() => {
+                    const hotelData = booking.tour_data?.hotels?.mekka;
+                    if (hotelData && typeof hotelData === 'object') {
+                      return hotelData.title || hotelData.hotel_text || hotelData.short_name || hotelData.name || 'НД';
+                    }
+                    const hotelInfo = getHotelInfo(booking, 'mekka');
+                    return hotelInfo.name || 'НД';
+                  })() },
                 { text: '' },
                 { text: '' }
               ],
