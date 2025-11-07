@@ -36,6 +36,20 @@ function BookingPageContent() {
 
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && isAuthenticated) {
+      const paymentStarted = localStorage.getItem('payment_started');
+      const paymentOrderId = localStorage.getItem('payment_order_id');
+      
+      if (paymentStarted && paymentOrderId) {
+        localStorage.removeItem('payment_started');
+        localStorage.removeItem('payment_order_id');
+        router.push(`/profile?tab=bookings#booking-${paymentOrderId}`);
+        return;
+      }
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
     if (searchParams) {
       const data = {
         id: searchParams.get("id"),
@@ -472,7 +486,10 @@ function BookingPageContent() {
                     if (paymentResult.success && paymentResult.payment_url) {
                       console.log('Получен URL для оплаты:', paymentResult.payment_url);
                       
-                      window.location.replace(paymentResult.payment_url);
+                      localStorage.setItem('payment_started', 'true');
+                      localStorage.setItem('payment_order_id', orderId);
+                      
+                      window.location.href = paymentResult.payment_url;
                     } else {
                       throw new Error('Неверный ответ от сервера');
                     }
