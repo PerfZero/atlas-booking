@@ -460,23 +460,22 @@ function BookingPageContent() {
           headers: Object.fromEntries(paymentResponse.headers.entries())
         });
 
-                                                if (!paymentResponse.ok) {
-                      const errorData = await paymentResponse.json();
-                      throw new Error(errorData.message || 'Ошибка создания платежа');
-                    }
-            
-                    // Бэкенд вернет JSON с URL для оплаты от Kaspi
-                    const paymentResult = await paymentResponse.json();
-                    console.log('Получен ответ от бэкенда:', paymentResult);
-                    
-                    if (paymentResult.success && paymentResult.payment_url) {
-                      console.log('Получен URL для оплаты:', paymentResult.payment_url);
-                      
-                      // Перенаправляем на URL оплаты от Kaspi
-                      window.location.href = paymentResult.payment_url;
-                    } else {
-                      throw new Error('Неверный ответ от сервера');
-                    }
+        if (!paymentResponse.ok) {
+          const errorData = await paymentResponse.json();
+          throw new Error(errorData.message || 'Ошибка создания платежа');
+        }
+
+        const paymentResult = await paymentResponse.json();
+        console.log('Получен ответ от бэкенда:', paymentResult);
+        
+        if (paymentResult.success && paymentResult.payment_url) {
+          console.log('Получен URL для оплаты:', paymentResult.payment_url);
+          
+          window.open(paymentResult.payment_url, '_blank');
+          router.push('/profile');
+        } else {
+          throw new Error('Неверный ответ от сервера');
+        }
       } else {
         alert('Ошибка при бронировании тура: ' + (result.error || 'Неизвестная ошибка'));
       }
