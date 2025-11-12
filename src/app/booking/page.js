@@ -428,7 +428,8 @@ function BookingPageContent() {
         ...tourData,
         tourists: tourists,
         totalPrice: tourData.price,
-        bookingDate: new Date().toISOString()
+        bookingDate: new Date().toISOString(),
+        managerId: managerId
       };
 
       const result = await bookTour(token, tourData.id, tourDataForBooking);

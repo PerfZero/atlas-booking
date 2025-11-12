@@ -72,6 +72,9 @@ function atlas_booking_details_page() {
     if (isset($booking['tour_data']['flightInboundDate'])) {
         echo '<tr><th scope="row">Дата возвращения</th><td>' . esc_html($booking['tour_data']['flightInboundDate']) . '</td></tr>';
     }
+    if (isset($booking['tour_data']['managerId']) && !empty($booking['tour_data']['managerId'])) {
+        echo '<tr><th scope="row">ID менеджера</th><td><strong>' . esc_html($booking['tour_data']['managerId']) . '</strong></td></tr>';
+    }
     echo '</tbody>';
     echo '</table>';
     echo '</div>';
