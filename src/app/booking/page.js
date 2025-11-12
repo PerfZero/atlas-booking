@@ -471,10 +471,8 @@ function BookingPageContent() {
         if (paymentResult.success && paymentResult.payment_url) {
           console.log('Получен URL для оплаты:', paymentResult.payment_url);
           
-          router.push('/profile');
-          setTimeout(() => {
-            window.location.href = paymentResult.payment_url;
-          }, 100);
+          window.history.replaceState({}, '', '/profile');
+          window.location.href = paymentResult.payment_url;
         } else {
           throw new Error('Неверный ответ от сервера');
         }

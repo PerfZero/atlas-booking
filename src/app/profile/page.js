@@ -89,10 +89,9 @@ function ProfilePageContent() {
     router.replace(url.pathname + url.search);
   };
 
-  // Функция для расчета времени до истечения брони
   const calculateTimeRemaining = (bookingDate) => {
     const bookingTime = new Date(bookingDate);
-    const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000); // 20 минут
+    const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000);
     const now = new Date();
     const timeRemaining = expirationTime.getTime() - now.getTime();
     
@@ -105,6 +104,41 @@ function ProfilePageContent() {
     const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
     
     return { minutes, seconds, expired: false };
+  };
+
+  const isBookingExpired = (booking) => {
+    if (booking.status === 'expired') {
+      return true;
+    }
+    if (booking.status === 'pending' && booking.booking_date) {
+      const bookingTime = new Date(booking.booking_date);
+      const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000);
+      return new Date() > expirationTime;
+    }
+    if (booking.status === 'pending' && booking.expires_at) {
+      return new Date() > new Date(booking.expires_at);
+    }
+    return false;
+  };
+
+  const isBookingPaid = (booking) => {
+    if (!booking) {
+      return false;
+    }
+    
+    if (booking.status === 'pending') {
+      return false;
+    }
+    
+    if (booking.status === 'paid' || booking.status === 'confirmed') {
+      return true;
+    }
+    
+    if (booking.payment_id && booking.payment_id !== 'null' && booking.payment_id !== null && booking.payment_id !== '') {
+      return true;
+    }
+    
+    return false;
   };
 
   const formatDate = (dateStr) => {
@@ -131,12 +165,6 @@ function ProfilePageContent() {
     }
     
     const tourData = booking.tour_data;
-    
-    console.log(`=== ПОИСК ДАННЫХ ОТЕЛЯ ${city.toUpperCase()} ===`);
-    console.log('tourData:', tourData);
-    console.log('hotels:', tourData?.hotels);
-    console.log(`hotel_${city}:`, tourData?.[`hotel_${city}`]);
-    console.log('hotels_info:', tourData?.hotels_info);
     
     let hotelName = '';
     let distanceText = '';
@@ -230,9 +258,6 @@ function ProfilePageContent() {
       hasData: hasData
     };
     
-    console.log(`=== РЕЗУЛЬТАТ ПОИСКА ОТЕЛЯ ${city.toUpperCase()} ===`);
-    console.log('Результат:', result);
-    
     return result;
   };
 
@@ -241,24 +266,6 @@ function ProfilePageContent() {
       console.error('Нет данных бронирования для создания ваучера');
       return;
     }
-    
-    console.log('=== ДАННЫЕ БРОНИРОВАНИЯ ===');
-    console.log('Полные данные бронирования:', booking);
-    console.log('=== ДАННЫЕ ТУРА ===');
-    console.log('Данные тура:', booking.tour_data);
-    console.log('Тип рейса:', booking.tour_data?.flight_type);
-    console.log('Рейс туда:', booking.tour_data?.flight_outbound);
-    console.log('Рейс обратно:', booking.tour_data?.flight_inbound);
-    console.log('Рейс с пересадкой туда:', booking.tour_data?.flight_outbound_connecting);
-    console.log('Пересадка:', booking.tour_data?.flight_connecting);
-    console.log('Рейс с пересадкой обратно:', booking.tour_data?.flight_inbound_connecting);
-    console.log('Услуги тура:', booking.tour_data?.services);
-    console.log('Трансферы тура:', booking.tour_data?.transfers);
-    console.log('=== ДАННЫЕ ОТЕЛЕЙ ===');
-    console.log('Отель Мекка:', booking.tour_data?.hotel_mekka);
-    console.log('Отель Медина:', booking.tour_data?.hotel_medina);
-    console.log('Отели (старая структура):', booking.tour_data?.hotels);
-    console.log('Информация об отелях:', booking.tour_data?.hotels_info);
     
     const norm = (v) => (v == null ? '' : String(v));
     const tourists = Array.isArray(booking.tour_data?.tourists) ? booking.tour_data.tourists : [];
@@ -288,7 +295,6 @@ function ProfilePageContent() {
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.log('Не удалось загрузить QR-код:', error);
     }
     
     try {
@@ -327,7 +333,6 @@ function ProfilePageContent() {
         img.src = url;
       });
     } catch (error) {
-      console.log('Не удалось конвертировать SVG:', error);
     }
 
     const docDefinition = {
@@ -736,19 +741,6 @@ function ProfilePageContent() {
       const result = await getMyBookings(user.token);
       if (result.success && result.bookings) {
         const bookingsArray = Array.isArray(result.bookings) ? result.bookings : [];
-        console.log('Загруженные бронирования:', bookingsArray);
-        // Логируем структуру данных первого бронирования для отладки
-        if (bookingsArray.length > 0) {
-          console.log('=== СТРУКТУРА ДАННЫХ БРОНИРОВАНИЯ ===');
-          console.log('Первое бронирование:', bookingsArray[0]);
-          console.log('Данные тура:', bookingsArray[0]?.tour_data);
-          console.log('Отели в tour_data:', {
-            hotel_mekka: bookingsArray[0]?.tour_data?.hotel_mekka,
-            hotel_medina: bookingsArray[0]?.tour_data?.hotel_medina,
-            hotels: bookingsArray[0]?.tour_data?.hotels,
-            hotels_info: bookingsArray[0]?.tour_data?.hotels_info
-          });
-        }
         setBookings(bookingsArray);
       } else {
         setBookings([]);
@@ -1013,13 +1005,22 @@ function ProfilePageContent() {
               <div className={styles.leftColumn}>
                 {bookingsLoading ? (
                   <div className={styles.loading}>Собираем ваши путешествия...</div>
-                ) : bookings.length === 0 ? (
+                ) : bookings.filter(booking => isBookingPaid(booking) && !isBookingExpired(booking)).length === 0 ? (
                   <div className={styles.noBookings}>
                     <h3 className={styles.textEx}>У вас пока нет забронированных туров</h3>
                     <p className={styles.textEx}>Забронируйте тур, чтобы он появился здесь</p>
                   </div>
                 ) : (
-                  bookings.map((booking) => (
+                  bookings
+                    .filter(booking => {
+                      const isPaid = isBookingPaid(booking);
+                      const isExpired = isBookingExpired(booking);
+                      if (!isPaid || isExpired) {
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map((booking) => (
                     <div key={booking.booking_id} id={`booking-${booking.booking_id}`} className={styles.tourCard}>
                       <div className={styles.tourImage}>
                         <img 
@@ -1085,8 +1086,7 @@ function ProfilePageContent() {
                         <div className={styles.wrapper}>
                           <div className={styles.tourPrice}>
                             <div className={styles.priceStatus}>
-                              {booking.status === 'pending' ? 'Ожидает оплаты' : 'Оплачено'} 
-                              ({booking.tour_data?.tourists?.length || 1} чел)
+                              Оплачено ({booking.tour_data?.tourists?.length || 1} чел)
                             </div>
                             <div className={styles.priceAmount}>
                               <span className={styles.priceKzt}>
@@ -1142,14 +1142,14 @@ function ProfilePageContent() {
               <div className={styles.leftColumn}>
                 {bookingsLoading ? (
                   <div className={styles.loading}>Проверяем статус оплаты...</div>
-                ) : bookings.filter(booking => booking.status === 'pending').length === 0 ? (
+                ) : bookings.filter(booking => !isBookingPaid(booking) && !isBookingExpired(booking)).length === 0 ? (
                   <div className={styles.noBookings}>
                     <h3 className={styles.textEx}>У вас нет туров ожидающих оплаты</h3>
                     <p className={styles.textEx}>Все ваши туры оплачены или бронирования не найдены</p>
                   </div>
                 ) : (
                   bookings
-                    .filter(booking => booking.status === 'pending')
+                    .filter(booking => !isBookingPaid(booking) && !isBookingExpired(booking))
                     .map((booking, index) => (
                     <div key={booking.booking_id} id={`booking-${booking.booking_id}`} className={styles.tourCard}>
                       <div className={styles.tourImage}>
@@ -1306,8 +1306,6 @@ function ProfilePageContent() {
                                   router.push('/auth?mode=login');
                                   return;
                                 }
-
-                                console.log('Данные бронирования:', booking);
                                 
                                 if (!booking.tour_price || booking.tour_price <= 0) {
                                   alert('Не удалось определить цену тура');
@@ -1323,19 +1321,12 @@ function ProfilePageContent() {
                                   token: token
                                 };
                                 
-                                console.log('Отправляем запрос на создание платежа:', paymentRequestData);
                                 const paymentResponse = await fetch('https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/create-payment', {
                                   method: 'POST',
                                   headers: {
                                     'Content-Type': 'application/json',
                                   },
                                   body: JSON.stringify(paymentRequestData)
-                                });
-                                
-                                console.log('Получен ответ от сервера:', {
-                                  status: paymentResponse.status,
-                                  statusText: paymentResponse.statusText,
-                                  headers: Object.fromEntries(paymentResponse.headers.entries())
                                 });
 
                                 if (!paymentResponse.ok) {
@@ -1344,11 +1335,8 @@ function ProfilePageContent() {
                                 }
                         
                                 const paymentResult = await paymentResponse.json();
-                                console.log('Получен ответ от бэкенда:', paymentResult);
                                 
                                 if (paymentResult.success && paymentResult.payment_url) {
-                                  console.log('Получен URL для оплаты:', paymentResult.payment_url);
-                                  
                                   window.location.href = paymentResult.payment_url;
                                 } else {
                                   throw new Error('Неверный ответ от сервера');

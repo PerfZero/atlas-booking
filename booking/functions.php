@@ -1664,6 +1664,12 @@ function atlas_get_my_bookings($request) {
                 $booking['tour_data']['transfers'] = get_field('transfers', $booking['tour_id']);
                 $booking['tour_data']['transfer_type'] = get_field('transfer_type', $booking['tour_id']);
         }
+        
+        $booking['status'] = $booking['status'] ?? 'pending';
+        $booking['payment_id'] = $booking['payment_id'] ?? null;
+        $booking['expires_at'] = $booking['expires_at'] ?? null;
+        $booking['booking_date'] = $booking['booking_date'] ?? null;
+        
         $bookings[] = $booking;
     }
     
