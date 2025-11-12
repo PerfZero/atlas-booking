@@ -71,7 +71,7 @@ function atlas_send_sms($request) {
         return new WP_Error('sms_error', 'SMSC credentials not configured', array('status' => 500));
     }
     
-    $message = "Ваш код подтверждения: {$code}. Atlas Hajj";
+    $message = "Ваш код подтверждения: {$code}. Atlas Hajj\n\n@atlas.kz #{$code}";
     
     $url = 'https://smsc.kz/sys/send.php?' . http_build_query([
         'login' => $login,

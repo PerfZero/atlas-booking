@@ -247,6 +247,7 @@ function AuthPageContent() {
                    className={`${styles.codeInput} ${codeError ? styles.codeInputError : ''}`}
                    autoFocus={idx === 0}
                    placeholder="0"
+                   autoComplete={idx === 0 ? "one-time-code" : "off"}
                  />
               ))}
             </div>
