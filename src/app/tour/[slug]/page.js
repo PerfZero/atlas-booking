@@ -682,10 +682,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_outbound_connecting.arrival_city || 'Стамбул'}
+                              {tour.flight_outbound_connecting.arrival_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_outbound_connecting.arrival_airport || 'IST'}
+                              {tour.flight_outbound_connecting.arrival_airport}
                             </span>
                           </div>
                         </div>
@@ -735,15 +735,15 @@ export default function TourDetailPage({ params }) {
 
                         <div className={styles.connectingLocation}>
                           <div className={styles.connectingCity}>
-                            {tour.flight_connecting.connecting_airport || 'Стамбул'}
+                            {tour.flight_connecting.connecting_airport}
                           </div>
                           <div className={styles.connectingCode}>
-                            {tour.flight_connecting.connecting_airport_code || 'IST'}
+                            {tour.flight_connecting.connecting_airport_code}
                           </div>
                         </div>
 
                         <div className={styles.duration}>
-                          <span>Время ожидания: {tour.flight_connecting.connecting_wait_time || '--'}</span>
+                          <span>Время ожидания: {tour.flight_connecting.connecting_wait_time}</span>
                         </div>
 
                         <div className={styles.timeInfo}>
@@ -765,8 +765,8 @@ export default function TourDetailPage({ params }) {
                       </div>
                     )}
 
-                    {/* Рейс туда - Кувейт → Медина */}
-                    {tour.flight_connecting && (
+                    {/* Рейс туда после пересадки */}
+                    {tour.flight_outbound_connecting_after && (
                       <div className={styles.flightSection}>
                         <div className={styles.flightSectionHeader}>
                           <h3>Туда</h3>
@@ -775,20 +775,24 @@ export default function TourDetailPage({ params }) {
 
                         <div className={styles.airlineInfo}>
                           <div className={styles.airlineTag}>
-                            <img src="/air_astana.svg" alt="airplane" />
+                            {tour.flight_outbound_connecting_after.airline_logo?.url ? (
+                              <img src={tour.flight_outbound_connecting_after.airline_logo.url} alt="airline" />
+                            ) : (
+                              <img src="/air_astana.svg" alt="airplane" />
+                            )}
                           </div>
                           <div className={styles.flightNumber}>
-                            <span>{tour.flight_connecting.number || 'KC 911'}</span>
+                            <span>{tour.flight_outbound_connecting_after.number}</span>
                           </div>
                         </div>
 
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_connecting.departure_city || tour.flight_connecting.connecting_airport || 'Kuwait'}
+                              {tour.flight_outbound_connecting_after.departure_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_connecting.departure_airport || tour.flight_connecting.connecting_airport_code || 'KUW'}
+                              {tour.flight_outbound_connecting_after.departure_airport}
                             </span>
                           </div>
                           <div className={styles.flightPath}>
@@ -796,38 +800,38 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_connecting.arrival_city || 'Медина'}
+                              {tour.flight_outbound_connecting_after.arrival_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_connecting.arrival_airport || 'MED'}
+                              {tour.flight_outbound_connecting_after.arrival_airport}
                             </span>
                           </div>
                         </div>
 
                         <div className={styles.duration}>
-                          <span>Время в пути {tour.flight_connecting.duration || '6 ч 20 м'}</span>
+                          <span>Время в пути {tour.flight_outbound_connecting_after.duration}</span>
                         </div>
 
                         <div className={styles.timeInfo}>
                           <div className={styles.departure}>
                             <span>Вылет</span>
                             <span className={styles.time}>
-                              {tour.flight_connecting.departure_time || '10:00'}
+                              {tour.flight_outbound_connecting_after.departure_time}
                             </span>
-                            <span className={styles.date}>{tour.flight_connecting.departure_date || 'Пн, 19 июня'}</span>
+                            <span className={styles.date}>{tour.flight_outbound_connecting_after.departure_date}</span>
                           </div>
                           <div className={styles.arrival}>
                             <span>Прилет</span>
                             <span className={styles.time}>
-                              {tour.flight_connecting.arrival_time || '20:00'}
+                              {tour.flight_outbound_connecting_after.arrival_time}
                             </span>
-                            <span className={styles.date}>{tour.flight_connecting.arrival_date || 'Вт, 19 июня'}</span>
+                            <span className={styles.date}>{tour.flight_outbound_connecting_after.arrival_date}</span>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Рейс обратно - Медина → Кувейт */}
+                    {/* Рейс обратно до пересадки */}
                     {tour.flight_inbound_connecting && (
                       <div className={styles.flightSection}>
                         <div className={styles.flightSectionHeader}>
@@ -851,10 +855,10 @@ export default function TourDetailPage({ params }) {
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.departure_city || 'Медина'}
+                              {tour.flight_inbound_connecting.departure_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.departure_airport || 'MED'}
+                              {tour.flight_inbound_connecting.departure_airport}
                             </span>
                           </div>
                           <div className={styles.flightPath}>
@@ -862,10 +866,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.arrival_city || 'Алматы'}
+                              {tour.flight_inbound_connecting.arrival_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.arrival_airport || 'ALA'}
+                              {tour.flight_inbound_connecting.arrival_airport}
                             </span>
                           </div>
                         </div>
@@ -893,8 +897,8 @@ export default function TourDetailPage({ params }) {
                       </div>
                     )}
 
-                    {/* Пересадка в Кувейте (обратно) */}
-                    {tour.flight_connecting && (
+                    {/* Пересадка обратно */}
+                    {tour.flight_connecting_inbound && (
                       <div className={`${styles.flightSection} ${styles.connectingSection}`}>
                         <div className={styles.flightSectionHeader}>
                           <h3>Пересадка</h3>
@@ -915,15 +919,15 @@ export default function TourDetailPage({ params }) {
 
                         <div className={styles.connectingLocation}>
                           <div className={styles.connectingCity}>
-                            {tour.flight_connecting.connecting_airport || 'Стамбул'}
+                            {tour.flight_connecting_inbound.connecting_airport}
                           </div>
                           <div className={styles.connectingCode}>
-                            {tour.flight_connecting.connecting_airport_code || 'IST'}
+                            {tour.flight_connecting_inbound.connecting_airport_code}
                           </div>
                         </div>
 
                         <div className={styles.duration}>
-                          <span>Время ожидания: {tour.flight_connecting.connecting_wait_time || '--'}</span>
+                          <span>Время ожидания: {tour.flight_connecting_inbound.connecting_wait_time}</span>
                         </div>
 
                         <div className={styles.timeInfo}>
@@ -945,8 +949,8 @@ export default function TourDetailPage({ params }) {
                       </div>
                     )}
 
-                    {/* Рейс обратно - Кувейт → Алматы */}
-                    {tour.flight_inbound_connecting && (
+                    {/* Рейс обратно после пересадки */}
+                    {tour.flight_inbound_connecting_after && (
                       <div className={styles.flightSection}>
                         <div className={styles.flightSectionHeader}>
                           <h3>Обратно</h3>
@@ -955,24 +959,24 @@ export default function TourDetailPage({ params }) {
 
                         <div className={styles.airlineInfo}>
                           <div className={styles.airlineTag}>
-                            {tour.flight_inbound_connecting.airline_logo?.url ? (
-                              <img src={tour.flight_inbound_connecting.airline_logo.url} alt="airline" />
+                            {tour.flight_inbound_connecting_after.airline_logo?.url ? (
+                              <img src={tour.flight_inbound_connecting_after.airline_logo.url} alt="airline" />
                             ) : (
                               <img src="/air_astana.svg" alt="airplane" />
                             )}
                           </div>
                           <div className={styles.flightNumber}>
-                            <span>{tour.flight_inbound_connecting.number}</span>
+                            <span>{tour.flight_inbound_connecting_after.number}</span>
                           </div>
                         </div>
 
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.departure_city || tour.flight_inbound_connecting.connecting_airport || 'Стамбул'}
+                              {tour.flight_inbound_connecting_after.departure_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.departure_airport || tour.flight_inbound_connecting.connecting_airport_code || 'IST'}
+                              {tour.flight_inbound_connecting_after.departure_airport}
                             </span>
                           </div>
                           <div className={styles.flightPath}>
@@ -980,36 +984,37 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_outbound_connecting?.departure_city || tour.flight_outbound?.departure_city}
+                              {tour.flight_inbound_connecting_after.arrival_city}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_outbound_connecting?.departure_airport || tour.flight_outbound?.departure_airport}
+                              {tour.flight_inbound_connecting_after.arrival_airport}
                             </span>
                           </div>
                         </div>
 
                         <div className={styles.duration}>
-                          <span>Время в пути {tour.flight_inbound_connecting.duration}</span>
+                          <span>Время в пути {tour.flight_inbound_connecting_after.duration}</span>
                         </div>
 
                         <div className={styles.timeInfo}>
                           <div className={styles.departure}>
                             <span>Вылет</span>
                             <span className={styles.time}>
-                              {tour.flight_inbound_connecting.departure_time}
+                              {tour.flight_inbound_connecting_after.departure_time}
                             </span>
-                            <span className={styles.date}>{tour.flight_inbound_connecting.departure_date}</span>
+                            <span className={styles.date}>{tour.flight_inbound_connecting_after.departure_date}</span>
                           </div>
                           <div className={styles.arrival}>
                             <span>Прилет</span>
                             <span className={styles.time}>
-                              {tour.flight_inbound_connecting.arrival_time}
+                              {tour.flight_inbound_connecting_after.arrival_time}
                             </span>
-                            <span className={styles.date}>{tour.flight_inbound_connecting.arrival_date}</span>
+                            <span className={styles.date}>{tour.flight_inbound_connecting_after.arrival_date}</span>
                           </div>
                         </div>
                       </div>
                     )}
+
                   </>
                 )}
               </div>
