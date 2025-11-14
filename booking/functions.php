@@ -364,6 +364,71 @@ function atlas_hotel_orderby($query) {
 }
 add_action('pre_get_posts', 'atlas_hotel_orderby');
 
+function atlas_posts_admin_columns($columns) {
+    $new_columns = array();
+    
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        
+        if ($key === 'title') {
+            $new_columns['tour_date'] = 'Дата тура';
+            $new_columns['hotel_mekka'] = 'Отель в Мекке';
+            $new_columns['hotel_medina'] = 'Отель в Медине';
+        }
+    }
+    
+    return $new_columns;
+}
+add_filter('manage_posts_columns', 'atlas_posts_admin_columns');
+
+function atlas_posts_admin_column_content($column, $post_id) {
+    switch ($column) {
+        case 'tour_date':
+            $tour_start_date = get_field('tour_start_date', $post_id);
+            $tour_end_date = get_field('tour_end_date', $post_id);
+            
+            if ($tour_start_date) {
+                $start_date = new DateTime($tour_start_date);
+                if ($tour_end_date) {
+                    $end_date = new DateTime($tour_end_date);
+                    echo $start_date->format('d.m.Y') . ' - ' . $end_date->format('d.m.Y');
+                } else {
+                    echo $start_date->format('d.m.Y');
+                }
+            } else {
+                $tour_dates = get_field('tour_dates', $post_id);
+                if ($tour_dates && is_array($tour_dates) && !empty($tour_dates)) {
+                    $first_date = $tour_dates[0];
+                    if (isset($first_date['date_start']) && !empty($first_date['date_start'])) {
+                        $start_date = new DateTime($first_date['date_start']);
+                        if (isset($first_date['date_end']) && !empty($first_date['date_end'])) {
+                            $end_date = new DateTime($first_date['date_end']);
+                            echo $start_date->format('d.m.Y') . ' - ' . $end_date->format('d.m.Y');
+                        } else {
+                            echo $start_date->format('d.m.Y');
+                        }
+                    } else {
+                        echo '—';
+                    }
+                } else {
+                    echo '—';
+                }
+            }
+            break;
+            
+        case 'hotel_mekka':
+            $hotel_name = get_hotel_short_name($post_id, 'hotel_mekka');
+            echo $hotel_name ? $hotel_name : '—';
+            break;
+            
+        case 'hotel_medina':
+            $hotel_name = get_hotel_short_name($post_id, 'hotel_medina');
+            echo $hotel_name ? $hotel_name : '—';
+            break;
+    }
+}
+add_action('manage_posts_custom_column', 'atlas_posts_admin_column_content', 10, 2);
+
 function atlas_register_transfer_post_type() {
     register_post_type('transfer', array(
         'labels' => array(
@@ -1501,7 +1566,7 @@ function atlas_search_tours($request) {
     wp_reset_postdata();
     
     // Фильтрация по датам (если указаны)
-    if ($start_date && $end_date) {
+    if ($start_date || $end_date) {
         $filtered_tours = array();
         foreach ($tours as $tour) {
             if (isset($tour['tour_dates']) && is_array($tour['tour_dates'])) {
@@ -1510,12 +1575,19 @@ function atlas_search_tours($request) {
                         $tour_start = $date_range['date_start'];
                         $tour_end = $date_range['date_end'];
                         
-                        // Проверяем пересечение дат
-                        if (($tour_start >= $start_date && $tour_start <= $end_date) || 
-                            ($tour_end >= $start_date && $tour_end <= $end_date) ||
-                            ($tour_start <= $start_date && $tour_end >= $end_date)) {
+                        $matches = true;
+                        
+                        if ($start_date) {
+                            $matches = $matches && ($tour_start <= $start_date && $start_date <= $tour_end);
+                        }
+                        
+                        if ($end_date) {
+                            $matches = $matches && ($tour_start <= $end_date && $end_date <= $tour_end);
+                        }
+                        
+                        if ($matches) {
                             $filtered_tours[] = $tour;
-                            break; // Нашли подходящую дату для этого тура
+                            break;
                         }
                     }
                 }

@@ -682,10 +682,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_outbound_connecting.connecting_airport || 'Kuwait'}
+                              {tour.flight_outbound_connecting.arrival_city || 'Стамбул'}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_outbound_connecting.connecting_airport_code || 'KUW'}
+                              {tour.flight_outbound_connecting.arrival_airport || 'IST'}
                             </span>
                           </div>
                         </div>
@@ -735,10 +735,10 @@ export default function TourDetailPage({ params }) {
 
                         <div className={styles.connectingLocation}>
                           <div className={styles.connectingCity}>
-                            {tour.flight_connecting.connecting_airport || 'Kuwait'}
+                            {tour.flight_connecting.connecting_airport || 'Стамбул'}
                           </div>
                           <div className={styles.connectingCode}>
-                            {tour.flight_connecting.connecting_airport_code || 'KUW'}
+                            {tour.flight_connecting.connecting_airport_code || 'IST'}
                           </div>
                         </div>
 
@@ -862,10 +862,10 @@ export default function TourDetailPage({ params }) {
                           </div>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.arrival_city || tour.flight_inbound_connecting.connecting_airport || 'Kuwait'}
+                              {tour.flight_inbound_connecting.arrival_city || 'Алматы'}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.arrival_airport || tour.flight_inbound_connecting.connecting_airport_code || 'KUW'}
+                              {tour.flight_inbound_connecting.arrival_airport || 'ALA'}
                             </span>
                           </div>
                         </div>
@@ -915,10 +915,10 @@ export default function TourDetailPage({ params }) {
 
                         <div className={styles.connectingLocation}>
                           <div className={styles.connectingCity}>
-                            {tour.flight_connecting.connecting_airport || 'Kuwait'}
+                            {tour.flight_connecting.connecting_airport || 'Стамбул'}
                           </div>
                           <div className={styles.connectingCode}>
-                            {tour.flight_connecting.connecting_airport_code || 'KUW'}
+                            {tour.flight_connecting.connecting_airport_code || 'IST'}
                           </div>
                         </div>
 
@@ -969,10 +969,10 @@ export default function TourDetailPage({ params }) {
                         <div className={styles.routeInfo}>
                           <div className={styles.airport}>
                             <span className={styles.city}>
-                              {tour.flight_inbound_connecting.connecting_airport || 'Kuwait'}
+                              {tour.flight_inbound_connecting.departure_city || tour.flight_inbound_connecting.connecting_airport || 'Стамбул'}
                             </span>
                             <span className={styles.code}>
-                              {tour.flight_inbound_connecting.connecting_airport_code || 'KUW'}
+                              {tour.flight_inbound_connecting.departure_airport || tour.flight_inbound_connecting.connecting_airport_code || 'IST'}
                             </span>
                           </div>
                           <div className={styles.flightPath}>
