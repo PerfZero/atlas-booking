@@ -1236,46 +1236,10 @@ function ProfilePageContent() {
                 {bookingsLoading ? (
                   <div className={styles.loading}>Проверяем статус оплаты...</div>
                 ) : (() => {
-                  const allPending = bookings.filter(booking => booking.status === 'pending');
                   const pendingToShow = bookings.filter(booking => !isBookingPaid(booking) && !isBookingExpired(booking));
-                  const expiredPending = bookings.filter(booking => booking.status === 'pending' && isBookingExpired(booking));
                   
                   return (
                     <>
-                      {allPending.length > 0 && (
-                        <div style={{
-                          padding: '16px',
-                          marginBottom: '24px',
-                          borderRadius: '12px',
-                          backgroundColor: '#fff3cd',
-                          border: '1px solid #ffc107'
-                        }}>
-                          <div style={{ fontWeight: '600', marginBottom: '8px', color: '#856404' }}>
-                            Информация о бронированиях:
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#856404', lineHeight: '1.6' }}>
-                            <div>Всего pending: {allPending.length}</div>
-                            <div>Показывается: {pendingToShow.length}</div>
-                            {expiredPending.length > 0 && (
-                              <div style={{ color: '#d80027', marginTop: '8px' }}>
-                                Истекших: {expiredPending.length}
-                              </div>
-                            )}
-                            {allPending.length > 0 && (
-                              <div style={{ marginTop: '12px', fontSize: '12px' }}>
-                                {allPending.map((b, i) => (
-                                  <div key={b.booking_id} style={{ marginTop: '4px' }}>
-                                    ID: {b.booking_id}, статус: {b.status}, 
-                                    оплачено: {isBookingPaid(b) ? 'да' : 'нет'}, 
-                                    истекло: {isBookingExpired(b) ? 'да' : 'нет'}
-                                    {b.booking_date && `, дата: ${new Date(b.booking_date).toLocaleString('ru-RU')}`}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                       {pendingToShow.length === 0 ? (
                         <div className={styles.noBookings}>
                           <h3 className={styles.textEx}>У вас нет туров ожидающих оплаты</h3>
