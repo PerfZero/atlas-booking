@@ -106,17 +106,18 @@ function ProfilePageContent() {
   };
 
   const isBookingExpired = (booking) => {
+    if (!booking) {
+      return false;
+    }
+    
     if (booking.status === 'expired') {
       return true;
     }
-    if (booking.status === 'pending' && booking.booking_date) {
-      const bookingTime = new Date(booking.booking_date);
-      const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000);
-      return new Date() > expirationTime;
-    }
+    
     if (booking.status === 'pending' && booking.expires_at) {
       return new Date() > new Date(booking.expires_at);
     }
+    
     return false;
   };
 
