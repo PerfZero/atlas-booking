@@ -1,13 +1,9 @@
 import styles from "../search/page.module.css";
 import Link from "next/link";
-import { getTourSpots } from "../../lib/wordpress-api";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function TourCard({ tour, searchParams = null }) {
-  const [spotsLeft, setSpotsLeft] = useState(
-    tour.spots_left || tour.spotsLeft || 4
-  );
-  const [loadingSpots, setLoadingSpots] = useState(false);
+  const spotsLeft = tour.spots_left || tour.spotsLeft || 4;
 
   const tourSlug =
     tour.slug ||
@@ -18,26 +14,6 @@ export default function TourCard({ tour, searchParams = null }) {
   const tourRating = tour.rating || 9.0;
   const tourDuration = tour.duration || "3 дня в Медине · 3 дня в Мекке";
   const tourTags = Array.isArray(tour.tags) ? tour.tags : ["Умра"];
-
-  // Получаем актуальное количество мест
-  useEffect(() => {
-    if (tour.id) {
-      setLoadingSpots(true);
-      getTourSpots(tour.id)
-        .then((result) => {
-          if (result.success) {
-            // Используем общее количество мест (сумму всех вариантов)
-            setSpotsLeft(result.spots_left);
-          }
-        })
-        .catch((error) => {
-          console.error("Ошибка получения количества мест:", error);
-        })
-        .finally(() => {
-          setLoadingSpots(false);
-        });
-    }
-  }, [tour.id]);
 
   // Функция для поиска ближайшей даты
   const getNearestDate = () => {
@@ -170,7 +146,7 @@ export default function TourCard({ tour, searchParams = null }) {
                 </span>
               )}
               <span>
-                {loadingSpots ? "Загрузка..." : `Осталось ${spotsLeft} мест`}
+                {`Осталось ${spotsLeft} мест`}
               </span>
             </div>
           )}

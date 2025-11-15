@@ -73,7 +73,6 @@
 }
 
 .filters {
-  backdrop-filter: blur(200px);
   background: rgba(242, 242, 247, 0.5);
 
   border-radius: 32px;

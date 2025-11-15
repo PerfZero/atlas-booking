@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { searchToursWithFilters, getTransfers } from '../../lib/wordpress-api';
 import Header from '../components/Header';
@@ -46,6 +46,8 @@ function SearchPageContent({ searchParams }) {
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [priceRangeManuallySet, setPriceRangeManuallySet] = useState(false);
   const [shouldUpdatePriceBounds, setShouldUpdatePriceBounds] = useState(true);
+  const filtersInitialized = useRef(false);
+  const isAutoUpdatingPriceRange = useRef(false);
 
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
@@ -172,15 +174,53 @@ function SearchPageContent({ searchParams }) {
   ]);
 
   useEffect(() => {
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const departureCity = searchParams.get('departureCity');
+    const pilgrimageType = searchParams.get('pilgrimageType');
+    
+    if (!(startDate && endDate && departureCity && pilgrimageType)) {
+      return;
+    }
+    
+    if (!priceRangeManuallySet) {
+      return;
+    }
+    
     const timeoutId = setTimeout(() => {
       loadTours();
     }, 300);
     
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceRange.min, priceRange.max, priceRangeManuallySet]);
+
+  useEffect(() => {
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const departureCity = searchParams.get('departureCity');
+    const pilgrimageType = searchParams.get('pilgrimageType');
+    
+    if (!(startDate && endDate && departureCity && pilgrimageType)) {
+      return;
+    }
+    
+    if (!filtersInitialized.current) {
+      filtersInitialized.current = true;
+      return;
+    }
+    
+    const timeoutId = setTimeout(() => {
+      loadTours();
+    }, 300);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    priceRange.min, 
-    priceRange.max, 
     flightTypes.direct, 
     flightTypes.transfer, 
     ticketTypes.economy, 
@@ -244,7 +284,11 @@ function SearchPageContent({ searchParams }) {
       setShouldUpdatePriceBounds(false);
       
       if (!priceRangeManuallySet) {
+        isAutoUpdatingPriceRange.current = true;
         setPriceRange({ min: minPrice, max: maxPrice });
+        setTimeout(() => {
+          isAutoUpdatingPriceRange.current = false;
+        }, 0);
       }
     }
     

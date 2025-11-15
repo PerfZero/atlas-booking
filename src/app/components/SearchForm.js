@@ -5,7 +5,7 @@ import CustomSelect from './CustomSelect';
 import DatePicker from './DatePicker';
 import styles from './SearchForm.module.css';
 import Toast from './Toast';
-import { getTours } from '../../lib/wordpress-api';
+import { getTourDates } from '../../lib/wordpress-api';
 
 function SearchFormWithParams({ className = '', isHomePage = false }) {
   const searchParams = useSearchParams();
@@ -113,12 +113,12 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   }, [isDatePickerOpen]);
 
   useEffect(() => {
-    const loadTours = async () => {
+    const loadDates = async () => {
       try {
-        const tours = await getTours();
-        setAvailableTours(tours);
+        const dates = await getTourDates(formData.departureCity, formData.pilgrimageType);
+        setAvailableTours(dates);
       } catch (error) {
-        console.error('Ошибка загрузки туров:', error);
+        console.error('Ошибка загрузки дат:', error);
       }
     };
 
@@ -141,9 +141,9 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
       }
     };
 
-    loadTours();
+    loadDates();
     loadPilgrimageTypes();
-  }, []);
+  }, [formData.departureCity, formData.pilgrimageType]);
 
   useEffect(() => {
     const departureCity = searchParams.get('departureCity');

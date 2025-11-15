@@ -1,7 +1,7 @@
 "use client";
 import { notFound } from "next/navigation";
 import { useState, use, useEffect } from "react";
-import { getTourBySlug, getTourSpots } from "../../../lib/wordpress-api";
+import { getTourBySlug } from "../../../lib/wordpress-api";
 import { useAuth } from "../../../contexts/AuthContext";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -32,22 +32,14 @@ export default function TourDetailPage({ params }) {
         const tourData = await getTourBySlug(resolvedParams.slug);
         setTour(tourData);
         
-        // Получаем актуальное количество мест
-        if (tourData.id) {
-          const spotsData = await getTourSpots(tourData.id);
-          if (spotsData.success) {
-            // Сохраняем общее количество мест
-            setRoomSpots({ total: spotsData.spots_left });
-            
-            // Также сохраняем по типам для отображения в вариантах размещения
-            if (spotsData.room_options) {
-              const spotsMap = {};
-              spotsData.room_options.forEach(room => {
-                spotsMap[room.type] = room.spots_left;
-              });
-              setRoomSpots(prev => ({ ...prev, ...spotsMap }));
-            }
-          }
+        if (tourData.room_options && Array.isArray(tourData.room_options)) {
+          const spotsMap = {};
+          tourData.room_options.forEach(room => {
+            spotsMap[room.type] = room.spots_left || 4;
+          });
+          setRoomSpots({ total: tourData.spots_left || 4, ...spotsMap });
+        } else {
+          setRoomSpots({ total: tourData.spots_left || 4 });
         }
       } catch (err) {
         console.error("Ошибка загрузки тура:", err);

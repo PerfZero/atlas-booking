@@ -1064,6 +1064,12 @@
             'callback' => 'atlas_get_pilgrimage_types',
             'permission_callback' => '__return_true'
         ));
+        
+        register_rest_route('atlas-hajj/v1', '/tour-dates', array(
+            'methods' => 'GET',
+            'callback' => 'atlas_get_tour_dates',
+            'permission_callback' => '__return_true'
+        ));
     });
 
     function atlas_get_transfers($request) {
@@ -1315,6 +1321,63 @@
         wp_reset_postdata();
         
         return $tours;
+    }
+
+    function atlas_get_tour_dates($request) {
+        $departure_city = $request->get_param('departure_city');
+        $pilgrimage_type = $request->get_param('pilgrimage_type');
+        
+        $args = array(
+            'post_type' => 'post',
+            'posts_per_page' => -1,
+            'post_status' => 'publish',
+            'meta_query' => array(
+                array(
+                    'key' => 'price',
+                    'compare' => 'EXISTS'
+                )
+            )
+        );
+        
+        if ($departure_city && $departure_city !== 'all') {
+            $args['meta_query'][] = array(
+                'key' => 'departure_city',
+                'value' => $departure_city,
+                'compare' => '='
+            );
+        }
+        
+        if ($pilgrimage_type && $pilgrimage_type !== 'all') {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => 'pilgrimage_type',
+                    'field' => 'slug',
+                    'terms' => $pilgrimage_type
+                )
+            );
+        }
+        
+        $query = new WP_Query($args);
+        $dates = array();
+        
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $tour_dates = get_field('tour_dates', $post_id);
+                
+                if ($tour_dates && is_array($tour_dates) && count($tour_dates) > 0) {
+                    $dates[] = array(
+                        'id' => $post_id,
+                        'tour_dates' => $tour_dates
+                    );
+                }
+            }
+        }
+        
+        wp_reset_postdata();
+        
+        return $dates;
     }
 
     function atlas_get_tour_by_slug($request) {

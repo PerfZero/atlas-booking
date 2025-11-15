@@ -312,18 +312,6 @@ export async function getMyBookings(token) {
   }
 }
 
-export async function getTourSpots(tourId) {
-  try {
-    const response = await fetch(`${API_BASE}/tour-spots/${tourId}`);
-    if (!response.ok) {
-      return { success: false, available: 0 };
-    }
-    return await response.json();
-  } catch (error) {
-    return { success: false, available: 0 };
-  }
-}
-
 export async function createKaspiPayment(paymentData) {
   try {
     const { token, ...dataWithoutToken } = paymentData;
@@ -364,3 +352,18 @@ export async function getTransfers() {
   }
 }
 
+export async function getTourDates(departureCity = 'all', pilgrimageType = 'all') {
+  try {
+    const params = new URLSearchParams();
+    if (departureCity && departureCity !== 'all') params.append('departureCity', departureCity);
+    if (pilgrimageType && pilgrimageType !== 'all') params.append('pilgrimageType', pilgrimageType);
+    
+    const response = await fetch(`/api/tour-dates?${params.toString()}`);
+    if (!response.ok) throw new Error('Ошибка загрузки дат туров');
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Ошибка получения дат туров:', error);
+    return [];
+  }
+}
