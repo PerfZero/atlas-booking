@@ -26,6 +26,7 @@ function ProfilePageContent() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [serverTime, setServerTime] = useState(null);
   const lastBookingsTabRef = useRef(null);
   const hasLoadedProfileRef = useRef(false);
   const [profileUpdated, setProfileUpdated] = useState(false);
@@ -69,16 +70,20 @@ function ProfilePageContent() {
       if (Array.isArray(bookings)) {
         bookings.forEach((booking) => {
           if (booking && booking.status === 'pending') {
-            const timeRemaining = calculateTimeRemaining(booking.booking_date || booking.bookingDate);
+            const timeRemaining = calculateTimeRemaining(booking.booking_date || booking.bookingDate, booking.expires_at);
             newTimers[booking.booking_id] = timeRemaining;
           }
         });
       }
       setBookingTimers(newTimers);
+      
+      if (serverTime) {
+        setServerTime(new Date(serverTime.getTime() + 1000));
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [bookings]);
+  }, [bookings, serverTime]);
 
   // Функция для переключения таба
   const handleTabChange = (tab) => {
@@ -88,12 +93,26 @@ function ProfilePageContent() {
     router.replace(url.pathname + url.search);
   };
 
-  const calculateTimeRemaining = (bookingDate) => {
-    const bookingTime = new Date(bookingDate);
-    const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000);
-    const now = new Date();
-    const timeRemaining = expirationTime.getTime() - now.getTime();
+  const calculateTimeRemaining = (bookingDate, expiresAt) => {
+    if (!expiresAt) {
+      const bookingTime = new Date(bookingDate);
+      const expirationTime = new Date(bookingTime.getTime() + 20 * 60 * 1000);
+      const now = serverTime || new Date();
+      const timeRemaining = expirationTime.getTime() - now.getTime();
+      
+      if (timeRemaining <= 0) {
+        return { minutes: 0, seconds: 0, expired: true };
+      }
+      
+      const minutes = Math.floor(timeRemaining / (1000 * 60));
+      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+      
+      return { minutes, seconds, expired: false };
+    }
     
+    const expirationTime = new Date(expiresAt);
+    const now = serverTime || new Date();
+    const timeRemaining = expirationTime.getTime() - now.getTime();
     
     if (timeRemaining <= 0) {
       return { minutes: 0, seconds: 0, expired: true };
@@ -115,7 +134,9 @@ function ProfilePageContent() {
     }
     
     if (booking.status === 'pending' && booking.expires_at) {
-      return new Date() > new Date(booking.expires_at);
+      const now = serverTime || new Date();
+      const expiresAt = new Date(booking.expires_at);
+      return now > expiresAt;
     }
     
     return false;
@@ -789,6 +810,9 @@ function ProfilePageContent() {
       
       if (result.success && result.bookings) {
         const bookingsArray = Array.isArray(result.bookings) ? result.bookings : [];
+        if (result.server_time) {
+          setServerTime(new Date(result.server_time));
+        }
         setBookings(bookingsArray);
       } else {
         setBookings([]);

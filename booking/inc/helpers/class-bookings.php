@@ -52,7 +52,7 @@ class Atlas_Bookings {
         
         $booking_id = 'BK' . time() . '_' . wp_generate_password(8, false, false);
         $booking_date = current_time('mysql');
-        $expires_at = date('Y-m-d H:i:s', time() + (20 * 60));
+        $expires_at = date('Y-m-d H:i:s', current_time('timestamp') + (20 * 60));
         
         $amount = isset($tour_data['price']) ? floatval($tour_data['price']) : 0;
         

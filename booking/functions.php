@@ -2015,7 +2015,8 @@
         
         return array(
             'success' => true,
-            'bookings' => $bookings
+            'bookings' => $bookings,
+            'server_time' => current_time('mysql')
         );
     }
 
