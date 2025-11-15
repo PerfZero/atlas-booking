@@ -1420,6 +1420,7 @@ function ProfilePageContent() {
                                 const paymentResponse = await fetch('https://api.booking.atlas.kz/wp-json/atlas/v1/kaspi/create-payment', {
                                   method: 'POST',
                                   headers: {
+                                    'Authorization': `Bearer ${token}`,
                                     'Content-Type': 'application/json',
                                   },
                                   body: JSON.stringify(paymentRequestData)
