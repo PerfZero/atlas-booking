@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
  
 import { useAuth } from "../../contexts/AuthContext";
-import { getProfile, updateProfile, getMyBookings } from "../../lib/wordpress-api";
 import HeaderProfile from "../components/HeaderProfile";
 import Footer from "../components/Footer";
 import BottomNavigation from "../components/BottomNavigation";
@@ -27,7 +26,7 @@ function ProfilePageContent() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
-  const [hasLoadedBookings, setHasLoadedBookings] = useState(false);
+  const lastBookingsTabRef = useRef(null);
   const hasLoadedProfileRef = useRef(false);
   const [profileUpdated, setProfileUpdated] = useState(false);
   const [formData, setFormData] = useState({
@@ -706,11 +705,35 @@ function ProfilePageContent() {
   }, [isAuthenticated, loading, router]);
 
   const loadProfile = useCallback(async () => {
-    if (!user?.token) return;
+    if (!user?.token) {
+      console.log('loadProfile: нет токена');
+      return;
+    }
     
+    console.log('loadProfile: начало загрузки');
     setProfileLoading(true);
     try {
-      const result = await getProfile(user.token);
+      const response = await fetch('https://api.booking.atlas.kz/wp-json/atlas-hajj/v1/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ошибка получения профиля: ${response.status} ${errorText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Неверный формат ответа от сервера');
+      }
+      
+      const result = await response.json();
+      console.log('Ответ API /profile:', JSON.stringify(result, null, 2));
+      
       if (result.success && result.profile) {
         const newFormData = {
           firstName: result.profile.first_name || "",
@@ -734,11 +757,35 @@ function ProfilePageContent() {
   }, [user?.token]);
 
   const loadBookings = useCallback(async () => {
-    if (!user?.token) return;
+    if (!user?.token) {
+      console.log('loadBookings: нет токена');
+      return;
+    }
     
+    console.log('loadBookings: начало загрузки');
     setBookingsLoading(true);
     try {
-      const result = await getMyBookings(user.token);
+      const response = await fetch('https://api.booking.atlas.kz/wp-json/atlas-hajj/v1/my-bookings', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ошибка загрузки бронирований: ${response.status} ${errorText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Неверный формат ответа от сервера');
+      }
+      
+      const result = await response.json();
+      console.log('Ответ API /my-bookings:', JSON.stringify(result, null, 2));
+      
       if (result.success && result.bookings) {
         const bookingsArray = Array.isArray(result.bookings) ? result.bookings : [];
         setBookings(bookingsArray);
@@ -767,12 +814,13 @@ function ProfilePageContent() {
       isAuthenticated &&
       user?.token &&
       !bookingsLoading &&
-      !hasLoadedBookings
+      lastBookingsTabRef.current !== activeTab
     ) {
+      console.log('Загрузка бронирований для таба:', activeTab);
+      lastBookingsTabRef.current = activeTab;
       loadBookings();
-      setHasLoadedBookings(true);
     }
-  }, [activeTab, isAuthenticated, user?.token, bookingsLoading, hasLoadedBookings]);
+  }, [activeTab, isAuthenticated, user?.token, bookingsLoading, loadBookings]);
 
 
   const handleInputChange = (field, value) => {
@@ -796,17 +844,37 @@ function ProfilePageContent() {
     
     setProfileLoading(true);
     try {
-      const result = await updateProfile(user.token, {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        name: `${formData.firstName} ${formData.lastName}`.trim(),
-        birth_date: formData.birthDate,
-        gender: formData.gender,
-        iin: formData.iin,
-        passport_number: formData.passportNumber,
-        passport_issue_date: formData.passportIssueDate,
-        passport_expiry_date: formData.passportExpiryDate
+      const response = await fetch('https://api.booking.atlas.kz/wp-json/atlas-hajj/v1/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          birth_date: formData.birthDate,
+          gender: formData.gender,
+          iin: formData.iin,
+          passport_number: formData.passportNumber,
+          passport_issue_date: formData.passportIssueDate,
+          passport_expiry_date: formData.passportExpiryDate
+        })
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ошибка обновления профиля: ${response.status} ${errorText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Неверный формат ответа от сервера');
+      }
+      
+      const result = await response.json();
+      console.log('Ответ API /profile (PUT):', JSON.stringify(result, null, 2));
       
       if (result.success) {
         setSaveSuccess(true);
