@@ -25,7 +25,6 @@ function SearchPageContent({ searchParams }) {
   const [filteredResults, setFilteredResults] = useState([]);
   const [allTours, setAllTours] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtering, setFiltering] = useState(false);
   const [sortBy, setSortBy] = useState('popular');
   const [minTourPrice, setMinTourPrice] = useState(0);
   const [maxTourPrice, setMaxTourPrice] = useState(3000);
@@ -35,7 +34,7 @@ function SearchPageContent({ searchParams }) {
   const [maxMedinaDistance, setMaxMedinaDistance] = useState(4000);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 3000 });
   const [availableTransfers, setAvailableTransfers] = useState([]);
-  const [flightTypes, setFlightTypes] = useState({ direct: true, transfer: false });
+  const [flightTypes, setFlightTypes] = useState({ direct: false, transfer: false });
   const [ticketTypes, setTicketTypes] = useState({ economy: false, business: false, first: false });
   const [mekkaHotels, setMekkaHotels] = useState({ five: false, four: false, three: false });
   const [medinaHotels, setMedinaHotels] = useState({ five: false, four: false, three: false });
@@ -45,11 +44,14 @@ function SearchPageContent({ searchParams }) {
   const [transferTypes, setTransferTypes] = useState({});
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
+  const [priceRangeManuallySet, setPriceRangeManuallySet] = useState(false);
+  const [shouldUpdatePriceBounds, setShouldUpdatePriceBounds] = useState(true);
 
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
     { label: 'Результат поиска' }
   ];
+
 
   const loadTours = useCallback(async () => {
     setLoading(true);
@@ -59,61 +61,152 @@ function SearchPageContent({ searchParams }) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
       
-      // Сначала получаем все туры без фильтрации по цене
+      const activeFlightType = flightTypes.direct && !flightTypes.transfer ? 'direct' : 
+                               flightTypes.transfer && !flightTypes.direct ? 'transfer' : null;
+      
+      const activeTicketTypes = [];
+      if (ticketTypes.economy) activeTicketTypes.push('economy');
+      if (ticketTypes.business) activeTicketTypes.push('business');
+      if (ticketTypes.first) activeTicketTypes.push('first');
+      
+      const activeFoodTypes = Object.keys(foodTypes).filter(key => foodTypes[key]);
+      
+      const activeTransferIds = Object.keys(transferTypes).filter(key => transferTypes[key]).map(id => parseInt(id));
+      
+      const activeMekkaStars = Object.keys(mekkaHotels).filter(key => mekkaHotels[key]).map(key => {
+        const starMap = { five: '5', four: '4', three: '3', two: '2', one: '1' };
+        return starMap[key];
+      });
+      
+      const activeMedinaStars = Object.keys(medinaHotels).filter(key => medinaHotels[key]).map(key => {
+        const starMap = { five: '5', four: '4', three: '3', two: '2', one: '1' };
+        return starMap[key];
+      });
+      
+      const minPriceFilter = priceRange.min > minTourPrice ? priceRange.min : null;
+      const maxPriceFilter = priceRange.max < maxTourPrice ? priceRange.max : null;
+      
       const filters = {
         departureCity,
         pilgrimageType,
         startDate,
         endDate,
-        sortBy
+        sortBy,
+        minPrice: minPriceFilter,
+        maxPrice: maxPriceFilter,
+        flightType: activeFlightType,
+        ticketTypes: activeTicketTypes.length > 0 ? activeTicketTypes : null,
+        foodTypes: activeFoodTypes.length > 0 ? activeFoodTypes : null,
+        transferIds: activeTransferIds.length > 0 ? activeTransferIds : null,
+        mekkaHotelStars: activeMekkaStars.length > 0 ? activeMekkaStars : null,
+        medinaHotelStars: activeMedinaStars.length > 0 ? activeMedinaStars : null,
+        mekkaDistanceMin: mekkaDistance.min !== minMekkaDistance ? mekkaDistance.min : null,
+        mekkaDistanceMax: mekkaDistance.max !== maxMekkaDistance ? mekkaDistance.max : null,
+        medinaDistanceMin: medinaDistance.min !== minMedinaDistance ? medinaDistance.min : null,
+        medinaDistanceMax: medinaDistance.max !== maxMedinaDistance ? medinaDistance.max : null
       };
       
       const result = await searchToursWithFilters(filters);
       
-      
       if (result.success && result.tours) {
-        // Применяем фильтры на фронтенде
-        let filteredTours = result.tours;
-        
-        // Сортировка
-        if (sortBy) {
-          switch (sortBy) {
-            case 'price-low':
-              filteredTours.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-              break;
-            case 'price-high':
-              filteredTours.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-              break;
-            case 'rating':
-              filteredTours.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
-              break;
-          }
-        }
-        
-        setAllTours(filteredTours);
-        setFilteredResults(filteredTours);
+        setAllTours(result.tours);
+        setFilteredResults(result.tours);
       } else {
         setAllTours([]);
         setFilteredResults([]);
       }
     } catch (error) {
       console.error('Ошибка загрузки туров:', error);
+      setAllTours([]);
       setFilteredResults([]);
     } finally {
       setLoading(false);
     }
-  }, [searchParams, sortBy]);
+  }, [
+    searchParams.get('departureCity'),
+    searchParams.get('pilgrimageType'),
+    searchParams.get('startDate'),
+    searchParams.get('endDate'),
+    sortBy, 
+    priceRange.min, 
+    priceRange.max, 
+    flightTypes.direct, 
+    flightTypes.transfer, 
+    ticketTypes.economy, 
+    ticketTypes.business, 
+    ticketTypes.first, 
+    foodTypes.BB, 
+    foodTypes.HB, 
+    foodTypes.FB, 
+    foodTypes.AI, 
+    JSON.stringify(transferTypes), 
+    mekkaHotels.five, 
+    mekkaHotels.four, 
+    mekkaHotels.three, 
+    medinaHotels.five, 
+    medinaHotels.four, 
+    medinaHotels.three, 
+    mekkaDistance.min, 
+    mekkaDistance.max, 
+    medinaDistance.min, 
+    medinaDistance.max
+  ]);
 
   useEffect(() => {
-    loadTours();
-  }, [searchParams, sortBy, loadTours]);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const departureCity = searchParams.get('departureCity');
+    const pilgrimageType = searchParams.get('pilgrimageType');
+    
+    if (startDate && endDate && departureCity && pilgrimageType) {
+      setPriceRangeManuallySet(false);
+      loadTours();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    searchParams.get('startDate'),
+    searchParams.get('endDate'),
+    searchParams.get('departureCity'),
+    searchParams.get('pilgrimageType'),
+    sortBy
+  ]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadTours();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    priceRange.min, 
+    priceRange.max, 
+    flightTypes.direct, 
+    flightTypes.transfer, 
+    ticketTypes.economy, 
+    ticketTypes.business, 
+    ticketTypes.first, 
+    foodTypes.BB, 
+    foodTypes.HB, 
+    foodTypes.FB, 
+    foodTypes.AI, 
+    JSON.stringify(transferTypes), 
+    mekkaHotels.five, 
+    mekkaHotels.four, 
+    mekkaHotels.three, 
+    medinaHotels.five, 
+    medinaHotels.four, 
+    medinaHotels.three, 
+    mekkaDistance.min, 
+    mekkaDistance.max, 
+    medinaDistance.min, 
+    medinaDistance.max
+  ]);
 
   useEffect(() => {
     const loadTransfers = async () => {
       try {
-        const API_URL = 'https://api.booking.atlas.kz/wp-json';
-        const response = await fetch(`${API_URL}/atlas-hajj/v1/transfers`);
-        const transfers = await response.json();
+        const transfers = await getTransfers();
         setAvailableTransfers(Array.isArray(transfers) ? transfers : []);
       } catch (error) {
         console.error('Ошибка загрузки трансферов:', error);
@@ -124,27 +217,42 @@ function SearchPageContent({ searchParams }) {
   }, []);
 
   useEffect(() => {
-    if (allTours.length > 0) {
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const departureCity = searchParams.get('departureCity');
+    const pilgrimageType = searchParams.get('pilgrimageType');
+    
+    if (startDate && endDate && departureCity && pilgrimageType) {
+      setShouldUpdatePriceBounds(true);
+      setPriceRangeManuallySet(false);
+    }
+  }, [
+    searchParams.get('startDate'),
+    searchParams.get('endDate'),
+    searchParams.get('departureCity'),
+    searchParams.get('pilgrimageType')
+  ]);
+
+  useEffect(() => {
+    if (allTours.length > 0 && shouldUpdatePriceBounds) {
       const prices = allTours.map(tour => parseFloat(tour.price) || 0);
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
       
       setMinTourPrice(minPrice);
       setMaxTourPrice(maxPrice);
+      setShouldUpdatePriceBounds(false);
       
-      if (priceRange.max === 3000) {
-        setPriceRange({
-          min: minPrice,
-          max: maxPrice
-        });
+      if (!priceRangeManuallySet) {
+        setPriceRange({ min: minPrice, max: maxPrice });
       }
-      
-      // Вычисляем минимальные и максимальные расстояния
+    }
+    
+    if (allTours.length > 0) {
       const mekkaDistances = allTours
         .map(tour => {
           const distance = tour.hotel_mekka?.distance_number;
           if (!distance) return 0;
-          // Убираем единицы измерения и парсим число
           return parseFloat(String(distance).replace(/[^\d.]/g, '')) || 0;
         })
         .filter(d => d > 0);
@@ -152,7 +260,6 @@ function SearchPageContent({ searchParams }) {
         .map(tour => {
           const distance = tour.hotel_medina?.distance_number;
           if (!distance) return 0;
-          // Убираем единицы измерения и парсим число
           return parseFloat(String(distance).replace(/[^\d.]/g, '')) || 0;
         })
         .filter(d => d > 0);
@@ -166,200 +273,8 @@ function SearchPageContent({ searchParams }) {
       setMaxMekkaDistance(maxMekka);
       setMinMedinaDistance(minMedina);
       setMaxMedinaDistance(maxMedina);
-      
-      if (mekkaDistance.max === 4000) {
-        setMekkaDistance({ min: minMekka, max: maxMekka });
-      }
-      
-      if (medinaDistance.max === 4000) {
-        setMedinaDistance({ min: minMedina, max: maxMedina });
-      }
     }
-  }, [allTours]);
-
-  // Отдельный useEffect для фильтрации с дебаунсом
-  useEffect(() => {
-    setFiltering(true);
-    
-    const timeoutId = setTimeout(() => {
-      if (allTours.length > 0) {
-        let filtered = allTours.filter(tour => {
-          // Фильтр по цене
-          const price = parseFloat(tour.price) || 0;
-          const priceMatch = price >= priceRange.min && price <= priceRange.max;
-          
-          // Фильтр по типу перелета
-          let flightMatch = true;
-          if (flightTypes.direct && !flightTypes.transfer) {
-            // Только прямые рейсы
-            flightMatch = tour.flight_type === 'direct';
-          } else if (flightTypes.transfer && !flightTypes.direct) {
-            // Только с пересадкой
-            flightMatch = tour.flight_type === 'transfer';
-          } else if (!flightTypes.direct && !flightTypes.transfer) {
-            // Ничего не выбрано - не показываем туры
-            flightMatch = false;
-          }
-          
-          // Фильтр по типу билета
-          let ticketMatch = true;
-          if (ticketTypes.economy || ticketTypes.business || ticketTypes.first) {
-            // Если выбраны какие-то типы билетов, проверяем соответствие
-            const hasMatchingTicketType = () => {
-              const selectedTypes = [];
-              if (ticketTypes.economy) selectedTypes.push('economy');
-              if (ticketTypes.business) selectedTypes.push('business');
-              if (ticketTypes.first) selectedTypes.push('first');
-              
-              const tourTicketTypes = [];
-              // Собираем все типы билетов в туре
-              if (tour.flight_outbound && tour.flight_outbound.ticket_type) {
-                tourTicketTypes.push(tour.flight_outbound.ticket_type);
-              }
-              if (tour.flight_inbound && tour.flight_inbound.ticket_type) {
-                tourTicketTypes.push(tour.flight_inbound.ticket_type);
-              }
-              
-              // Проверяем, что хотя бы один выбранный тип присутствует в туре
-              return selectedTypes.some(selectedType => tourTicketTypes.includes(selectedType));
-            };
-            ticketMatch = hasMatchingTicketType();
-          } else {
-            // Если ничего не выбрано, показываем все туры
-            ticketMatch = true;
-          }
-          
-          // Фильтр по типу питания (проверяем meal_plan отелей)
-          let foodMatch = true;
-          if (Object.values(foodTypes).some(selected => selected)) {
-            // Если выбраны какие-то типы питания, проверяем соответствие
-            const selectedFoodTypes = Object.keys(foodTypes).filter(key => foodTypes[key]);
-            
-            // Собираем все типы питания из отелей тура
-            const tourMealPlans = [];
-            if (tour.hotel_mekka_details && tour.hotel_mekka_details.meal_plan) {
-              tourMealPlans.push(tour.hotel_mekka_details.meal_plan);
-            }
-            if (tour.hotel_medina_details && tour.hotel_medina_details.meal_plan) {
-              tourMealPlans.push(tour.hotel_medina_details.meal_plan);
-            }
-            
-            // Проверяем, что хотя бы один выбранный тип присутствует в отелях тура
-            foodMatch = selectedFoodTypes.some(selectedType => tourMealPlans.includes(selectedType));
-          } else {
-            // Если ничего не выбрано, показываем все туры
-            foodMatch = true;
-          }
-          
-          // Фильтр по трансферам
-          let transferMatch = true;
-          if (Object.values(transferTypes).some(selected => selected)) {
-            const selectedTransferIds = Object.keys(transferTypes).filter(key => transferTypes[key]).map(id => parseInt(id));
-            
-            const tourTransferIds = [];
-            if (tour.transfers && Array.isArray(tour.transfers)) {
-              tour.transfers.forEach(transfer => {
-                if (transfer.id) {
-                  tourTransferIds.push(transfer.id);
-                }
-              });
-            }
-            
-            transferMatch = selectedTransferIds.some(selectedId => tourTransferIds.includes(selectedId));
-          }
-          
-          // Фильтр по отелям в Мекке
-          let mekkaHotelMatch = true;
-          if (Object.values(mekkaHotels).some(selected => selected)) {
-            const selectedStars = Object.keys(mekkaHotels).filter(key => mekkaHotels[key]);
-            const starMap = { five: '5', four: '4', three: '3', two: '2', one: '1' };
-            const tourMekkaStars = tour.hotel_mekka_details?.stars;
-            
-            mekkaHotelMatch = selectedStars.some(key => starMap[key] === tourMekkaStars);
-          }
-          
-          // Фильтр по отелям в Медине
-          let medinaHotelMatch = true;
-          if (Object.values(medinaHotels).some(selected => selected)) {
-            const selectedStars = Object.keys(medinaHotels).filter(key => medinaHotels[key]);
-            const starMap = { five: '5', four: '4', three: '3', two: '2', one: '1' };
-            const tourMedinaStars = tour.hotel_medina_details?.stars;
-            
-            medinaHotelMatch = selectedStars.some(key => starMap[key] === tourMedinaStars);
-          }
-          
-          // Фильтр по расстоянию отеля в Мекке
-          let mekkaDistanceMatch = true;
-          if (mekkaDistance.min !== minMekkaDistance || mekkaDistance.max !== maxMekkaDistance) {
-            const distanceStr = tour.hotel_mekka?.distance_number;
-            if (distanceStr) {
-              // Убираем единицы измерения и парсим число
-              const distance = parseFloat(String(distanceStr).replace(/[^\d.]/g, '')) || 0;
-              mekkaDistanceMatch = distance >= mekkaDistance.min && distance <= mekkaDistance.max;
-            } else {
-              mekkaDistanceMatch = false;
-            }
-          }
-          
-          // Фильтр по расстоянию отеля в Медине
-          let medinaDistanceMatch = true;
-          if (medinaDistance.min !== minMedinaDistance || medinaDistance.max !== maxMedinaDistance) {
-            const distanceStr = tour.hotel_medina?.distance_number;
-            if (distanceStr) {
-              // Убираем единицы измерения и парсим число
-              const distance = parseFloat(String(distanceStr).replace(/[^\d.]/g, '')) || 0;
-              medinaDistanceMatch = distance >= medinaDistance.min && distance <= medinaDistance.max;
-            } else {
-              medinaDistanceMatch = false;
-            }
-          }
-          
-          // Отладочная информация
-          console.log('Tour:', tour.name, {
-            priceMatch,
-            flightMatch,
-            ticketMatch,
-            foodMatch,
-            transferMatch,
-            mekkaHotelMatch,
-            medinaHotelMatch,
-            mekkaDistanceMatch,
-            medinaDistanceMatch,
-            flightType: tour.flight_type,
-            mealPlans: {
-              mekka: tour.hotel_mekka_details?.meal_plan,
-              medina: tour.hotel_medina_details?.meal_plan
-            },
-            hotelStars: {
-              mekka: tour.hotel_mekka_details?.stars,
-              medina: tour.hotel_medina_details?.stars
-            },
-            hotelDistances: {
-              mekka: tour.hotel_mekka?.distance_number,
-              medina: tour.hotel_medina?.distance_number
-            },
-            transfers: tour.transfers,
-            ticketTypes: {
-              outbound: tour.flight_outbound?.ticket_type,
-              inbound: tour.flight_inbound?.ticket_type
-            },
-            selectedFlightTypes: flightTypes,
-            selectedTicketTypes: ticketTypes,
-            selectedFoodTypes: foodTypes,
-            selectedTransferTypes: transferTypes
-          });
-          
-          return priceMatch && flightMatch && ticketMatch && foodMatch && transferMatch && 
-                 mekkaHotelMatch && medinaHotelMatch && mekkaDistanceMatch && medinaDistanceMatch;
-        });
-        setFilteredResults(filtered);
-      }
-      setFiltering(false);
-    }, 500); // 500ms задержка
-
-    return () => clearTimeout(timeoutId);
-  }, [priceRange.min, priceRange.max, flightTypes, ticketTypes, foodTypes, transferTypes, 
-      mekkaHotels, medinaHotels, mekkaDistance, medinaDistance, allTours]);
+  }, [allTours, shouldUpdatePriceBounds, priceRangeManuallySet]);
 
   return (
     <div className={styles.page}>
@@ -386,7 +301,14 @@ function SearchPageContent({ searchParams }) {
             <div className={styles.leftColumn}>
               <SearchFilters 
                 priceRange={priceRange}
-                setPriceRange={setPriceRange}
+                setPriceRange={(updater) => {
+                  setPriceRangeManuallySet(true);
+                  if (typeof updater === 'function') {
+                    setPriceRange(updater);
+                  } else {
+                    setPriceRange(updater);
+                  }
+                }}
                 minPrice={minTourPrice}
                 maxPrice={maxTourPrice}
                 flightTypes={flightTypes}
@@ -450,7 +372,7 @@ function SearchPageContent({ searchParams }) {
                 </div>
 
                 <div className={styles.tourCards}>
-                  {loading || filtering ? (
+                  {loading ? (
                     <>
                       <TourCardSkeleton />
                       <TourCardSkeleton />
@@ -482,7 +404,14 @@ function SearchPageContent({ searchParams }) {
       
       <MobileFilters
         priceRange={priceRange}
-        setPriceRange={setPriceRange}
+        setPriceRange={(updater) => {
+          setPriceRangeManuallySet(true);
+          if (typeof updater === 'function') {
+            setPriceRange(updater);
+          } else {
+            setPriceRange(updater);
+          }
+        }}
         minPrice={minTourPrice}
         maxPrice={maxTourPrice}
         flightTypes={flightTypes}

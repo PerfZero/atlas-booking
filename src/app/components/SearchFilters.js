@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from '../search/page.module.css';
 
 export default function SearchFilters({ 
@@ -28,20 +28,54 @@ export default function SearchFilters({
   setTransferTypes,
   availableTransfers = []
 }) {
+  const sliderRangeRef = useRef(null);
+
+  const updateSliderRange = useCallback(() => {
+    if (!sliderRangeRef.current) return;
+    
+    const range = maxPrice - minPrice;
+    if (range === 0) {
+      sliderRangeRef.current.style.left = '0%';
+      sliderRangeRef.current.style.width = '100%';
+      return;
+    }
+    
+    let minPercent = ((priceRange.min - minPrice) / range) * 100;
+    let maxPercent = ((priceRange.max - minPrice) / range) * 100;
+    
+    minPercent = Math.max(0, Math.min(100, minPercent));
+    maxPercent = Math.max(0, Math.min(100, maxPercent));
+    
+    const width = Math.max(0, maxPercent - minPercent);
+    
+    sliderRangeRef.current.style.left = `${minPercent}%`;
+    sliderRangeRef.current.style.width = `${width}%`;
+  }, [priceRange, minPrice, maxPrice]);
+
+  useEffect(() => {
+    updateSliderRange();
+  }, [updateSliderRange]);
+
   const handleMinPriceChange = (e) => {
     const value = parseInt(e.target.value);
-    setPriceRange(prev => ({
-      ...prev,
-      min: Math.min(value, prev.max - 100)
-    }));
+    setPriceRange(prev => {
+      const newMin = Math.min(value, prev.max - 1);
+      return {
+        ...prev,
+        min: newMin
+      };
+    });
   };
 
   const handleMaxPriceChange = (e) => {
     const value = parseInt(e.target.value);
-    setPriceRange(prev => ({
-      ...prev,
-      max: Math.max(value, prev.min + 100)
-    }));
+    setPriceRange(prev => {
+      const newMax = Math.max(value, prev.min + 1);
+      return {
+        ...prev,
+        max: newMax
+      };
+    });
   };
 
   const handleFlightTypeChange = (type) => {
@@ -152,68 +186,6 @@ export default function SearchFilters({
     }));
   };
 
-  // Инициализация линии при загрузке компонента
-  useEffect(() => {
-    const updateSliderRange = () => {
-      const minSlider = document.getElementById('minPrice');
-      const maxSlider = document.getElementById('maxPrice');
-      const sliderRange = document.querySelector(`.${styles.sliderRange}`);
-      
-      if (minSlider && maxSlider && sliderRange) {
-        const min = parseInt(minSlider.min);
-        const max = parseInt(minSlider.max);
-        const minVal = parseInt(minSlider.value);
-        const maxVal = parseInt(maxSlider.value);
-        
-        const minPercent = ((minVal - min) / (max - min)) * 100;
-        const maxPercent = ((maxVal - min) / (max - min)) * 100;
-        
-        sliderRange.style.left = `${minPercent}%`;
-        sliderRange.style.width = `${maxPercent - minPercent}%`;
-      }
-    };
-
-    // Инициализация при загрузке
-    const timeoutId = setTimeout(updateSliderRange, 100);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  // Обновляем позицию линии при изменении priceRange
-  useEffect(() => {
-    const updateSliderRange = () => {
-      const minSlider = document.getElementById('minPrice');
-      const maxSlider = document.getElementById('maxPrice');
-      const sliderRange = document.querySelector(`.${styles.sliderRange}`);
-      
-      if (minSlider && maxSlider && sliderRange) {
-        const min = parseInt(minSlider.min);
-        const max = parseInt(minSlider.max);
-        const minVal = parseInt(minSlider.value);
-        const maxVal = parseInt(maxSlider.value);
-        
-        const minPercent = ((minVal - min) / (max - min)) * 100;
-        const maxPercent = ((maxVal - min) / (max - min)) * 100;
-        
-        sliderRange.style.left = `${minPercent}%`;
-        sliderRange.style.width = `${maxPercent - minPercent}%`;
-      }
-    };
-
-    updateSliderRange();
-    
-    // Также обновляем при изменении ползунков
-    const minSlider = document.getElementById('minPrice');
-    const maxSlider = document.getElementById('maxPrice');
-    
-    if (minSlider) minSlider.addEventListener('input', updateSliderRange);
-    if (maxSlider) maxSlider.addEventListener('input', updateSliderRange);
-    
-    return () => {
-      if (minSlider) minSlider.removeEventListener('input', updateSliderRange);
-      if (maxSlider) maxSlider.removeEventListener('input', updateSliderRange);
-    };
-  }, [priceRange]);
 
   return (
     <aside className={styles.filters}>
@@ -224,7 +196,7 @@ export default function SearchFilters({
         <div className={styles.priceRange}>
           <div className={styles.priceSlider}>
             <div className={styles.sliderTrack}>
-              <div className={styles.sliderRange}></div>
+              <div ref={sliderRangeRef} className={styles.sliderRange}></div>
             </div>
             <div className={styles.sliderThumbs}>
               <input 

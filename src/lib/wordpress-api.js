@@ -23,6 +23,19 @@ export async function searchToursWithFilters(filters = {}) {
     if (filters.endDate) params.append('end_date', filters.endDate);
     if (filters.sortBy) params.append('sort_by', filters.sortBy);
     
+    if (filters.minPrice) params.append('min_price', filters.minPrice);
+    if (filters.maxPrice) params.append('max_price', filters.maxPrice);
+    
+    if (filters.flightType) params.append('flight_type', filters.flightType);
+    if (filters.ticketTypes && filters.ticketTypes.length > 0) params.append('ticket_type', filters.ticketTypes.join(','));
+    if (filters.foodTypes && filters.foodTypes.length > 0) params.append('food_types', filters.foodTypes.join(','));
+    if (filters.transferIds && filters.transferIds.length > 0) params.append('transfer_ids', filters.transferIds.join(','));
+    if (filters.mekkaHotelStars && filters.mekkaHotelStars.length > 0) params.append('mekka_hotel_stars', filters.mekkaHotelStars.join(','));
+    if (filters.medinaHotelStars && filters.medinaHotelStars.length > 0) params.append('medina_hotel_stars', filters.medinaHotelStars.join(','));
+    if (filters.mekkaDistanceMin) params.append('mekka_distance_min', filters.mekkaDistanceMin);
+    if (filters.mekkaDistanceMax) params.append('mekka_distance_max', filters.mekkaDistanceMax);
+    if (filters.medinaDistanceMin) params.append('medina_distance_min', filters.medinaDistanceMin);
+    if (filters.medinaDistanceMax) params.append('medina_distance_max', filters.medinaDistanceMax);
     
     const response = await fetch(`${API_BASE}/search-tours?${params.toString()}`);
     if (!response.ok) throw new Error('Ошибка поиска туров');
@@ -302,11 +315,12 @@ export async function getMyBookings(token) {
 export async function getTourSpots(tourId) {
   try {
     const response = await fetch(`${API_BASE}/tour-spots/${tourId}`);
-    if (!response.ok) throw new Error('Ошибка получения количества мест');
+    if (!response.ok) {
+      return { success: false, available: 0 };
+    }
     return await response.json();
   } catch (error) {
-    console.error('Ошибка получения количества мест:', error);
-    return { success: false, error: error.message };
+    return { success: false, available: 0 };
   }
 }
 
@@ -339,7 +353,7 @@ export async function createKaspiPayment(paymentData) {
 
 export async function getTransfers() {
   try {
-    const response = await fetch(`${API_URL}/atlas-hajj/v1/transfers`);
+    const response = await fetch(`${API_BASE}/transfers`);
     if (!response.ok) {
       throw new Error(`Ошибка при получении трансферов: ${response.status}`);
     }

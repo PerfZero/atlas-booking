@@ -1,4 +1,4 @@
-    <?php
+ <?php
 
     if ( ! defined( '_S_VERSION' ) ) {
         define( '_S_VERSION', '1.0.0' );
@@ -521,18 +521,30 @@
         $transfer_ids = get_field('transfers', $post_id);
         $transfers_data = array();
         
-        if ($transfer_ids && is_array($transfer_ids)) {
-            foreach ($transfer_ids as $transfer_id) {
-                $transfer_post = get_post($transfer_id);
-                if ($transfer_post && $transfer_post->post_type === 'transfer') {
-                    $transfers_data[] = array(
-                        'id' => $transfer_id,
-                        'name' => $transfer_post->post_title,
-                        'short_name' => get_field('short_name', $transfer_id),
-                        'description' => get_field('description', $transfer_id),
-                        'gallery' => get_field('gallery', $transfer_id)
-                    );
-                }
+        if (!$transfer_ids) {
+            $transfer_ids = get_post_meta($post_id, 'transfers', true) ?: get_post_meta($post_id, 'field_tour_transfers', true);
+        }
+        
+        if (!$transfer_ids) {
+            return $transfers_data;
+        }
+        
+        if (!is_array($transfer_ids)) {
+            $transfer_ids = array($transfer_ids);
+        }
+        
+        foreach ($transfer_ids as $transfer_id) {
+            if (!$transfer_id) continue;
+            
+            $transfer_post = get_post($transfer_id);
+            if ($transfer_post && $transfer_post->post_type === 'transfer') {
+                $transfers_data[] = array(
+                    'id' => $transfer_id,
+                    'name' => $transfer_post->post_title,
+                    'short_name' => get_field('short_name', $transfer_id) ?: get_post_meta($transfer_id, 'short_name', true) ?: get_post_meta($transfer_id, 'field_transfer_short_name', true),
+                    'description' => get_field('description', $transfer_id) ?: get_post_meta($transfer_id, 'description', true) ?: get_post_meta($transfer_id, 'field_transfer_description', true),
+                    'gallery' => get_field('gallery', $transfer_id) ?: get_post_meta($transfer_id, 'gallery', true) ?: get_post_meta($transfer_id, 'field_transfer_gallery', true)
+                );
             }
         }
         
@@ -1054,6 +1066,35 @@
         ));
     });
 
+    function atlas_get_transfers($request) {
+        $args = array(
+            'post_type' => 'transfer',
+            'posts_per_page' => -1,
+            'post_status' => 'publish'
+        );
+        
+        $query = new WP_Query($args);
+        $transfers = array();
+        
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $transfers[] = array(
+                    'id' => $post_id,
+                    'name' => get_the_title(),
+                    'short_name' => get_field('short_name', $post_id) ?: get_post_meta($post_id, 'short_name', true) ?: get_post_meta($post_id, 'field_transfer_short_name', true),
+                    'description' => get_field('description', $post_id) ?: get_post_meta($post_id, 'description', true) ?: get_post_meta($post_id, 'field_transfer_description', true),
+                    'gallery' => get_field('gallery', $post_id) ?: get_post_meta($post_id, 'gallery', true) ?: get_post_meta($post_id, 'field_transfer_gallery', true)
+                );
+            }
+        }
+        
+        wp_reset_postdata();
+        
+        return $transfers;
+    }
+
     function atlas_get_profile($request) {
         $token = $request->get_header('Authorization');
         if ($token) {
@@ -1435,6 +1476,17 @@
         $max_price = $request->get_param('max_price');
         $sort_by = $request->get_param('sort_by');
         
+        $flight_type = $request->get_param('flight_type');
+        $ticket_type = $request->get_param('ticket_type');
+        $food_types = $request->get_param('food_types');
+        $transfer_ids = $request->get_param('transfer_ids');
+        $mekka_hotel_stars = $request->get_param('mekka_hotel_stars');
+        $medina_hotel_stars = $request->get_param('medina_hotel_stars');
+        $mekka_distance_min = $request->get_param('mekka_distance_min');
+        $mekka_distance_max = $request->get_param('mekka_distance_max');
+        $medina_distance_min = $request->get_param('medina_distance_min');
+        $medina_distance_max = $request->get_param('medina_distance_max');
+        
         $args = array(
             'post_type' => 'post',
             'post_status' => 'publish',
@@ -1443,7 +1495,7 @@
             'tax_query' => array()
         );
         
-        if ($departure_city) {
+        if ($departure_city && $departure_city !== 'all') {
             $args['meta_query'][] = array(
                 'key' => 'departure_city',
                 'value' => $departure_city,
@@ -1451,7 +1503,7 @@
             );
         }
         
-        if ($pilgrimage_type) {
+        if ($pilgrimage_type && $pilgrimage_type !== 'all') {
             $args['tax_query'][] = array(
                 'taxonomy' => 'pilgrimage_type',
                 'field' => 'slug',
@@ -1579,17 +1631,34 @@
                 if (isset($tour['tour_dates']) && is_array($tour['tour_dates'])) {
                     foreach ($tour['tour_dates'] as $date_range) {
                         if (isset($date_range['date_start']) && isset($date_range['date_end'])) {
-                            $tour_start = $date_range['date_start'];
-                            $tour_end = $date_range['date_end'];
+                            $tour_start_str = $date_range['date_start'];
+                            $tour_end_str = $date_range['date_end'];
                             
-                            $matches = true;
+                            $tour_start_ts = strtotime($tour_start_str);
+                            $tour_end_ts = strtotime($tour_end_str);
                             
-                            if ($start_date) {
-                                $matches = $matches && ($tour_start <= $start_date && $start_date <= $tour_end);
+                            if ($tour_start_ts === false || $tour_end_ts === false) {
+                                continue;
                             }
                             
-                            if ($end_date) {
-                                $matches = $matches && ($tour_start <= $end_date && $end_date <= $tour_end);
+                            $matches = false;
+                            
+                            if ($start_date && $end_date) {
+                                $start_ts = strtotime($start_date);
+                                $end_ts = strtotime($end_date);
+                                if ($start_ts !== false && $end_ts !== false) {
+                                    $matches = ($tour_start_ts == $start_ts && $tour_end_ts == $end_ts);
+                                }
+                            } elseif ($start_date) {
+                                $start_ts = strtotime($start_date);
+                                if ($start_ts !== false) {
+                                    $matches = ($tour_start_ts >= $start_ts);
+                                }
+                            } elseif ($end_date) {
+                                $end_ts = strtotime($end_date);
+                                if ($end_ts !== false) {
+                                    $matches = ($tour_end_ts <= $end_ts);
+                                }
                             }
                             
                             if ($matches) {
@@ -1602,6 +1671,132 @@
             }
             $tours = $filtered_tours;
         }
+        
+        $filtered_tours = array();
+        foreach ($tours as $tour) {
+            $matches = true;
+            
+            if ($flight_type && isset($tour['flight_type'])) {
+                if ($tour['flight_type'] !== $flight_type) {
+                    $matches = false;
+                }
+            }
+            
+            if ($ticket_type && $matches) {
+                $ticket_types_array = is_array($ticket_type) ? $ticket_type : explode(',', $ticket_type);
+                $tour_ticket_types = array();
+                if (isset($tour['flight_outbound']['ticket_type'])) {
+                    $tour_ticket_types[] = $tour['flight_outbound']['ticket_type'];
+                }
+                if (isset($tour['flight_inbound']['ticket_type'])) {
+                    $tour_ticket_types[] = $tour['flight_inbound']['ticket_type'];
+                }
+                $has_matching_ticket = false;
+                foreach ($ticket_types_array as $ticket_type_item) {
+                    if (in_array($ticket_type_item, $tour_ticket_types)) {
+                        $has_matching_ticket = true;
+                        break;
+                    }
+                }
+                if (!$has_matching_ticket) {
+                    $matches = false;
+                }
+            }
+            
+            if ($food_types && $matches) {
+                $food_types_array = is_array($food_types) ? $food_types : explode(',', $food_types);
+                $tour_meal_plans = array();
+                if (isset($tour['hotel_mekka_details']['meal_plan'])) {
+                    $tour_meal_plans[] = $tour['hotel_mekka_details']['meal_plan'];
+                }
+                if (isset($tour['hotel_medina_details']['meal_plan'])) {
+                    $tour_meal_plans[] = $tour['hotel_medina_details']['meal_plan'];
+                }
+                $has_matching_food = false;
+                foreach ($food_types_array as $food_type) {
+                    if (in_array($food_type, $tour_meal_plans)) {
+                        $has_matching_food = true;
+                        break;
+                    }
+                }
+                if (!$has_matching_food) {
+                    $matches = false;
+                }
+            }
+            
+            if ($transfer_ids && $matches) {
+                $transfer_ids_array = is_array($transfer_ids) ? $transfer_ids : explode(',', $transfer_ids);
+                $tour_transfer_ids = array();
+                if (isset($tour['transfers']) && is_array($tour['transfers'])) {
+                    foreach ($tour['transfers'] as $transfer) {
+                        if (isset($transfer['id'])) {
+                            $tour_transfer_ids[] = $transfer['id'];
+                        }
+                    }
+                }
+                $has_matching_transfer = false;
+                foreach ($transfer_ids_array as $transfer_id) {
+                    if (in_array(intval($transfer_id), $tour_transfer_ids)) {
+                        $has_matching_transfer = true;
+                        break;
+                    }
+                }
+                if (!$has_matching_transfer) {
+                    $matches = false;
+                }
+            }
+            
+            if ($mekka_hotel_stars && $matches) {
+                $mekka_stars_array = is_array($mekka_hotel_stars) ? $mekka_hotel_stars : explode(',', $mekka_hotel_stars);
+                $tour_mekka_stars = isset($tour['hotel_mekka_details']['stars']) ? $tour['hotel_mekka_details']['stars'] : null;
+                if (!in_array($tour_mekka_stars, $mekka_stars_array)) {
+                    $matches = false;
+                }
+            }
+            
+            if ($medina_hotel_stars && $matches) {
+                $medina_stars_array = is_array($medina_hotel_stars) ? $medina_hotel_stars : explode(',', $medina_hotel_stars);
+                $tour_medina_stars = isset($tour['hotel_medina_details']['stars']) ? $tour['hotel_medina_details']['stars'] : null;
+                if (!in_array($tour_medina_stars, $medina_stars_array)) {
+                    $matches = false;
+                }
+            }
+            
+            if (($mekka_distance_min || $mekka_distance_max) && $matches) {
+                $distance_str = isset($tour['hotel_mekka']['distance_number']) ? $tour['hotel_mekka']['distance_number'] : '';
+                if ($distance_str) {
+                    $distance = floatval(preg_replace('/[^\d.]/', '', $distance_str));
+                    if ($mekka_distance_min && $distance < floatval($mekka_distance_min)) {
+                        $matches = false;
+                    }
+                    if ($mekka_distance_max && $distance > floatval($mekka_distance_max)) {
+                        $matches = false;
+                    }
+                } else {
+                    $matches = false;
+                }
+            }
+            
+            if (($medina_distance_min || $medina_distance_max) && $matches) {
+                $distance_str = isset($tour['hotel_medina']['distance_number']) ? $tour['hotel_medina']['distance_number'] : '';
+                if ($distance_str) {
+                    $distance = floatval(preg_replace('/[^\d.]/', '', $distance_str));
+                    if ($medina_distance_min && $distance < floatval($medina_distance_min)) {
+                        $matches = false;
+                    }
+                    if ($medina_distance_max && $distance > floatval($medina_distance_max)) {
+                        $matches = false;
+                    }
+                } else {
+                    $matches = false;
+                }
+            }
+            
+            if ($matches) {
+                $filtered_tours[] = $tour;
+            }
+        }
+        $tours = $filtered_tours;
         
         if ($sort_by) {
             switch ($sort_by) {

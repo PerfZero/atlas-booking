@@ -134,7 +134,6 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
               label: type.name
             }))
           ];
-          console.log('Loaded pilgrimage types:', options);
           setPilgrimageOptions(options);
         }
       } catch (error) {
@@ -160,7 +159,6 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
       setFormData(prev => ({ ...prev, travelDate }));
     }
     if (pilgrimageType) {
-      console.log('Setting pilgrimage type from URL:', pilgrimageType);
       setFormData(prev => ({ ...prev, pilgrimageType }));
     }
     if (startDate && endDate) {
@@ -187,6 +185,30 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
       setShowResults(true);
     }
   }, [formData.departureCity, formData.pilgrimageType, selectedStartDate, selectedEndDate]);
+
+  useEffect(() => {
+    if (!isHomePage && selectedStartDate && selectedEndDate) {
+      const currentStartDate = searchParams.get('startDate');
+      const currentEndDate = searchParams.get('endDate');
+      
+      const formatDate = (date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear().toString();
+        return `${year}-${month}-${day}`;
+      };
+      
+      const newStartDate = formatDate(selectedStartDate);
+      const newEndDate = formatDate(selectedEndDate);
+      
+      if (currentStartDate !== newStartDate || currentEndDate !== newEndDate) {
+        const newSearchParams = new URLSearchParams(searchParams.toString());
+        newSearchParams.set('startDate', newStartDate);
+        newSearchParams.set('endDate', newEndDate);
+        router.push(`/search?${newSearchParams.toString()}`);
+      }
+    }
+  }, [selectedStartDate, selectedEndDate, isHomePage, searchParams, router]);
 
   const isFormValid = selectedStartDate && selectedEndDate;
 
