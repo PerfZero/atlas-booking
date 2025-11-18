@@ -32,6 +32,21 @@ function PopularToursContent() {
     loadTours();
   }, []);
 
+  const getFirstHotelImage = (tour) => {
+    if (!tour) return null;
+    const hotelImages = [];
+    if (Array.isArray(tour.hotel_mekka_details?.gallery) && tour.hotel_mekka_details.gallery.length > 0) {
+      hotelImages.push(...tour.hotel_mekka_details.gallery);
+    }
+    if (Array.isArray(tour.hotel_medina_details?.gallery) && tour.hotel_medina_details.gallery.length > 0) {
+      hotelImages.push(...tour.hotel_medina_details.gallery);
+    }
+    if (hotelImages.length > 0) {
+      return hotelImages[0].url || hotelImages[0];
+    }
+    return null;
+  };
+
   const getTourUrl = (tourSlug, tour = null) => {
     // Функция для поиска ближайшей даты
     const getNearestDate = (tourData) => {
@@ -133,14 +148,15 @@ function PopularToursContent() {
               <Link href={getTourUrl(tour.slug, tour)} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.imageContainer}>
                   <Image 
-                    src={tour.featured_image || '/tour_1.png'} 
+                    src={tour.featured_image || getFirstHotelImage(tour) || '/tour_1.png'} 
                     alt={tour.name} 
                     width={320} 
                     height={400} 
                     className={styles.image}
             
                     onError={(e) => {
-                      e.target.src = '/tour_1.png';
+                      const hotelImage = getFirstHotelImage(tour);
+                      e.target.src = hotelImage || '/tour_1.png';
                     }}
                   />
                   <div className={styles.price}>От {tour.price} $</div>

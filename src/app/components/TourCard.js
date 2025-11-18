@@ -5,10 +5,24 @@ import { useState } from "react";
 export default function TourCard({ tour, searchParams = null }) {
   const spotsLeft = tour.spots_left || tour.spotsLeft || 4;
 
+  const getFirstHotelImage = () => {
+    const hotelImages = [];
+    if (Array.isArray(tour.hotel_mekka_details?.gallery) && tour.hotel_mekka_details.gallery.length > 0) {
+      hotelImages.push(...tour.hotel_mekka_details.gallery);
+    }
+    if (Array.isArray(tour.hotel_medina_details?.gallery) && tour.hotel_medina_details.gallery.length > 0) {
+      hotelImages.push(...tour.hotel_medina_details.gallery);
+    }
+    if (hotelImages.length > 0) {
+      return hotelImages[0].url || hotelImages[0];
+    }
+    return null;
+  };
+
   const tourSlug =
     tour.slug ||
     tour.name?.toLowerCase().replace(/\s+/g, "-").replace("package", "package");
-  const tourImage = tour.featured_image || tour.image || "/tour_1.png";
+  const tourImage = tour.featured_image || tour.image || getFirstHotelImage() || "/tour_1.png";
   const tourPrice = tour.price || "0";
   const tourOldPrice = tour.old_price || tour.oldPrice;
   const tourRating = tour.rating || 9.0;
@@ -87,7 +101,18 @@ export default function TourCard({ tour, searchParams = null }) {
               <span>Выбор паломников</span>
             </div>
           )}
-          <img src={tourImage} alt={tour.name} />
+          <img 
+            src={tourImage} 
+            alt={tour.name}
+            onError={(e) => {
+              const hotelImage = getFirstHotelImage();
+              if (hotelImage && e.target.src !== hotelImage) {
+                e.target.src = hotelImage;
+              } else if (e.target.src !== "/tour_1.png") {
+                e.target.src = "/tour_1.png";
+              }
+            }}
+          />
           <div className={styles.imageOverlay}>
             <div className={styles.tourTags}>
               {tourTags.map((tag, index) => (

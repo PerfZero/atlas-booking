@@ -320,12 +320,31 @@ export default function TourDetailPage({ params }) {
     return tmp.textContent || tmp.innerText || '';
   };
 
+  const getHotelImages = () => {
+    const images = [];
+    if (Array.isArray(tour.hotel_mekka_details?.gallery) && tour.hotel_mekka_details.gallery.length > 0) {
+      images.push(...tour.hotel_mekka_details.gallery);
+    }
+    if (Array.isArray(tour.hotel_medina_details?.gallery) && tour.hotel_medina_details.gallery.length > 0) {
+      images.push(...tour.hotel_medina_details.gallery);
+    }
+    return images;
+  };
+
+  const getFirstHotelImage = () => {
+    const hotelImages = getHotelImages();
+    if (hotelImages.length > 0) {
+      return hotelImages[0].url || hotelImages[0];
+    }
+    return null;
+  };
+
   const getGalleryImages = () => {
     const images = [];
 
-    // Всегда добавляем главное изображение первым
+    const firstHotelImage = getFirstHotelImage();
     images.push({
-      src: tour.featured_image || "/tour_1.png",
+      src: tour.featured_image || firstHotelImage || "/tour_1.png",
       alt: tour.name,
     });
 
@@ -338,6 +357,15 @@ export default function TourDetailPage({ params }) {
         });
       });
     }
+
+    // Добавляем изображения из отелей
+    const hotelImages = getHotelImages();
+    hotelImages.forEach((image, index) => {
+      images.push({
+        src: image.url || image,
+        alt: `${tour.name} отель ${index + 1}`,
+      });
+    });
 
     // Добавляем изображения из хадж наборов
     if (Array.isArray(tour.hajj_kits)) {
@@ -399,36 +427,44 @@ export default function TourDetailPage({ params }) {
             <div className={styles.galleryGrid}>
               <div className={styles.mainImage} onClick={() => openLightbox(0)}>
                 <img
-                  src={tour.featured_image || "/tour_1.png"}
+                  src={tour.featured_image || getFirstHotelImage() || "/tour_1.png"}
                   alt={tour.name}
                 />
               </div>
               <div className={styles.sideImages}>
-                {Array.isArray(tour.gallery) &&
-                  tour.gallery.slice(0, 4).map((image, index) => (
+                {(() => {
+                  const hotelImages = getHotelImages();
+                  const galleryImages = Array.isArray(tour.gallery) ? tour.gallery : [];
+                  const allImages = [...galleryImages, ...hotelImages];
+                  
+                  if (allImages.length > 0) {
+                    return allImages.slice(0, 4).map((image, index) => (
+                      <div
+                        key={index}
+                        className={styles.sideImage}
+                        onClick={() => openLightbox(index + 1)}
+                      >
+                        <img
+                          src={image.url || image}
+                          alt={`${tour.name} ${index + 1}`}
+                        />
+                      </div>
+                    ));
+                  }
+                  
+                  return (
                     <div
-                      key={index}
                       className={styles.sideImage}
-                      onClick={() => openLightbox(index + 1)}
+                      onClick={() => openLightbox(0)}
                     >
-                      <img
-                        src={image.url || image}
-                        alt={`${tour.name} ${index + 1}`}
-                      />
+                      <img src={getFirstHotelImage() || "/tour_1.png"} alt="Вид на мечеть" />
+                      <button className={styles.viewAllPhotos}>
+                        <img src="/photos.svg" alt="eye" />
+                        Посмотреть все фото
+                      </button>
                     </div>
-                  ))}
-                {(!Array.isArray(tour.gallery) || tour.gallery.length < 4) && (
-                  <div
-                    className={styles.sideImage}
-                    onClick={() => openLightbox(0)}
-                  >
-                    <img src="/tour_1.png" alt="Вид на мечеть" />
-                    <button className={styles.viewAllPhotos}>
-                      <img src="/photos.svg" alt="eye" />
-                      Посмотреть все фото
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           </div>
