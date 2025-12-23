@@ -70,3 +70,35 @@ function atlas_get_russian_days() {
     ];
 }
 
+function atlas_flight_duration_calculator($departure_time_raw, $arrival_time_raw) {
+    if (!$departure_time_raw || !$arrival_time_raw) {
+        return null;
+    }
+    
+    try {
+        $departure = new DateTime($departure_time_raw);
+        $arrival = new DateTime($arrival_time_raw);
+        
+        if ($arrival < $departure) {
+            $arrival->modify('+1 day');
+        }
+        
+        $diff = $departure->diff($arrival);
+        
+        $hours = $diff->h + ($diff->days * 24);
+        $minutes = $diff->i;
+        
+        if ($hours > 0 && $minutes > 0) {
+            return $hours . ' ч ' . $minutes . ' м';
+        } elseif ($hours > 0) {
+            return $hours . ' ч';
+        } elseif ($minutes > 0) {
+            return $minutes . ' м';
+        } else {
+            return null;
+        }
+    } catch (Exception $e) {
+        return null;
+    }
+}
+

@@ -3,6 +3,24 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from './Partners.module.css';
 
+function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  if (url.startsWith('/')) return true;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function normalizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  if (url.startsWith('/')) return url;
+  if (isValidImageUrl(url)) return url;
+  return null;
+}
+
 export default function Partners() {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,17 +68,21 @@ export default function Partners() {
       <div className={styles.container}>
         <h2 className={styles.title}>Наши партнеры</h2>
         <div className={styles.logoGrid}>
-          {partners.map((partner) => (
-            <div key={partner.id} className={styles.logoCard}>
-              <Image 
-                src={partner.logo} 
-                alt={partner.name}
-                width={200}
-                height={100}
-                className={styles.logo}
-              />
-            </div>
-          ))}
+          {partners.map((partner) => {
+            const logoUrl = normalizeImageUrl(partner.logo);
+            if (!logoUrl) return null;
+            return (
+              <div key={partner.id} className={styles.logoCard}>
+                <Image 
+                  src={logoUrl} 
+                  alt={partner.name}
+                  width={200}
+                  height={100}
+                  className={styles.logo}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

@@ -1,6 +1,24 @@
 import Image from 'next/image';
 import styles from './AboutService.module.css';
 
+function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  if (url.startsWith('/')) return true;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function normalizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return '/icon_1.svg';
+  if (url.startsWith('/')) return url;
+  if (isValidImageUrl(url)) return url;
+  return '/icon_1.svg';
+}
+
 export default function AboutService({ title, cards }) {
   const defaultCards = [
     {
@@ -40,7 +58,7 @@ export default function AboutService({ title, cards }) {
           {displayCards.map((card, idx) => (
             <div className={styles.card} key={idx}>
               <div className={styles.icon}>
-                <Image src={card.icon} alt={card.title} width={40} height={40} />
+                <Image src={normalizeImageUrl(card.icon)} alt={card.title} width={40} height={40} />
               </div>
               <h3 className={styles.cardTitle}>{card.title}</h3>
               <p className={styles.cardDescription}>{card.description}</p>

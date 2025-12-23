@@ -56,7 +56,8 @@
         $flight_data['arrival_time'] = atlas_format_time($arrival_time_raw);
         $flight_data['arrival_date'] = atlas_format_date_russian($arrival_time_raw);
         
-        $flight_data['duration'] = get_field('duration', $flight_id) ?: get_post_meta($flight_id, 'duration', true) ?: get_post_meta($flight_id, 'field_flight_duration', true);
+        $duration_field = get_field('duration', $flight_id) ?: get_post_meta($flight_id, 'duration', true) ?: get_post_meta($flight_id, 'field_flight_duration', true);
+        $flight_data['duration'] = $duration_field ?: atlas_flight_duration_calculator($departure_time_raw, $arrival_time_raw);
         
         // Добавляем авиакомпанию для всех рейсов
         $airline_id = get_field('airline', $flight_id);
@@ -738,6 +739,28 @@
     }
     add_action('init', 'atlas_clean_old_hotel_data');
 
+    add_action('acf/save_post', 'atlas_auto_calculate_flight_duration', 20);
+    function atlas_auto_calculate_flight_duration($post_id) {
+        if (get_post_type($post_id) !== 'flight') {
+            return;
+        }
+        
+        $flight_type = get_field('flight_type', $post_id);
+        if ($flight_type !== 'direct') {
+            return;
+        }
+        
+        $departure_time_raw = get_field('departure_time', $post_id) ?: get_post_meta($post_id, 'departure_time', true) ?: get_post_meta($post_id, 'field_flight_departure_time', true);
+        $arrival_time_raw = get_field('arrival_time', $post_id) ?: get_post_meta($post_id, 'arrival_time', true) ?: get_post_meta($post_id, 'field_flight_arrival_time', true);
+        
+        if ($departure_time_raw && $arrival_time_raw) {
+            $calculated_duration = atlas_flight_duration_calculator($departure_time_raw, $arrival_time_raw);
+            if ($calculated_duration) {
+                update_field('duration', $calculated_duration, $post_id);
+            }
+        }
+    }
+
     // Хук для отладки сохранения полей отелей
     add_action('acf/save_post', 'debug_hotel_fields_save', 20);
     function debug_hotel_fields_save($post_id) {
@@ -1209,9 +1232,12 @@
     }
 
     function atlas_get_tours($request) {
+        $per_page = $request->get_param('per_page');
+        $posts_per_page = $per_page ? intval($per_page) : -1;
+        
         $args = array(
             'post_type' => 'post',
-            'posts_per_page' => -1,
+            'posts_per_page' => $posts_per_page,
             'post_status' => 'publish',
             'meta_query' => array(
                 array(

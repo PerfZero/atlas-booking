@@ -6,6 +6,24 @@ import { useSearchParams } from 'next/navigation';
 import { getTours } from '../../lib/wordpress-api';
 import styles from './PopularTours.module.css';
 
+function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  if (url.startsWith('/')) return true;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function normalizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return '/tour_1.png';
+  if (url.startsWith('/')) return url;
+  if (isValidImageUrl(url)) return url;
+  return '/tour_1.png';
+}
+
 function PopularToursContent() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,11 +34,10 @@ function PopularToursContent() {
     const loadTours = async () => {
       try {
         setLoading(true);
-        const toursData = await getTours();
-        console.log('Загруженные туры:', toursData);
-        // Показываем больше туров на мобильных для лучшего скролла
         const isMobile = window.innerWidth <= 768;
-        setTours(toursData.slice(0, isMobile ? 8 : 4));
+        const limit = isMobile ? 8 : 4;
+        const toursData = await getTours(`?per_page=${limit}`);
+        setTours(toursData);
       } catch (err) {
         console.error('Ошибка загрузки туров:', err);
         setError('Не удалось загрузить туры');
@@ -42,7 +59,8 @@ function PopularToursContent() {
       hotelImages.push(...tour.hotel_medina_details.gallery);
     }
     if (hotelImages.length > 0) {
-      return hotelImages[0].url || hotelImages[0];
+      const imageUrl = hotelImages[0].url || hotelImages[0];
+      return isValidImageUrl(imageUrl) ? imageUrl : null;
     }
     return null;
   };
@@ -148,16 +166,11 @@ function PopularToursContent() {
               <Link href={getTourUrl(tour.slug, tour)} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.imageContainer}>
                   <Image 
-                    src={tour.featured_image || getFirstHotelImage(tour) || '/tour_1.png'} 
+                    src={normalizeImageUrl(tour.featured_image || getFirstHotelImage(tour))} 
                     alt={tour.name} 
                     width={320} 
                     height={400} 
                     className={styles.image}
-            
-                    onError={(e) => {
-                      const hotelImage = getFirstHotelImage(tour);
-                      e.target.src = hotelImage || '/tour_1.png';
-                    }}
                   />
                   <div className={styles.price}>От {tour.price} $</div>
                   <div className={styles.overlay}>

@@ -8,6 +8,12 @@ const nextConfig = {
         port: '',
         pathname: '/wp-content/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'booking.atlas.kz',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
