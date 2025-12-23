@@ -39,7 +39,7 @@ function PopularToursContent() {
         const toursData = await getTours(`?per_page=${limit}`);
         setTours(toursData);
       } catch (err) {
-        console.error('Ошибка загрузки туров:', err);
+        console.error('Ошибка загрузки туров1:', err);
         setError('Не удалось загрузить туры');
       } finally {
         setLoading(false);
