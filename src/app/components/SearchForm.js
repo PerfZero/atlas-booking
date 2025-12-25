@@ -15,14 +15,44 @@ function SearchFormWithParams({ className = '', isHomePage = false }) {
 function SearchForm({ searchParams, className = '', isHomePage = false }) {
   const router = useRouter();
   const datePickerRef = useRef(null);
+  const initializedFromUrl = useRef(false);
+  const isInitialMount = useRef(true);
+  
+  const getInitialFormData = () => {
+    const departureCity = searchParams.get('departureCity');
+    const travelDate = searchParams.get('travelDate');
+    const pilgrimageType = searchParams.get('pilgrimageType');
+    
+    return {
+      departureCity: departureCity || 'all',
+      travelDate: travelDate || 'not-specified',
+      pilgrimageType: pilgrimageType || 'all'
+    };
+  };
+  
+  const getInitialDates = () => {
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    
+    if (startDate && endDate) {
+      const parseDate = (dateString) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      };
+      return {
+        startDate: parseDate(startDate),
+        endDate: parseDate(endDate)
+      };
+    }
+    return { startDate: null, endDate: null };
+  };
+  
+  const initialDates = getInitialDates();
+  
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [selectedStartDate, setSelectedStartDate] = useState(null);
-  const [selectedEndDate, setSelectedEndDate] = useState(null);
-  const [formData, setFormData] = useState({
-    departureCity: 'all',
-    travelDate: 'not-specified',
-    pilgrimageType: 'all'
-  });
+  const [selectedStartDate, setSelectedStartDate] = useState(initialDates.startDate);
+  const [selectedEndDate, setSelectedEndDate] = useState(initialDates.endDate);
+  const [formData, setFormData] = useState(getInitialFormData);
   const [dateError, setDateError] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [showResults, setShowResults] = useState(false);
@@ -157,33 +187,106 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   }, [formData.departureCity, formData.pilgrimageType]);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      const departureCity = searchParams.get('departureCity');
+      const travelDate = searchParams.get('travelDate');
+      const pilgrimageType = searchParams.get('pilgrimageType');
+      const startDate = searchParams.get('startDate');
+      const endDate = searchParams.get('endDate');
+      
+      if (departureCity || travelDate || pilgrimageType || startDate || endDate) {
+        setFormData(prev => {
+          const updates = {};
+          if (departureCity && departureCity !== prev.departureCity) {
+            updates.departureCity = departureCity;
+          }
+          if (travelDate && travelDate !== prev.travelDate) {
+            updates.travelDate = travelDate;
+          }
+          if (pilgrimageType && pilgrimageType !== prev.pilgrimageType) {
+            updates.pilgrimageType = pilgrimageType;
+          }
+          if (Object.keys(updates).length > 0) {
+            initializedFromUrl.current = true;
+            return { ...prev, ...updates };
+          }
+          initializedFromUrl.current = true;
+          return prev;
+        });
+        
+        if (startDate && endDate) {
+          const parseDate = (dateString) => {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          };
+          const parsedStartDate = parseDate(startDate);
+          const parsedEndDate = parseDate(endDate);
+          
+          setSelectedStartDate(parsedStartDate);
+          setSelectedEndDate(parsedEndDate);
+          initializedFromUrl.current = true;
+        }
+      } else {
+        initializedFromUrl.current = true;
+      }
+      
+      const hasSearchParams = departureCity && travelDate && pilgrimageType && startDate && endDate;
+      setShowResults(hasSearchParams);
+      return;
+    }
+    
     const departureCity = searchParams.get('departureCity');
     const travelDate = searchParams.get('travelDate');
     const pilgrimageType = searchParams.get('pilgrimageType');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    if (departureCity) {
-      setFormData(prev => ({ ...prev, departureCity }));
-    }
-    if (travelDate) {
-      setFormData(prev => ({ ...prev, travelDate }));
-    }
-    if (pilgrimageType) {
-      setFormData(prev => ({ ...prev, pilgrimageType }));
-    }
+    setFormData(prev => {
+      const updates = {};
+      if (departureCity && departureCity !== prev.departureCity) {
+        updates.departureCity = departureCity;
+      }
+      if (travelDate && travelDate !== prev.travelDate) {
+        updates.travelDate = travelDate;
+      }
+      if (pilgrimageType && pilgrimageType !== prev.pilgrimageType) {
+        updates.pilgrimageType = pilgrimageType;
+      }
+      if (Object.keys(updates).length > 0) {
+        initializedFromUrl.current = true;
+        return { ...prev, ...updates };
+      }
+      return prev;
+    });
+
     if (startDate && endDate) {
       const parseDate = (dateString) => {
         const [year, month, day] = dateString.split('-').map(Number);
         return new Date(year, month - 1, day);
       };
-      setSelectedStartDate(parseDate(startDate));
-      setSelectedEndDate(parseDate(endDate));
+      const parsedStartDate = parseDate(startDate);
+      const parsedEndDate = parseDate(endDate);
+      
+      setSelectedStartDate(prev => {
+        if (!prev || prev.getTime() !== parsedStartDate.getTime()) {
+          initializedFromUrl.current = true;
+          return parsedStartDate;
+        }
+        return prev;
+      });
+      setSelectedEndDate(prev => {
+        if (!prev || prev.getTime() !== parsedEndDate.getTime()) {
+          initializedFromUrl.current = true;
+          return parsedEndDate;
+        }
+        return prev;
+      });
     }
 
     const hasSearchParams = departureCity && travelDate && pilgrimageType && startDate && endDate;
     setShowResults(hasSearchParams);
-  }, [searchParams, pilgrimageOptions]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (selectedStartDate && selectedEndDate) {
@@ -222,41 +325,48 @@ function SearchForm({ searchParams, className = '', isHomePage = false }) {
   }, [selectedStartDate, selectedEndDate, isHomePage, searchParams, router]);
 
   useEffect(() => {
-    if (!isHomePage) {
-      const currentDepartureCity = searchParams.get('departureCity');
-      const currentPilgrimageType = searchParams.get('pilgrimageType');
-      const currentStartDate = searchParams.get('startDate');
-      const currentEndDate = searchParams.get('endDate');
-      
-      if (!selectedStartDate || !selectedEndDate) {
-        if (currentStartDate || currentEndDate) {
-          const newSearchParams = new URLSearchParams(searchParams.toString());
-          newSearchParams.delete('startDate');
-          newSearchParams.delete('endDate');
-          if (currentDepartureCity !== formData.departureCity || currentPilgrimageType !== formData.pilgrimageType) {
-            newSearchParams.set('departureCity', formData.departureCity);
-            newSearchParams.set('pilgrimageType', formData.pilgrimageType);
-          }
-          router.push(`/search?${newSearchParams.toString()}`);
-        } else if (currentDepartureCity !== formData.departureCity || currentPilgrimageType !== formData.pilgrimageType) {
-          const newSearchParams = new URLSearchParams(searchParams.toString());
+    if (isHomePage || isInitialMount.current || !initializedFromUrl.current) {
+      return;
+    }
+    
+    const currentDepartureCity = searchParams.get('departureCity');
+    const currentPilgrimageType = searchParams.get('pilgrimageType');
+    const currentStartDate = searchParams.get('startDate');
+    const currentEndDate = searchParams.get('endDate');
+    
+    if (currentDepartureCity === formData.departureCity && 
+        currentPilgrimageType === formData.pilgrimageType) {
+      return;
+    }
+    
+    if (!selectedStartDate || !selectedEndDate) {
+      if (currentStartDate || currentEndDate) {
+        const newSearchParams = new URLSearchParams(searchParams.toString());
+        newSearchParams.delete('startDate');
+        newSearchParams.delete('endDate');
+        if (currentDepartureCity !== formData.departureCity || currentPilgrimageType !== formData.pilgrimageType) {
           newSearchParams.set('departureCity', formData.departureCity);
           newSearchParams.set('pilgrimageType', formData.pilgrimageType);
           router.push(`/search?${newSearchParams.toString()}`);
         }
-        return;
-      }
-      
-      if (!currentStartDate || !currentEndDate) {
-        return;
-      }
-      
-      if (currentDepartureCity !== formData.departureCity || currentPilgrimageType !== formData.pilgrimageType) {
+      } else if (currentDepartureCity !== formData.departureCity || currentPilgrimageType !== formData.pilgrimageType) {
         const newSearchParams = new URLSearchParams(searchParams.toString());
         newSearchParams.set('departureCity', formData.departureCity);
         newSearchParams.set('pilgrimageType', formData.pilgrimageType);
         router.push(`/search?${newSearchParams.toString()}`);
       }
+      return;
+    }
+    
+    if (!currentStartDate || !currentEndDate) {
+      return;
+    }
+    
+    if (currentDepartureCity !== formData.departureCity || currentPilgrimageType !== formData.pilgrimageType) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set('departureCity', formData.departureCity);
+      newSearchParams.set('pilgrimageType', formData.pilgrimageType);
+      router.push(`/search?${newSearchParams.toString()}`);
     }
   }, [formData.departureCity, formData.pilgrimageType, isHomePage, searchParams, router, selectedStartDate, selectedEndDate]);
 
