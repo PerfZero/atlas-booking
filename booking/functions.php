@@ -76,6 +76,71 @@
         return $flight_data;
     }
 
+    function atlas_filter_hotels_by_tour_date($args, $field, $post_id) {
+        if (!in_array($field['name'], array('hotel_mekka', 'hotel_medina'))) {
+            return $args;
+        }
+        
+        if (!$post_id || get_post_type($post_id) !== 'post') {
+            return $args;
+        }
+        
+        $tour_dates = get_field('tour_dates', $post_id);
+        
+        if (!$tour_dates || !is_array($tour_dates) || count($tour_dates) === 0) {
+            return $args;
+        }
+        
+        $hotel_ids = array();
+        
+        foreach ($tour_dates as $date_range) {
+            if (!isset($date_range['date_start']) || !isset($date_range['date_end'])) {
+                continue;
+            }
+            
+            $tour_date_start = $date_range['date_start'];
+            $tour_date_end = $date_range['date_end'];
+            
+            $hotel_query_args = array(
+                'post_type' => 'hotel',
+                'posts_per_page' => -1,
+                'post_status' => 'publish',
+                'fields' => 'ids'
+            );
+            
+            if (isset($args['post__in']) && is_array($args['post__in']) && count($args['post__in']) > 0) {
+                $hotel_query_args['post__in'] = $args['post__in'];
+            }
+            
+            $hotels_query = new WP_Query($hotel_query_args);
+            
+            foreach ($hotels_query->posts as $hotel_id) {
+                $check_in = get_field('check_in', $hotel_id);
+                
+                if (!$check_in) {
+                    continue;
+                }
+                
+                $hotel_check_in = date('Y-m-d', strtotime($check_in));
+                
+                if ($hotel_check_in >= $tour_date_start && $hotel_check_in <= $tour_date_end) {
+                    $hotel_ids[] = $hotel_id;
+                }
+            }
+            
+            wp_reset_postdata();
+        }
+        
+        if (count($hotel_ids) > 0) {
+            $args['post__in'] = array_unique($hotel_ids);
+        } else {
+            $args['post__in'] = array(0);
+        }
+        
+        return $args;
+    }
+    
+    add_filter('acf/fields/post_object/query', 'atlas_filter_hotels_by_tour_date', 10, 3);
 
     function booking_setup() {
 
@@ -1232,12 +1297,9 @@
     }
 
     function atlas_get_tours($request) {
-        $per_page = $request->get_param('per_page');
-        $posts_per_page = $per_page ? intval($per_page) : -1;
-        
         $args = array(
             'post_type' => 'post',
-            'posts_per_page' => $posts_per_page,
+            'posts_per_page' => -1,
             'post_status' => 'publish',
             'meta_query' => array(
                 array(

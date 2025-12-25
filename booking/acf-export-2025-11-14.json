@@ -1376,8 +1376,8 @@
                             "id": ""
                         },
                         "choices": {
-                            "7": "7 дней",
-                            "10": "10 дней"
+                            "7": "7-9 дней",
+                            "10": "10-15 дней"
                         },
                         "default_value": 7,
                         "allow_null": 0,
@@ -1412,21 +1412,18 @@
                         "label": "Дата окончания",
                         "name": "date_end",
                         "aria-label": "",
-                        "type": "text",
-                        "instructions": "Дата окончания тура (рассчитывается автоматически)",
-                        "required": 0,
+                        "type": "date_picker",
+                        "instructions": "Дата окончания тура",
+                        "required": 1,
                         "conditional_logic": false,
                         "wrapper": {
                             "width": "",
                             "class": "",
                             "id": ""
                         },
-                        "default_value": "",
-                        "placeholder": "Будет рассчитана автоматически",
-                        "prepend": "",
-                        "append": "",
-                        "maxlength": "",
-                        "readonly": 1,
+                        "display_format": "d\/m\/Y",
+                        "return_format": "Y-m-d",
+                        "first_day": 1,
                         "parent_repeater": "field_tour_dates"
                     }
                 ]

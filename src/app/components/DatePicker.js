@@ -195,13 +195,13 @@ export default function DatePicker({
             className={`${styles.tab} ${selectedTab === '7' ? styles.active : ''}`}
             onClick={(e) => handleTabClick('7', e)}
           >
-            7 дневные туры
+            7-9 дней
           </button>
           <button 
             className={`${styles.tab} ${selectedTab === '10' ? styles.active : ''}`}
             onClick={(e) => handleTabClick('10', e)}
           >
-            10 дневные туры
+            10-15 дней
           </button>
         </div>
 
@@ -317,7 +317,7 @@ export default function DatePicker({
             )}
             {startDate && !endDate && (
               <div className={styles.hint}>
-                Выберите {selectedTab === '7' ? '7' : '10'} дней
+                Выберите {selectedTab === '7' ? '7-9' : '10-15'} дней
               </div>
             )}
             {startDate && endDate && (
