@@ -236,6 +236,7 @@ export default function TourCard({ tour, searchParams = null }) {
         </div>
         <div className={styles.tourPrice}>
           <div className={styles.priceNote}>Без скрытых платежей</div>
+          <div className={styles.prepaymentBadge}>Предоплата 200$</div>
           <div className={styles.priceInfo}>
             <span className={styles.currentPrice}>
               От ${tourPrice.toString().replace(" $", "")}

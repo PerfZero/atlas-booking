@@ -436,7 +436,7 @@ function BookingPageContent() {
       
       if (result.success) {
         const orderId = result.booking_id;
-        const amount = Math.round(tourData.priceValue * 547 * tourists.length);
+        const amount = Math.round(200 * 547);
         const tourId = tourData.id;
         
         const paymentRequestData = {

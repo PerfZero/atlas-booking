@@ -1589,6 +1589,7 @@ export default function TourDetailPage({ params }) {
 
                     <div className={styles.roomPrice}>
                       <p>Без скрытых платежей</p>
+                      <div className={styles.prepaymentBadge}>Предоплата 200$</div>
                       <div className={styles.priceInfo}>
                         <span className={styles.currentPrice}>
                           ${room.price || 2400}

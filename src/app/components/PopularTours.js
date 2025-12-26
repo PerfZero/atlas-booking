@@ -34,10 +34,9 @@ function PopularToursContent() {
     const loadTours = async () => {
       try {
         setLoading(true);
-        const isMobile = window.innerWidth <= 768;
-        const limit = isMobile ? 8 : 4;
-        const toursData = await getTours(`?per_page=${limit}`);
-        setTours(toursData);
+        const toursData = await getTours('?per_page=4');
+        const limitedTours = Array.isArray(toursData) ? toursData.slice(0, 4) : [];
+        setTours(limitedTours);
       } catch (err) {
         console.error('Ошибка загрузки туров1:', err);
         setError('Не удалось загрузить туры');
@@ -173,6 +172,7 @@ function PopularToursContent() {
                     className={styles.image}
                   />
                   <div className={styles.price}>От {tour.price} $</div>
+                  <div className={styles.prepaymentBadge}>Предоплата 200$</div>
                   <div className={styles.overlay}>
                     <div className={styles.tags}>
                       {Array.isArray(tour.tags) && tour.tags.map((tag, index) => (

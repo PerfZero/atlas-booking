@@ -1408,8 +1408,7 @@ function ProfilePageContent() {
                                   return;
                                 }
 
-                                const touristsCount = booking.tour_data?.tourists?.length || 1;
-                                const amount = Math.round(booking.tour_price * 547 * touristsCount);
+                                const amount = Math.round(200 * 547);
                                 const paymentRequestData = {
                                   order_id: booking.booking_id,
                                   amount: amount,

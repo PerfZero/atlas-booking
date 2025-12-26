@@ -59,6 +59,19 @@ background: #fff;
   z-index: 2;
 }
 
+.prepaymentBadge {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  font: 500 14px var(--font-primary);
+  color: #fff;
+  border-radius: 100px;
+  padding: 8px 16px;
+  background: #253168;
+  z-index: 2;
+  white-space: nowrap;
+}
+
 .overlay {
   position: absolute;
   bottom: 0;
@@ -187,6 +200,12 @@ padding: 4px 8px;
     height: 30px;
   }
   
+  .prepaymentBadge {
+    top: 50px;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
   .tag {
     font-size: 7px;
     padding: 3px 6px;
@@ -235,6 +254,12 @@ padding: 4px 8px;
     padding: 4px 8px;
     width: 80px;
     height: 26px;
+  }
+  
+  .prepaymentBadge {
+    top: 45px;
+    font-size: 11px;
+    padding: 4px 8px;
   }
   
   .tag {

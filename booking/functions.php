@@ -1297,9 +1297,12 @@
     }
 
     function atlas_get_tours($request) {
+        $per_page = $request->get_param('per_page');
+        $posts_per_page = ($per_page && is_numeric($per_page) && $per_page > 0) ? intval($per_page) : -1;
+        
         $args = array(
             'post_type' => 'post',
-            'posts_per_page' => -1,
+            'posts_per_page' => $posts_per_page,
             'post_status' => 'publish',
             'meta_query' => array(
                 array(

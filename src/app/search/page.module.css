@@ -604,6 +604,17 @@ background: #253168;
   color: rgba(51, 51, 51, 0.5);
 }
 
+.prepaymentBadge {
+  font: 500 14px var(--font-primary);
+  color: #fff;
+  background: #253168;
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  display: inline-block;
+  width: fit-content;
+}
+
 .priceInfo {
   align-items: center;
   gap: 12px;
